@@ -1,0 +1,39 @@
+{
+  "name": "cloud-functions-simulator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloud Functions Simulator",
+  "main": "index.js",
+  "author": "Jason Polites",
+  "license": "Apache Version 2.0",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "cli-table2": "^0.2.0",
+    "colors": "^1.1.2",
+    "commander": "^2.9.0",
+    "connect-timeout": "^1.7.0",
+    "express": "^4.14.0",
+    "jsonfile": "^2.3.1",
+    "request": "^2.72.0",
+    "response-time": "^2.3.1",
+    "winston": "^2.2.0"
+  },
+  "scripts": {
+    "pretest": "npm install",
+    "test": "NODE_ENV=test _mocha test/"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "istanbul": "^0.4.3",
+    "mocha": "^2.4.5",
+    "proxyquire": "^1.7.7",
+    "sinon": "^1.17.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "sso://user/jasonpolites/gcf-recipes"
+  },
+  "bin": {
+    "functions": "./index.js"
+  }
+}

@@ -1,0 +1,10 @@
+.DS_Store
+.vscode
+node_modules/
+coverage/
+sandbox/
+npm_debug.log
+local.txt
+keyfile.json
+translate_apikey.json
+sheets
