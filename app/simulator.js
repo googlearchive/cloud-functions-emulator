@@ -57,14 +57,8 @@ var self = {
     // Ensure the logs directory exists
     var logsDir = path.resolve(__dirname, config.logFilePath);
 
-    try {
-      fs.statSync(logsDir);
-    } catch (e) {
-      if (e.code === 'ENOENT') {
-        fs.mkdir(logsDir);
-      } else {
-        throw e;
-      }
+    if (!self._pathExists(logsDir)) {
+      fs.mkdir(logsDir);
     }
 
     var logLevel = 'info';
@@ -121,14 +115,8 @@ var self = {
     self._functionsFile = path.resolve(__dirname, 'functions.json');
 
     // Ensure the function registry file exists
-    try {
-      fs.statSync(self._functionsFile);
-    } catch (e) {
-      if (e.code === 'ENOENT') {
-        jsonfile.writeFileSync(self._functionsFile, {});
-      } else {
-        throw e;
-      }
+    if (!self._pathExists(self._functionsFile)) {
+      jsonfile.writeFileSync(self._functionsFile, {});
     }
 
     // Create or read the current registry file
@@ -215,6 +203,8 @@ var self = {
         self._unrequire(p);
         mod = require(p);
       } catch (err) {
+        console.error(err);
+
         res.status(400).send(
           '\nFailed to require module being deployed.  Make sure your module compiles and you have run `npm install` on it first\n' +
           err.stack);
@@ -302,18 +292,18 @@ var self = {
       var pruned = 0;
       var funcs = self._functions;
 
-      console.log(self._functions);
-
       for (var name in funcs) {
-        // Ensure we aren't cached
+        var func = undefined;
         var fn = self._functions[name];
 
-        self._unrequire(fn.path);
+        // Ensure the function still exists on the file system
+        if (self._pathExists(fn.path)) {
+          // Ensure we aren't cached
+          self._unrequire(fn.path);
 
-        // Require the target module to load the function for invocation
-        var mod = require(fn.path);
-
-        var func = mod[name];
+          // Require the target module to load the function for invocation
+          func = require(fn.path)[name];
+        }
 
         if (!func) {
           delete self._functions[name];
@@ -487,6 +477,19 @@ var self = {
     console.error(err.stack);
     res.status(500).send(err.stack);
     next(err);
+  },
+
+  _pathExists: function(p) {
+    try {
+      fs.statSync(p);
+      return true;
+    } catch (e) {
+      if (e.code === 'ENOENT') {
+        return false;
+      } else {
+        throw e;
+      }
+    }
   },
 
   main: function() {
