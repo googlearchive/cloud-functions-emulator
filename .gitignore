@@ -6,3 +6,4 @@ sandbox/
 npm_debug.log
 process.pid
 simulator.log
+functions.json
