@@ -36,6 +36,7 @@ module.exports = {
    *                       case of BACKGROUND functions this is the 'data' arg
    */
   invoke: function (fn, ctx, arg1, arg2) {
+    debugger; // eslint-disable-line
     fn.call(ctx, arg1, arg2);
   }
 };
