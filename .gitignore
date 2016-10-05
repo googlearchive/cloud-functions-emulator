@@ -5,5 +5,9 @@ coverage/
 sandbox/
 npm_debug.log
 process.pid
-simulator.log
 functions.json
+local.txt
+keyfile.json
+translate_apikey.json
+sheets
+src/logs/*.log

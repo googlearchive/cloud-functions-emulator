@@ -1,39 +1,61 @@
 {
-  "name": "cloud-functions-simulator",
-  "version": "1.0.0",
-  "private": true,
-  "description": "Cloud Functions Simulator",
-  "main": "index.js",
-  "author": "Jason Polites",
+  "name": "@google-cloud/functions-emulator",
+  "description": "Google Cloud Functions Emulator",
+  "version": "0.1.0",
   "license": "Apache Version 2.0",
+  "author": "Google Inc.",
+  "bin": {
+    "functions": "./bin/functions"
+  },
+  "contributors": [
+    {
+      "name": "Jason Dobry",
+      "email": "jason.dobry@gmail.com"
+    },
+    {
+      "name": "Jason Polites",
+      "email": "jasonpolites@google.com"
+    }
+  ],
+  "semistandard": {
+    "globals": [
+      "after",
+      "afterEach",
+      "before",
+      "beforeEach",
+      "describe",
+      "it"
+    ],
+    "ignore": [
+      "**/node_modules/**",
+      "coverage"
+    ]
+  },
+  "scripts": {
+    "lint": "semistandard \"**/*.js\"",
+    "test": "npm run lint && NODE_ENV=test _mocha test/"
+  },
   "dependencies": {
     "body-parser": "^1.15.2",
     "cli-table2": "^0.2.0",
     "colors": "^1.1.2",
-    "commander": "^2.9.0",
     "connect-timeout": "^1.7.0",
     "express": "^4.14.0",
-    "jsonfile": "^2.3.1",
-    "request": "^2.72.0",
+    "jsonfile": "^2.4.0",
+    "request": "^2.75.0",
     "response-time": "^2.3.1",
-    "winston": "^2.2.0"
-  },
-  "scripts": {
-    "pretest": "npm install",
-    "test": "NODE_ENV=test _mocha test/"
+    "winston": "^2.2.0",
+    "yargs": "^6.0.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",
-    "istanbul": "^0.4.3",
-    "mocha": "^2.4.5",
-    "proxyquire": "^1.7.7",
-    "sinon": "^1.17.3"
+    "istanbul": "^0.4.5",
+    "mocha": "^3.1.0",
+    "proxyquire": "^1.7.10",
+    "sinon": "^1.17.6"
   },
   "repository": {
     "type": "git",
-    "url": "sso://user/jasonpolites/gcf-recipes"
-  },
-  "bin": {
-    "functions": "./index.js"
+    "url": "https://github.com/GoogleCloudPlatform/cloud-functions-emulator.git"
   }
 }

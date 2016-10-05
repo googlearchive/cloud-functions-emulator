@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * Copyright 2016, Google, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +14,4 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-module.exports = {
-  hello: function (context, data) {
-    context.success('Hello World');
-  },
-  helloData: function (context, data) {
-    context.success(data['foo']);
-  },
-  helloJSON: function (context, data) {
-    context.success({
-      message: 'Hello World'
-    });
-  },
-  helloThrow: function (context, data) {
-    throw new Error('uncaught exception!');
-  }
-};
+require('../src/cli').main(process.argv.slice(2));

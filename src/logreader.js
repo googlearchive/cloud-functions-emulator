@@ -1,10 +1,10 @@
-/*!
- *
+/**
+ * Copyright 2016, Google, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,11 +19,8 @@ var fs = require('fs');
 var EOL = require('os').EOL;
 
 module.exports = {
-
-  readLogLines: function(filePath, num, output) {
-
+  readLogLines: function (filePath, num, output) {
     try {
-
       var buf = fs.readFileSync(filePath);
       var chr = null;
       var cursor = buf.length;
@@ -44,14 +41,13 @@ module.exports = {
       }
 
       // The last line in the squence (the first line in the file)
-      // will not terminate with EOL, so ensure we're always include 
+      // will not terminate with EOL, so ensure we're always include
       // the last line
       if (count < num) {
         cursor = 0;
       }
 
       output(buf.toString('utf8', cursor, buf.length) + '\n');
-
     } catch (e) {
       if (e.code === 'ENOENT') {
         output('');
@@ -61,4 +57,4 @@ module.exports = {
       throw e;
     }
   }
-}
+};
