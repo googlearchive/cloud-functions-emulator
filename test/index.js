@@ -1,6 +1,6 @@
 /**
  * Copyright 2016, Google, Inc.
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -143,23 +143,23 @@ describe('Cloud Functions Emulator Tests', function () {
     controller.deploy(TEST_MODULE, 'hello', {}, done);
   });
 
-  it('Fails deployment when the module doesn\'t exist', function (done) {
+  it("Fails deployment when the module doesn't exist", function (done) {
     controller.deploy('foobar', 'hello', {}, function (err) {
       if (err) {
         done();
         return;
       }
-      done(new Error('Deployment should have failed but didn\'t'));
+      done(new Error("Deployment should have failed but didn't"));
     });
   });
 
-  it('Fails deployment when the function doesn\'t exist', function (done) {
+  it("Fails deployment when the function doesn't exist", function (done) {
     controller.deploy(TEST_MODULE, 'foobar', {}, function (err) {
       if (err) {
         done();
         return;
       }
-      done(new Error('Deployment should have failed but didn\'t'));
+      done(new Error("Deployment should have failed but didn't"));
     });
   });
 
@@ -311,7 +311,7 @@ describe('Cloud Functions Emulator Tests', function () {
     });
   });
 
-  it('Functions that throw exceptions don\'t crash the process', function (done) {
+  it("Functions that throw exceptions don't crash the process", function (done) {
     controller.deploy(TEST_MODULE, 'helloThrow', 'B', function (err) {
       if (err) {
         done(err);
@@ -339,7 +339,7 @@ describe('Cloud Functions Emulator Tests', function () {
           }
           return;
         }
-        done('Expected error but didn\'t get one');
+        done("Expected error but didn't get one");
       });
     });
   });

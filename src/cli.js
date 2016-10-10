@@ -1,6 +1,6 @@
 /**
  * Copyright 2016, Google, Inc.
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -23,18 +23,18 @@ var config = require('../config.js');
 var APP_NAME = 'Google Cloud Functions Emulator ';
 
 var writer = {
-  log: function() {
+  log: function () {
     console.log.apply(console, arguments);
   },
-  error: function() {
+  error: function () {
     console.error.apply(console, arguments);
   },
-  write: function() {
+  write: function () {
     console._stdout.write.apply(console._stdout, arguments);
   }
 };
 
-function printDescribe(body) {
+function printDescribe (body) {
   body = JSON.parse(body);
 
   var table = new Table({
@@ -52,7 +52,7 @@ function printDescribe(body) {
   writer.log(table.toString());
 }
 
-function pathExists(p) {
+function pathExists (p) {
   try {
     fs.statSync(p);
     return true;
@@ -61,8 +61,8 @@ function pathExists(p) {
   }
 }
 
-function doIfRunning(fn) {
-  controller.status(function(err, status) {
+function doIfRunning (fn) {
+  controller.status(function (err, status) {
     if (err) {
       writer.error(err);
       return;
@@ -72,13 +72,13 @@ function doIfRunning(fn) {
       fn();
     } else {
       writer.write((APP_NAME +
-        'is not running.  Use \'functions start\' to start the emulator\n'
-      ).cyan);
+      "is not running.  Use 'functions start' to start the emulator\n"
+        ).cyan);
     }
   });
 }
 
-function start(options) {
+function start (options) {
   var projectId;
   if (options && options.projectId) {
     projectId = options.projectId;
@@ -88,7 +88,7 @@ function start(options) {
 
   writer.log('Starting ' + APP_NAME + 'on port ' + config.port + '...');
 
-  controller.start(projectId, debug, function(err, status) {
+  controller.start(projectId, debug, function (err, status) {
     if (err) {
       writer.error(err);
       return;
@@ -105,9 +105,9 @@ function start(options) {
   });
 }
 
-function list() {
-  doIfRunning(function() {
-    controller.list(function(err, body) {
+function list () {
+  doIfRunning(function () {
+    controller.list(function (err, body) {
       if (err) {
         writer.error(err);
         return;
@@ -145,7 +145,7 @@ function list() {
       if (count === 0) {
         table.push([{
           colSpan: 3,
-          content: 'No functions deployed ¯\\_(ツ)_/¯.  Run \'functions deploy\' to deploy a function'
+          content: "No functions deployed ¯\\_(ツ)_/¯.  Run 'functions deploy' to deploy a function"
             .gray
         }]);
       }
@@ -157,8 +157,8 @@ function list() {
   });
 }
 
-function stop(options, callback) {
-  controller.stop(function(err) {
+function stop (options, callback) {
+  controller.stop(function (err) {
     if (err) {
       writer.error(err);
       if (callback) {
@@ -172,8 +172,8 @@ function stop(options, callback) {
   });
 }
 
-function kill() {
-  controller.kill(function(err, result) {
+function kill () {
+  controller.kill(function (err, result) {
     if (err) {
       writer.error(err);
       return;
@@ -189,8 +189,8 @@ function kill() {
   });
 }
 
-function restart() {
-  controller.restart(function(err, status) {
+function restart () {
+  controller.restart(function (err, status) {
     if (err) {
       writer.error(err);
       return;
@@ -205,9 +205,9 @@ function restart() {
   });
 }
 
-function clear() {
-  doIfRunning(function() {
-    controller.clear(function(err) {
+function clear () {
+  doIfRunning(function () {
+    controller.clear(function (err) {
       if (err) {
         writer.error(err);
         writer.error('Clear command aborted'.red);
@@ -220,9 +220,9 @@ function clear() {
   });
 }
 
-function prune() {
-  doIfRunning(function() {
-    controller.prune(function(err, body) {
+function prune () {
+  doIfRunning(function () {
+    controller.prune(function (err, body) {
       if (err) {
         writer.error(err);
         writer.error('Prune command aborted'.red);
@@ -235,8 +235,8 @@ function prune() {
   });
 }
 
-function status() {
-  controller.status(function(err, status) {
+function status () {
+  controller.status(function (err, status) {
     if (err) {
       writer.error(err);
       return;
@@ -253,7 +253,7 @@ function status() {
   });
 }
 
-function getLogs(options) {
+function getLogs (options) {
   var limit = 20;
   if (options.limit) {
     limit = parseInt(options.limit);
@@ -261,10 +261,10 @@ function getLogs(options) {
   controller.getLogs(writer, limit);
 }
 
-function deploy(options) {
-  doIfRunning(function() {
+function deploy (options) {
+  doIfRunning(function () {
     var type = (options['trigger-http'] === true) ? 'H' : 'B';
-    controller.deploy(options.modulePath, options.entryPoint, type, function(err,
+    controller.deploy(options.modulePath, options.entryPoint, type, function (err,
       body) {
       if (err) {
         writer.error(err);
@@ -277,23 +277,23 @@ function deploy(options) {
   });
 }
 
-function undeploy(options) {
-  doIfRunning(function() {
-    controller.undeploy(options.function, function(err, body) {
+function undeploy (options) {
+  doIfRunning(function () {
+    controller.undeploy(options.function, function (err, body) {
       if (err) {
         writer.error(err);
         writer.error('Delete aborted'.red);
         return;
       }
-      writer.log('Function ' + options.function+' removed'.green);
+      writer.log('Function ' + options.function + ' removed'.green);
       list();
     });
   });
 }
 
-function describe(options) {
-  doIfRunning(function() {
-    controller.describe(options.function, function(err, body) {
+function describe (options) {
+  doIfRunning(function () {
+    controller.describe(options.function, function (err, body) {
       if (err) {
         writer.error(err);
         return;
@@ -303,9 +303,9 @@ function describe(options) {
   });
 }
 
-function call(options) {
-  doIfRunning(function() {
-    controller.call(options.function, options.data, function(err, body, response) {
+function call (options) {
+  doIfRunning(function () {
+    controller.call(options.function, options.data, function (err, body, response) {
       if (err) {
         writer.error(err);
         return;
@@ -315,12 +315,12 @@ function call(options) {
 
       writer.log(body);
 
-      controller.status(function(err, status) {
+      controller.status(function (err, status) {
         if (err) {
           writer.error(
             APP_NAME +
             'exited unexpectedly.  Check the cloud-functions-emulator.log for more details'
-            .red);
+              .red);
           return;
         }
       });
@@ -338,7 +338,7 @@ var program = module.exports = {
   getLogs: getLogs,
   kill: kill,
   list: list,
-  main: function(args) {
+  main: function (args) {
     cli
       .help('h')
       .alias('h', 'help')
@@ -364,7 +364,7 @@ cli
       type: 'string',
       requiresArg: true
     }
-  }, function(opts) {
+  }, function (opts) {
     try {
       opts.data = JSON.parse(opts.data);
     } catch (err) {

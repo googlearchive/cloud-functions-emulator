@@ -7,16 +7,13 @@
   "bin": {
     "functions": "./bin/functions"
   },
-  "contributors": [
-    {
-      "name": "Jason Dobry",
-      "email": "jason.dobry@gmail.com"
-    },
-    {
-      "name": "Jason Polites",
-      "email": "jasonpolites@google.com"
-    }
-  ],
+  "contributors": [{
+    "name": "Jason Dobry",
+    "email": "jason.dobry@gmail.com"
+  }, {
+    "name": "Jason Polites",
+    "email": "jasonpolites@google.com"
+  }],
   "semistandard": {
     "globals": [
       "after",
@@ -33,7 +30,8 @@
   },
   "scripts": {
     "lint": "semistandard \"**/*.js\"",
-    "test": "npm run lint && NODE_ENV=test _mocha test/"
+    "format": "semistandard-format -w",
+    "test": "npm run format && npm run lint && NODE_ENV=test _mocha test/"
   },
   "dependencies": {
     "body-parser": "^1.15.2",
@@ -53,6 +51,7 @@
     "mocha": "^3.1.0",
     "proxyquire": "^1.7.10",
     "semistandard": "^9.0.0",
+    "semistandard-format": "^3.0.0",
     "sinon": "^1.17.6"
   },
   "repository": {

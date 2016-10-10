@@ -1,6 +1,6 @@
 /**
  * Copyright 2016, Google, Inc.
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -29,7 +29,6 @@ const EMULATOR_ROOT_URI = 'http://localhost:' + config.port;
 const EMULATOR_FUNC_URI = EMULATOR_ROOT_URI + '/function/';
 
 var self = {
-
   STOPPED: 0,
   RUNNING: 1,
   ALREADY_RUNNING: 2,
@@ -359,9 +358,9 @@ var self = {
    */
   deploy: function (modulePath, entryPoint, type, callback) {
     self._action('POST', EMULATOR_FUNC_URI +
-      entryPoint +
-      '?path=' + path.resolve(modulePath) +
-      '&type=' + type,
+    entryPoint +
+    '?path=' + path.resolve(modulePath) +
+    '&type=' + type,
       function (err, response, body) {
         if (err) {
           if (callback) {
