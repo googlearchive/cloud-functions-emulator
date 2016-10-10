@@ -24,6 +24,7 @@ const fs = require('fs');
 const winston = require('winston');
 const config = require('../config');
 const invoker = require('./invoker');
+const loadHandler = require('./loadhandler');
 
 var self = {
   _log: null,
@@ -32,10 +33,10 @@ var self = {
   _functions: null,
   _functionsFile: null,
 
-  _init: function () {
+  _init: function() {
     // Add a global error handler to catch all unexpected exceptions in the process
     // Note that this will not include any unexpected system errors (syscall failures)
-    process.on('uncaughtException', function (err) {
+    process.on('uncaughtException', function(err) {
       console.error(err.stack);
 
       // HACK:  An uncaught exception may leave the process in an incomplete state
@@ -43,7 +44,7 @@ var self = {
       // to not complete.  This we're just going to wait for an arbitrary amount
       // of time for the log entry to complete.
       // Possible future solution here: https://github.com/winstonjs/winston/issues/228
-      setTimeout(function () {
+      setTimeout(function() {
         process.exit(1);
       }, 1000);
     });
@@ -85,16 +86,16 @@ var self = {
     // DEBUG level.  We've made an exception for error logs in the emulator, just
     // to make it easier for developers to recognize failures in the emulator.
 
-    console.log = function () {
+    console.log = function() {
       self._log.info.apply(self._log, arguments);
     };
 
     console.info = console.log;
 
-    console.error = function () {
+    console.error = function() {
       self._log.error.apply(self._log, arguments);
     };
-    console.debug = function () {
+    console.debug = function() {
       self._log.debug.apply(self._log, arguments);
     };
 
@@ -121,9 +122,20 @@ var self = {
 
     // Create Express App
     self._setupApp();
+
+    // Override Module._load to we can inject mocks into calls to require()
+    try {
+      var override = require('../mocks');
+      if (override) {
+        loadHandler.init(override);
+        console.debug('Mock handler found.  Require calls will be intercepted');
+      }
+    } catch (e) {
+      console.debug('No mock handler found.  Require calls will NOT be intercepted');
+    }
   },
 
-  _setupApp: function () {
+  _setupApp: function() {
     // Standard ExpressJS app.  Where possible this should mimic the *actual*
     // setup of Cloud Functions regarding the use of body parsers etc.
     self._app = express();
@@ -135,7 +147,7 @@ var self = {
     }));
 
     // Never cache
-    self._app.use(function (err, req, res, next) {
+    self._app.use(function(err, req, res, next) {
       res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.set('Pragma', 'no-cache');
       res.set('Expires', 0);
@@ -154,7 +166,7 @@ var self = {
     // path.  This should be safe because it would not be possible to deploy a
     // function with that name if we assume that all function names in the
     // emulator are *actual* function names from the module
-    self._app.get('/', function (req, res) {
+    self._app.get('/', function(req, res) {
       if (req.query.env) {
         res.set('Content-type', 'application/json');
         res.send({
@@ -169,7 +181,7 @@ var self = {
     // Use a DELETE to signal the shutdown of the emulator.  The process will
     // ultimately be "spawned" from the CLI so the channel to the parent process
     // will be lost
-    self._app.delete('/', function (req, res) {
+    self._app.delete('/', function(req, res) {
       console.debug('Server stopped');
       res.status(200).end();
       self._server.close();
@@ -186,7 +198,7 @@ var self = {
      * @param {String} module  A path on the local file system containing the Node module to deploy
      * @param {String} function  The function (entry point) to be invoked
      */
-    self._app.post('/function/:name', function (req, res) {
+    self._app.post('/function/:name', function(req, res) {
       var p = req.query.path;
       var name = req.params.name;
 
@@ -250,7 +262,7 @@ var self = {
      * @example
      * functions stop
      */
-    self._app.delete('/function', function (req, res) {
+    self._app.delete('/function', function(req, res) {
       self._functions = {};
       jsonfile.writeFileSync(self._functionsFile, self._functions);
       console.debug('Cleared all deployed functions');
@@ -266,7 +278,7 @@ var self = {
      *
      * @param {String} function  The function to be removed
      */
-    self._app.delete('/function/:name', function (req, res) {
+    self._app.delete('/function/:name', function(req, res) {
       // undeploy
       delete self._functions[req.params.name];
       jsonfile.writeFileSync(self._functionsFile, self._functions);
@@ -281,7 +293,7 @@ var self = {
      * @example
      * functions stop
      */
-    self._app.patch('/function', function (req, res) {
+    self._app.patch('/function', function(req, res) {
       var pruned = 0;
       var funcs = self._functions;
 
@@ -316,7 +328,7 @@ var self = {
      * @example
      * functions list
      */
-    self._app.get('/function', function (req, res) {
+    self._app.get('/function', function(req, res) {
       res.json(self._functions);
     });
 
@@ -329,7 +341,7 @@ var self = {
      *
      * @param {String} function  The function to be described
      */
-    self._app.get('/function/:name', function (req, res) {
+    self._app.get('/function/:name', function(req, res) {
       var name = req.params.name;
       if (self._functions[name]) {
         res.json(self._functions[name]);
@@ -352,7 +364,7 @@ var self = {
      * @param {String} data (Optional)  The data to be sent to the function, as a JSON object
      * @param {String} function  The function to be described
      */
-    self._app.all('/*', function (req, res) {
+    self._app.all('/*', function(req, res) {
       var fn = req.path.substring(1, req.path.length);
 
       console.debug('Executing ' + req.method + ' on function ' + fn);
@@ -371,11 +383,11 @@ var self = {
    * Removes a previously required module from the require cache
    * @param {String} path The file system path to the module
    */
-  _unrequire: function (path) {
+  _unrequire: function(path) {
     delete require.cache[require.resolve(path)];
   },
 
-  _invoke: function (fn, req, res) {
+  _invoke: function(fn, req, res) {
     // Ensure the module is not loaded from cache
     // This has obvious negative performance implications, with the
     // benefit of allowing function code to be changed out of band
@@ -427,11 +439,11 @@ var self = {
       } else {
         // BACKGROUND
         var context = {
-          success: function (val) {
+          success: function(val) {
             process.chdir(cwd);
             res.status(200).json(val);
           },
-          failure: function (val) {
+          failure: function(val) {
             process.chdir(cwd);
             if (val instanceof Error) {
               // Error objects serialize to an empty JSON object.. how convenient :/
@@ -440,7 +452,7 @@ var self = {
             }
             res.status(500).json(val);
           },
-          done: function (val) {
+          done: function(val) {
             if (val) {
               context.failure(val);
               return;
@@ -460,13 +472,13 @@ var self = {
     }
   },
 
-  _errorHandler: function (err, req, res, next) {
+  _errorHandler: function(err, req, res, next) {
     console.error(err.stack);
     res.status(500).send(err.stack);
     next(err);
   },
 
-  _pathExists: function (p) {
+  _pathExists: function(p) {
     try {
       fs.statSync(p);
       return true;
@@ -479,11 +491,11 @@ var self = {
     }
   },
 
-  main: function () {
+  main: function() {
     self._init();
     console.debug('Starting emulator server on port ' + config.port +
       '...');
-    self._server = self._app.listen(config.port, function () {
+    self._server = self._app.listen(config.port, function() {
       console.debug('Server started');
     });
   }
