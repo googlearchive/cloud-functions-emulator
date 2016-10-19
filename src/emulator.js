@@ -388,6 +388,8 @@ var self = {
   },
 
   _invoke: function (fn, req, res) {
+    console.log('Invoking ' + JSON.stringify(fn));
+
     // Ensure the module is not loaded from cache
     // This has obvious negative performance implications, with the
     // benefit of allowing function code to be changed out of band
@@ -420,6 +422,8 @@ var self = {
       // As per the comment above, this is sub-optimal but probably an
       // acceptable trade-off for an emulator
       process.env['FUNCTION_NAME'] = fn.name;
+
+      console.log('fn: ' + fn.name);
 
       if (type === 'HTTP') {
         // Pass through HTTP

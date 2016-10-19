@@ -4,7 +4,7 @@ var self = {
     var Module = require('module');
     self._originalLoader = Module._load;
     Module._load = function () {
-      var override = handler.onRequire(arguments[0]);
+      var override = handler.onRequire(process.env['FUNCTION_NAME'], arguments[0]);
       return (override || self._originalLoader.apply(this, arguments));
     };
   }

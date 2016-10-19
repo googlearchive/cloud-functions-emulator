@@ -158,17 +158,19 @@ function list () {
 }
 
 function stop (options, callback) {
-  controller.stop(function (err) {
-    if (err) {
-      writer.error(err);
-      if (callback) {
-        callback(err);
+  doIfRunning(function () {
+    controller.stop(function (err) {
+      if (err) {
+        writer.error(err);
+        if (callback) {
+          callback(err);
+        }
+        return;
       }
-      return;
-    }
 
-    writer.write(APP_NAME);
-    writer.write('STOPPED\n'.red);
+      writer.write(APP_NAME);
+      writer.write('STOPPED\n'.red);
+    });
   });
 }
 
