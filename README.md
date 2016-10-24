@@ -12,6 +12,10 @@ _Disclaimer: This is not an official Google product._
 This is a simple emulator that allows you to test your Cloud Functions on your
 local machine.
 
+**@google-cloud/functions-emulator is currently in pre-1.0.0 development. Before
+the 1.0.0 release backwards compatible changes and bug fixes will bump the patch
+version number and breaking changes will bump the minor version number.**
+
 ## Table of Contents
 
 * [Installation](#installation)

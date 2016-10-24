@@ -13,3 +13,4 @@ sheets
 src/logs/*.log
 doc/
 .nyc_output
+*.log
