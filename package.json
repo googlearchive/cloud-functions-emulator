@@ -20,6 +20,13 @@
       "email": "jasonpolites@google.com"
     }
   ],
+  "files": [
+    "AUTHORS",
+    "bin/",
+    "config.js",
+    "CONTRIBUTORS",
+    "src/"
+  ],
   "semistandard": {
     "globals": [
       "after",
@@ -31,7 +38,8 @@
     ],
     "ignore": [
       "**/node_modules/**",
-      "coverage"
+      "coverage",
+      "doc"
     ]
   },
   "scripts": {
