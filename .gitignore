@@ -11,3 +11,5 @@ keyfile.json
 translate_apikey.json
 sheets
 src/logs/*.log
+doc/
+.nyc_output
