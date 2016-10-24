@@ -1,6 +1,6 @@
 /**
  * Copyright 2016, Google, Inc.
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -26,17 +26,17 @@ module.exports = {
    * to fire when the server is running in debug mode.
    *
    * @param {Function} fn The function to be invoked
-   * @param {Object} ctx The context of the invocation.  Corresponds to
-   *                     the 'this' pointer available to the function during execution
    * @param {Object} arg1  The first argument to the function.  In the case of HTTP
    *                       functions this is an HTTP request.  In the case of
-   *                       BACKGROUND functions this is a 'context' object
+   *                       BACKGROUND functions this is the 'event' object
    * @param {Object} arg2  The second argument to the function.  In the case of
    *                       HTTP functions this is an HTTP response.  In the
-   *                       case of BACKGROUND functions this is the 'data' arg
+   *                       case of BACKGROUND functions this is the (optional) 'callback' arg
    */
-  invoke: function (fn, ctx, arg1, arg2) {
+  invoke: function (fn, mod, arg1, arg2) {
     debugger; // eslint-disable-line
-    fn.call(ctx, arg1, arg2);
+
+    // Return the outcome to accommodate the return of a Promise
+    return fn.call(mod, arg1, arg2);
   }
 };

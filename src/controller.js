@@ -61,13 +61,28 @@ var self = {
         // Communication to the detached process is then done via HTTP
         var args = [path.join(__dirname, '/emulator.js'), config.port, projectId];
 
+        // We will pipe stdout from the child process to the emulator log file
+        var logFilePath = path.resolve(__dirname, config.logFilePath, config.logFileName);
+
         // TODO:
         // For some bizzare reason boolean values in the environment of the
         // child process return as Strings in JSON documents sent over HTTP with
         // a content-type of application/json, so we need to check for String
         // 'true' as well as boolean.
         if (debug === true || debug === 'true') {
-          args.unshift('--debug');
+          // If we're Node version 6+, use native support for the V8 inspector
+          var semver = process.version.split('\.');
+          var major = parseInt(semver[0].substring(1, semver[0].length));
+
+          if(major >= 6) {
+            // Use the experimental inspection feature in Node 
+            args.unshift('--inspect');
+            console.log('Starting in debug mode.  Check ' + logFilePath + ' for details on how to connect to the debugger');
+          } else {
+            // Requires the use of node-inspector
+            args.unshift('--debug');
+            console.log('Starting in debug mode.  Use node-inspector to debug');            
+          }
         }
 
         // Pass the debug flag to the environment of the child process so we can
@@ -80,9 +95,10 @@ var self = {
         // Make sure the child is detached, otherwise it will be bound to the
         // lifecycle of the parent process.  This means we should also ignore
         // the binding of stdout.
+        const out = fs.openSync(logFilePath, 'a');
         var child = spawn('node', args, {
           detached: true,
-          stdio: 'ignore',
+          stdio:  ['ignore',out,out],
           env: env
         });
 

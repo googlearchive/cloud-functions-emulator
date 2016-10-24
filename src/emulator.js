@@ -409,6 +409,10 @@ var self = {
       // acceptable trade-off for an emulator
       process.env['FUNCTION_NAME'] = fn.name;
 
+      var serializeError = function(val) {
+        return JSON.parse(JSON.stringify(val, Object.getOwnPropertyNames(val)));
+      };    
+
       if (type === 'HTTP') {
         // Pass through HTTP
         try {
@@ -417,7 +421,7 @@ var self = {
           var error = err;
           if (error instanceof Error) {
             // Error objects serialize to an empty JSON object.. how convenient :/
-            error = JSON.parse(JSON.stringify(error, Object.getOwnPropertyNames(error)));
+            error = serializeError(error);
           }
           res.status(500).json(error);
         }
@@ -426,36 +430,47 @@ var self = {
         process.chdir(cwd);
       } else {
         // BACKGROUND
-        var context = {
-          success: function (val) {
-            process.chdir(cwd);
-            res.status(200).json(val);
-          },
-          failure: function (val) {
-            process.chdir(cwd);
-            if (val instanceof Error) {
+        var errback = function (err, val) {
+          process.chdir(cwd);
+          if(err) {
+            if (err instanceof Error) {
               // Error objects serialize to an empty JSON object.. how convenient :/
-              val = JSON.parse(JSON.stringify(val, Object.getOwnPropertyNames(
-                val)));
+              err = serializeError(err);
             }
-            res.status(500).json(val);
-          },
-          done: function (val) {
-            if (val) {
-              context.failure(val);
-              return;
-            }
-            context.success();
+            res.status(500).json(err);
+          } else {
+            res.status(200).json(val);
           }
         };
 
         try {
-          invoker.invoke(func, mod, context, req.body);
+          // Function arguments will be of length 1 if we expected a promise
+          if(func.length === 1) {
+            Promise.resolve()
+                .then(function() {
+                  var result = invoker.invoke(func, mod, req.body);
+                  if (typeof result === 'undefined') {
+                    console.debug(
+                        'Function returned undefined, expected Promise or value');
+                  }
+                  return result;
+                })
+                .then(
+                    function(result) {
+                      errback(null, result);
+                    },
+                    function(err) { 
+                      errback(err); 
+                    });
+          } else {
+            invoker.invoke(func, mod, req.body, errback);
+          }
         } catch (e) {
-          context.failure(e);
+          errback(e);
         }
       }
     } catch (err) {
+      console.error(err.stack);
       res.status(500).send(err.stack);
     }
   },
