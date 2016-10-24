@@ -1,4 +1,11 @@
-# Google Cloud Functions Emulator
+# Google Cloud Functions Emulator [![NPM][1]][2] [![Tests][3]][4] [![Coverage][5]][6]
+
+[1]: https://img.shields.io/npm/v/@google-cloud/functions-emulator.svg?style=flat
+[2]: https://www.npmjs.org/package/@google-cloud/functions-emulator
+[3]: https://img.shields.io/circleci/project/GoogleCloudPlatform/cloud-functions-emulator.svg
+[4]: https://circleci.com/gh/GoogleCloudPlatform/cloud-functions-emulator
+[5]: https://img.shields.io/codecov/c/github/GoogleCloudPlatform/cloud-functions-emulator/master.svg
+[6]: https://codecov.io/github/GoogleCloudPlatform/cloud-functions-emulator
 
 _Disclaimer: This is not an official Google product._
 
