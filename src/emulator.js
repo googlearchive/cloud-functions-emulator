@@ -1,6 +1,6 @@
 /**
  * Copyright 2016, Google, Inc.
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -409,9 +409,9 @@ var self = {
       // acceptable trade-off for an emulator
       process.env['FUNCTION_NAME'] = fn.name;
 
-      var serializeError = function(val) {
+      var serializeError = function (val) {
         return JSON.parse(JSON.stringify(val, Object.getOwnPropertyNames(val)));
-      };    
+      };
 
       if (type === 'HTTP') {
         // Pass through HTTP
@@ -432,7 +432,7 @@ var self = {
         // BACKGROUND
         var errback = function (err, val) {
           process.chdir(cwd);
-          if(err) {
+          if (err) {
             if (err instanceof Error) {
               // Error objects serialize to an empty JSON object.. how convenient :/
               err = serializeError(err);
@@ -445,23 +445,23 @@ var self = {
 
         try {
           // Function arguments will be of length 1 if we expected a promise
-          if(func.length === 1) {
+          if (func.length === 1) {
             Promise.resolve()
-                .then(function() {
-                  var result = invoker.invoke(func, mod, req.body);
-                  if (typeof result === 'undefined') {
-                    console.debug(
-                        'Function returned undefined, expected Promise or value');
-                  }
-                  return result;
-                })
-                .then(
-                    function(result) {
-                      errback(null, result);
-                    },
-                    function(err) { 
-                      errback(err); 
-                    });
+              .then(function () {
+                var result = invoker.invoke(func, mod, req.body);
+                if (typeof result === 'undefined') {
+                  console.debug(
+                    'Function returned undefined, expected Promise or value');
+                }
+                return result;
+              })
+              .then(
+                function (result) {
+                  errback(null, result);
+                },
+                function (err) {
+                  errback(err);
+                });
           } else {
             invoker.invoke(func, mod, req.body, errback);
           }

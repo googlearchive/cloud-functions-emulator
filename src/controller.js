@@ -1,6 +1,6 @@
 /**
  * Copyright 2016, Google, Inc.
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -29,7 +29,6 @@ const EMULATOR_ROOT_URI = 'http://localhost:' + config.port;
 const EMULATOR_FUNC_URI = EMULATOR_ROOT_URI + '/function/';
 
 var self = {
-
   STOPPED: 0,
   RUNNING: 1,
   ALREADY_RUNNING: 2,
@@ -71,17 +70,17 @@ var self = {
         // 'true' as well as boolean.
         if (debug === true || debug === 'true') {
           // If we're Node version 6+, use native support for the V8 inspector
-          var semver = process.version.split('\.');
+          var semver = process.version.split('.');
           var major = parseInt(semver[0].substring(1, semver[0].length));
 
-          if(major >= 6) {
-            // Use the experimental inspection feature in Node 
+          if (major >= 6) {
+            // Use the experimental inspection feature in Node
             args.unshift('--inspect');
             console.log('Starting in debug mode.  Check ' + logFilePath + ' for details on how to connect to the debugger');
           } else {
             // Requires the use of node-inspector
             args.unshift('--debug');
-            console.log('Starting in debug mode.  Use node-inspector to debug');            
+            console.log('Starting in debug mode.  Use node-inspector to debug');
           }
         }
 
@@ -98,7 +97,7 @@ var self = {
         const out = fs.openSync(logFilePath, 'a');
         var child = spawn('node', args, {
           detached: true,
-          stdio:  ['ignore',out,out],
+          stdio: ['ignore', out, out],
           env: env
         });
 
@@ -375,9 +374,9 @@ var self = {
    */
   deploy: function (modulePath, entryPoint, type, callback) {
     self._action('POST', EMULATOR_FUNC_URI +
-      entryPoint +
-      '?path=' + path.resolve(modulePath) +
-      '&type=' + type,
+    entryPoint +
+    '?path=' + path.resolve(modulePath) +
+    '&type=' + type,
       function (err, response, body) {
         if (err) {
           if (callback) {

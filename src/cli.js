@@ -1,6 +1,6 @@
 /**
  * Copyright 2016, Google, Inc.
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -72,8 +72,8 @@ function doIfRunning (fn) {
       fn();
     } else {
       writer.write((APP_NAME +
-        'is not running.  Use \'functions start\' to start the emulator\n'
-      ).cyan);
+      "is not running.  Use 'functions start' to start the emulator\n"
+        ).cyan);
     }
   });
 }
@@ -145,7 +145,7 @@ function list () {
       if (count === 0) {
         table.push([{
           colSpan: 3,
-          content: 'No functions deployed ¯\\_(ツ)_/¯.  Run \'functions deploy\' to deploy a function'
+          content: "No functions deployed ¯\\_(ツ)_/¯.  Run 'functions deploy' to deploy a function"
             .gray
         }]);
       }
@@ -320,7 +320,7 @@ function call (options) {
           writer.error(
             APP_NAME +
             'exited unexpectedly.  Check the cloud-functions-emulator.log for more details'
-            .red);
+              .red);
           return;
         }
       });
