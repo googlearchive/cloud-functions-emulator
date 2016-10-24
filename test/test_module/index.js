@@ -14,18 +14,18 @@
  */
 
 module.exports = {
-  hello: function (context, data) {
-    context.success('Hello World');
+  hello: function (data, callback) {
+    callback(null, 'Hello World');
   },
-  helloData: function (context, data) {
-    context.success(data['foo']);
+  helloData: function (data, callback) {
+    callback(null, data['foo']);
   },
-  helloJSON: function (context, data) {
-    context.success({
+  helloJSON: function (data, callback) {
+    callback(null, {
       message: 'Hello World'
     });
   },
-  helloThrow: function (context, data) {
+  helloThrow: function (data, callback) {
     throw new Error('uncaught exception!');
   }
 };
