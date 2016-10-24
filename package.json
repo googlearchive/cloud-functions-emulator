@@ -2,7 +2,7 @@
   "name": "@google-cloud/functions-emulator",
   "description": "Google Cloud Functions Emulator",
   "version": "0.1.0",
-  "license": "Apache Version 2.0",
+  "license": "Apache-2.0",
   "author": "Google Inc.",
   "engines": {
     "node": ">=4.3.2"
