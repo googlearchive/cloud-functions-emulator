@@ -25,6 +25,7 @@ version number and breaking changes will bump the minor version number.**
   * [Config](#config)
   * [Logs](#logs)
   * [Debugging](#debugging)
+    * [Debugging with Visual Studio Code](#debugging-with-visual-studio-code)
     * [Debugging with Chrome Developer Tools](#debugging-with-chrome-developer-tools)
   * [Known issues and FAQ](#known-issues-and-faq)
 
@@ -146,6 +147,19 @@ While running in debug mode a separate debug server will be started on port 5858
 with your favorite IDE.
 
 #### Debugging with Chrome Developer Tools
+
+##### Node version 6+
+
+Node 6 introduces a new (experimental) *--inspect* flag to allow for integration with Chrome Developer Tools.  
+To debug functions in the emulator when running Node 6+, start the emulator with the `--inspect` flag (instead of `--debug`)
+
+    functions start --inspect
+
+This will start the internal Node process with this flag.  To access the debugger in Chrome, you'll need to inspect the 
+log file written by the emulator, which by default is located in `logs\cloud-functions-emulator.log`
+
+
+##### Node versions prior to 6
 
 If your IDE doesn't support connecting to a Node.js debugger process, you can
 easily debug your Cloud Functions in the emulator using [node-inspector](https://github.com/node-inspector/node-inspector)

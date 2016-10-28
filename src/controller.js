@@ -21,9 +21,9 @@ const path = require('path');
 const net = require('net');
 const spawn = require('child_process').spawn;
 const config = require('../config.js');
-const logreader = require('./logreader.js');
+const logs = require('./logs.js');
 const fs = require('fs');
-const LOG_FILE_PATH = path.join(__dirname, config.logFilePath, config.logFileName);
+// const LOG_FILE_PATH = path.join(__dirname, config.logFilePath, config.logFileName)
 const PID_PATH = path.join(__dirname, 'process.pid');
 const EMULATOR_ROOT_URI = 'http://localhost:' + config.port;
 const EMULATOR_FUNC_URI = EMULATOR_ROOT_URI + '/function/';
@@ -62,7 +62,7 @@ var self = {
         var args = [path.join(__dirname, '/emulator.js'), config.port, projectId];
 
         // We will pipe stdout from the child process to the emulator log file
-        var logFilePath = path.resolve(__dirname, config.logFilePath, config.logFileName);
+        var logFilePath = path.resolve(logs.assertLogsPath(), config.logFileName);
 
         // TODO:
         // For some bizzare reason boolean values in the environment of the
@@ -354,7 +354,10 @@ var self = {
     if (!limit) {
       limit = 20;
     }
-    logreader.readLogLines(LOG_FILE_PATH, limit, function (val) {
+
+    var logFile = path.join(logs.assertLogsPath(), config.logFileName);
+
+    logs.readLogLines(logFile, limit, function (val) {
       writer.write(val);
     });
   },

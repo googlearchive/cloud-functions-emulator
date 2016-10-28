@@ -25,6 +25,7 @@ const winston = require('winston');
 const config = require('../config');
 const invoker = require('./invoker');
 const loadHandler = require('./loadhandler');
+const logs = require('./logs');
 
 var self = {
   _log: null,
@@ -52,13 +53,7 @@ var self = {
     // Setup the winston logger.  We're going to write to a file which will
     // automatically roll when it exceeds ~1MB.
 
-    // Ensure the logs directory exists
-    var logsDir = path.resolve(__dirname, config.logFilePath);
-
-    if (!self._pathExists(logsDir)) {
-      fs.mkdir(logsDir);
-    }
-
+    var logsDir = logs.assertLogsPath();
     var logLevel = 'info';
 
     if (config.verbose === true) {
