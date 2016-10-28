@@ -146,11 +146,17 @@ While running in debug mode a separate debug server will be started on port 5858
 (default debugger port for Node). You can then attach to the debugger process
 with your favorite IDE.
 
+#### Debugging with Visual Studio Code
+
+If you started the emulator with the `--debug` flag, you can simply "Attach" to the emulator from withing Visual Studio Code.
+
+Refer to the documentation for [debugging in Visual Studio Code](https://code.visualstudio.com/Docs/editor/debugging) for more information.
+
 #### Debugging with Chrome Developer Tools
 
 ##### Node version 6+
 
-Node 6 introduces a new (experimental) *--inspect* flag to allow for integration with Chrome Developer Tools.  
+Node 6 introduces a new (experimental) `--inspect` flag to allow for integration with Chrome Developer Tools.  
 To debug functions in the emulator when running Node 6+, start the emulator with the `--inspect` flag (instead of `--debug`)
 
     functions start --inspect
@@ -164,6 +170,7 @@ that appears like this:
     To start debugging, open the following URL in Chrome:
         chrome-devtools://devtools/remote/serve_file/@60cd6e859b9f557d2312f5bf532f6aec5f284980/inspector.html?experiments=true&v8only=true&ws=localhost:9229/165471ce-1e76-421f-b52d-e3b8a14bcb0c
 
+When you open the chrome devtools debugger you may not see your function source file.  Just invoke your function once to have its source file appear in the debugger window
 
 ##### Node versions prior to 6
 
