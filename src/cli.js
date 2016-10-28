@@ -258,7 +258,7 @@ function status () {
 
 function getLogs (options) {
   var limit = 20;
-  if (options.limit) {
+  if (options && options.limit) {
     limit = parseInt(options.limit);
   }
   controller.getLogs(writer, limit);
@@ -386,15 +386,19 @@ cli
   }, program.deploy)
   .example('$0', 'Some description')
   .command('describe <function>', 'Describes the details of a single deployed function.', {}, program.describe)
-  .command('get-logs', 'Displays the logs for the emulator.', {
-    limit: {
-      alias: 'l',
-      default: 20,
-      description: 'Number of log entries to be fetched.',
-      type: 'number',
-      requiresArg: true
-    }
-  }, program.getLogs)
+
+  .command('logs <action>', 'Manages emulator logs access', function(yargs) {
+      return yargs
+        .command('read', 'Show logs produced by functions.', {
+          limit: {
+            alias: 'l',
+            default: 20,
+            description: 'Number of log entries to be fetched.',
+            type: 'number',
+            requiresArg: true
+          }
+        }, program.getLogs);
+  })
   .command('kill', 'Force kills the emulator process if it stops responding.', {}, program.kill)
   .command('list', 'Lists deployed functions.', {}, program.list)
   .command('prune', 'Removes any functions known to the emulator but which no longer exist in their corresponding module.', {}, program.prune)
