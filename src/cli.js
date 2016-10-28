@@ -387,17 +387,17 @@ cli
   .example('$0', 'Some description')
   .command('describe <function>', 'Describes the details of a single deployed function.', {}, program.describe)
 
-  .command('logs <action>', 'Manages emulator logs access', function(yargs) {
-      return yargs
-        .command('read', 'Show logs produced by functions.', {
-          limit: {
-            alias: 'l',
-            default: 20,
-            description: 'Number of log entries to be fetched.',
-            type: 'number',
-            requiresArg: true
-          }
-        }, program.getLogs);
+  .command('logs <action>', 'Manages emulator logs access', function (yargs) {
+    return yargs
+      .command('read', 'Show logs produced by functions.', {
+        limit: {
+          alias: 'l',
+          default: 20,
+          description: 'Number of log entries to be fetched.',
+          type: 'number',
+          requiresArg: true
+        }
+      }, program.getLogs);
   })
   .command('kill', 'Force kills the emulator process if it stops responding.', {}, program.kill)
   .command('list', 'Lists deployed functions.', {}, program.list)
