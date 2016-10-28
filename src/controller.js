@@ -38,10 +38,11 @@ var self = {
    * Starts the emulator process
    *
    * @param {String} projectId The Cloud Platform project ID to bind to this emulator instance
-   * @param {boolean} debug If true, start the emulator in debug mode
+   * @param {boolean} debug If true, start the spawned node process with --debug
+   * @param {boolean} inspect If true, start the spawned node process with --inspect
    * @param {Function} callback The callback function to be called upon success/failure
    */
-  start: function (projectId, debug, callback) {
+  start: function (projectId, debug, inspect, callback) {
     // Project ID is optional, but any function that needs to authenticate to
     // a Google API will require a valid project ID
     // The authentication against the project is handled by the gcloud-node
@@ -68,20 +69,18 @@ var self = {
         // child process return as Strings in JSON documents sent over HTTP with
         // a content-type of application/json, so we need to check for String
         // 'true' as well as boolean.
-        if (debug === true || debug === 'true') {
-          // If we're Node version 6+, use native support for the V8 inspector
+        if (inspect === true || inspect === 'true') {
           var semver = process.version.split('.');
           var major = parseInt(semver[0].substring(1, semver[0].length));
-
           if (major >= 6) {
-            // Use the experimental inspection feature in Node
             args.unshift('--inspect');
-            console.log('Starting in debug mode.  Check ' + logFilePath + ' for details on how to connect to the debugger');
+            console.log('Starting in inspect mode.  Check ' + logFilePath + ' for details on how to connect to the chrome debugger');
           } else {
-            // Requires the use of node-inspector
-            args.unshift('--debug');
-            console.log('Starting in debug mode.  Use node-inspector to debug');
+            console.error('--inspect flag requires Node 6+');
           }
+        } else if (debug === true || debug === 'true') {
+          args.unshift('--debug');
+          console.log('Starting in debug mode.');
         }
 
         // Pass the debug flag to the environment of the child process so we can
@@ -90,6 +89,7 @@ var self = {
         // TODO: This will become unwieldy if we add more startup arguments
         var env = process.env;
         env.DEBUG = debug;
+        env.INSPECT = inspect;
 
         // Make sure the child is detached, otherwise it will be bound to the
         // lifecycle of the parent process.  This means we should also ignore
@@ -264,7 +264,8 @@ var self = {
           // Start the process with the same environment as we had last time
           self.start(
             env.projectId,
-            env.debug,
+            env.DEBUG,
+            env.INSPECT,
             callback);
         });
       });

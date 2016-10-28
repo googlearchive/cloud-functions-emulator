@@ -85,10 +85,11 @@ function start (options) {
   }
 
   var debug = (options && options.debug) || false;
+  var inspect = (options && options.inspect) || false;
 
   writer.log('Starting ' + APP_NAME + 'on port ' + config.port + '...');
 
-  controller.start(projectId, debug, function (err, status) {
+  controller.start(projectId, debug, inspect, function (err, status) {
     if (err) {
       writer.error(err);
       return;
@@ -403,6 +404,13 @@ cli
       alias: 'd',
       default: false,
       description: 'Start the emulator in debug mode.',
+      type: 'boolean',
+      requiresArg: false
+    },
+    inspect: {
+      alias: 'i',
+      default: false,
+      description: 'Experimental (Node 6+ only).  Pass the --inspect flag to Node',
       type: 'boolean',
       requiresArg: false
     },

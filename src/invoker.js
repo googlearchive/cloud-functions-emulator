@@ -34,8 +34,6 @@ module.exports = {
    *                       case of BACKGROUND functions this is the (optional) 'callback' arg
    */
   invoke: function (fn, mod, arg1, arg2) {
-    debugger; // eslint-disable-line
-
     // Return the outcome to accommodate the return of a Promise
     return fn.call(mod, arg1, arg2);
   }

@@ -17,7 +17,7 @@
     },
     {
       "name": "Jason Polites",
-      "email": "jasonpolites@google.com"
+      "email": "jason.polites@gmail.com"
     }
   ],
   "files": [
@@ -45,6 +45,7 @@
   "scripts": {
     "lint": "semistandard \"**/*.js\"",
     "mocha": "mocha test/ --recursive -t 20000 -R dot",
+    "mocha-debug": "mocha debug test/ --recursive -t 20000 -R dot",
     "cover": "nyc --cache mocha test/ --recursive -t 20000 -R dot && nyc report --reporter=html",
     "test": "npm run lint && npm run cover",
     "format": "semistandard-format -w"
