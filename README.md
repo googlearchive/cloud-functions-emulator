@@ -156,7 +156,13 @@ To debug functions in the emulator when running Node 6+, start the emulator with
     functions start --inspect
 
 This will start the internal Node process with this flag.  To access the debugger in Chrome, you'll need to inspect the 
-log file written by the emulator, which by default is located in `logs\cloud-functions-emulator.log`
+log file written by the emulator, which by default is located in `logs\cloud-functions-emulator.log`.  Look for a log entry 
+that appears like this:
+
+    Debugger listening on port 9229.
+    Warning: This is an experimental feature and could change at any time.
+    To start debugging, open the following URL in Chrome:
+        chrome-devtools://devtools/remote/serve_file/@60cd6e859b9f557d2312f5bf532f6aec5f284980/inspector.html?experiments=true&v8only=true&ws=localhost:9229/165471ce-1e76-421f-b52d-e3b8a14bcb0c
 
 
 ##### Node versions prior to 6
@@ -209,7 +215,6 @@ Now when you invoke your function, you can debug!
 
     `pgrep -f emulator.js | xargs kill`
 
-
 - If you see the following error when deploying
 
     `Error: Module version mismatch`
@@ -227,6 +232,15 @@ Now when you invoke your function, you can debug!
     It means you deployed an HTTP function as a BACKGROUND function (so it's expecting an
     HTTP request but the emulator didn't give it one). Make sure to deploy HTTP functions
     with the `--trigger-http` flag.
+
+- If the emulator times out when starting, check the logs (`logs\cloud-functions-emulator.log`)  
+
+    If you see the following error:
+
+    `Unable to open devtools socket: address already in use`
+
+    It means the chrome devtools debugger is running and using the default debug port.  Close the 
+    Chrome tab with the debugger and try again.
 
 ## License
 
