@@ -24,6 +24,7 @@ const fs = require('fs');
 const winston = require('winston');
 const config = require('../config');
 const invoker = require('./invoker');
+const loadHandler = require('./loadhandler');
 
 var self = {
   _log: null,
@@ -121,6 +122,17 @@ var self = {
 
     // Create Express App
     self._setupApp();
+
+    // Override Module._load to we can inject mocks into calls to require()
+    try {
+      var override = require('../mocks');
+      if (override) {
+        loadHandler.init(override);
+        console.debug('Mock handler found.  Require calls will be intercepted');
+      }
+    } catch (e) {
+      console.debug('No mock handler found.  Require calls will NOT be intercepted');
+    }
   },
 
   _setupApp: function () {
@@ -376,6 +388,8 @@ var self = {
   },
 
   _invoke: function (fn, req, res) {
+    console.log('Invoking ' + JSON.stringify(fn));
+
     // Ensure the module is not loaded from cache
     // This has obvious negative performance implications, with the
     // benefit of allowing function code to be changed out of band

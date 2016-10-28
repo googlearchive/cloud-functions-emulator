@@ -158,17 +158,19 @@ function list () {
 }
 
 function stop (options, callback) {
-  controller.stop(function (err) {
-    if (err) {
-      writer.error(err);
-      if (callback) {
-        callback(err);
+  doIfRunning(function () {
+    controller.stop(function (err) {
+      if (err) {
+        writer.error(err);
+        if (callback) {
+          callback(err);
+        }
+        return;
       }
-      return;
-    }
 
-    writer.write(APP_NAME);
-    writer.write('STOPPED\n'.red);
+      writer.write(APP_NAME);
+      writer.write('STOPPED\n'.red);
+    });
   });
 }
 
@@ -339,7 +341,12 @@ var program = module.exports = {
   kill: kill,
   list: list,
   main: function (args) {
-    cli.help().strict().parse(args).argv;
+    cli
+      .help('h')
+      .alias('h', 'help')
+      .strict()
+      .parse(args)
+      .argv;
   },
   prune: prune,
   restart: restart,
@@ -372,12 +379,11 @@ cli
   .command('deploy <modulePath> <entryPoint>', 'Deploys a function with the given module path and entry point.', {
     'trigger-http': {
       alias: 't',
-      default: false,
       description: 'Deploys the function an an HTTP function.',
-      type: 'boolean',
       requiresArg: false
     }
   }, program.deploy)
+  .example('$0', 'Some description')
   .command('describe <function>', 'Describes the details of a single deployed function.', {}, program.describe)
   .command('get-logs', 'Displays the logs for the emulator.', {
     limit: {

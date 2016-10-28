@@ -46,7 +46,8 @@
     "lint": "semistandard \"**/*.js\"",
     "mocha": "mocha test/ --recursive -t 20000 -R dot",
     "cover": "nyc --cache mocha test/ --recursive -t 20000 -R dot && nyc report --reporter=html",
-    "test": "npm run lint && npm run cover"
+    "test": "npm run lint && npm run cover",
+    "format": "semistandard-format -w"
   },
   "dependencies": {
     "body-parser": "^1.15.2",
@@ -67,6 +68,7 @@
     "nyc": "^8.3.2",
     "proxyquire": "^1.7.10",
     "semistandard": "^9.0.0",
+    "semistandard-format": "^3.0.0",
     "sinon": "^1.17.6"
   },
   "repository": {
