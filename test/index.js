@@ -36,7 +36,7 @@ describe('Cloud Functions Emulator Tests', function () {
       if (err) {
         done(err);
       } else if (status === controller.STOPPED) {
-        controller.start(PROJECT_ID, false, done);
+        controller.start(PROJECT_ID, false, false, done);
       } else {
         done();
       }
