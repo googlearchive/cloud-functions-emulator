@@ -50,7 +50,7 @@ Print the available commands:
       deploy               Deploys a function with the given module path and entry
                            point.
       describe <function>  Describes the details of a single deployed function.
-      get-logs             Displays the logs for the emulator.
+      logs                 Manages emulator logs access.
       kill                 Force kills the emulator process if it stops responding.
       list                 Lists deployed functions.
       prune                Removes any functions known to the emulator but which no
@@ -119,20 +119,20 @@ Functions running in the emulator run in their own (detached) process, so
 console logs from your function (e.g. `console.log()` calls) will not be piped to
 the stdout stream of the emulator. Instead a log file can be found in **app/logs/cloud-functions-emulator.log**
 
-You can view the logs from your functions using the `get-logs` command:
+You can view the logs from your functions using the `logs read` command:
 
-    functions get-logs
+    functions logs read
 
 By default this will return the most recent 20 log lines. You can alter this
 with the `--limit` flag.
 
-    functions get-logs --limit 100
+    functions logs read --limit 100
 
 Alternatively, you can simply *tail* the log file itself.
 
 Mac/Linux:
 
-    tail -f app/logs/cloud-functions-emulator.log
+    tail -f logs/cloud-functions-emulator.log
 
 (Note this log will automatically roll when it reaches 1MB.)
 
