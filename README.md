@@ -155,10 +155,10 @@ Refer to the documentation for [debugging in Visual Studio Code](https://code.vi
 
 #### Debugging with Chrome Developer Tools
 
-##### Node version 6+
+##### Node version 7+
 
-Node 6 introduces a new (experimental) `--inspect` flag to allow for integration with Chrome Developer Tools.  
-To debug functions in the emulator when running Node 6+, start the emulator with the `--inspect` flag (instead of `--debug`)
+Node 7.0.0 introduces a new (experimental) `--inspect` flag to allow for integration with Chrome Developer Tools.  
+To debug functions in the emulator when running Node 7+, start the emulator with the `--inspect` flag (instead of `--debug`)
 
     functions start --inspect
 
@@ -173,7 +173,7 @@ that appears like this:
 
 When you open the chrome devtools debugger you may not see your function source file.  Just invoke your function once to have its source file appear in the debugger window
 
-##### Node versions prior to 6
+##### Node versions prior to 7
 
 If your IDE doesn't support connecting to a Node.js debugger process, you can
 easily debug your Cloud Functions in the emulator using [node-inspector](https://github.com/node-inspector/node-inspector)
@@ -227,7 +227,7 @@ The Cloud Functions Emulator provides a way to inject *mock* versions of node mo
     /**
     * Called when the require() method is called
     * @param {String} func The name of the current function being invoked
-    * @param {String} path The name of the module being required
+    * @param {String} module The name of the module being required
     */
     exports.onRequire = function (func, module) {
         // Return an object or module to override the named module argument

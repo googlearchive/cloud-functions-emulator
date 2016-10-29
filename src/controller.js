@@ -267,8 +267,8 @@ var self = {
           // Start the process with the same environment as we had last time
           self.start(
             env.projectId,
-            env.DEBUG,
-            env.INSPECT,
+            env.debug,
+            env.inspect,
             callback);
         });
       });
@@ -337,7 +337,13 @@ var self = {
         return;
       }
       if (callback) {
-        callback(null, self.RUNNING);
+        self.getCurrentEnvironment(function (err, env) {
+          if (err) {
+            callback(err);
+            return;
+          }
+          callback(null, self.RUNNING, env, env.INSPECT);
+        });
       }
     });
   },

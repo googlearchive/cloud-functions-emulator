@@ -239,7 +239,7 @@ function prune () {
 }
 
 function status () {
-  controller.status(function (err, status) {
+  controller.status(function (err, status, env) {
     if (err) {
       writer.error(err);
       return;
@@ -249,7 +249,17 @@ function status () {
 
     if (status === controller.RUNNING) {
       writer.write('RUNNING'.green);
-      writer.write(' on port ' + config.port + '\n');
+      writer.write(' on port ' + config.port);
+
+      if (env) {
+        if (env.inspect && (env.inspect === 'true' || env.inspect === true)) {
+          writer.write(', with ' + 'INSPECT'.yellow + ' enabled on port ' + (config.debugPort || 9229));
+        } else if (env.debug && (env.debug === 'true' || env.debug === true)) {
+          writer.write(', with ' + 'DEBUG'.yellow + ' enabled on port ' + (config.debugPort || 5858));
+        }
+      }
+
+      writer.write('\n');
     } else {
       writer.write('STOPPED\n'.red);
     }
@@ -414,7 +424,7 @@ cli
     inspect: {
       alias: 'i',
       default: false,
-      description: 'Experimental (Node 6+ only).  Pass the --inspect flag to Node',
+      description: 'Experimental! (Node 7+ only).  Pass the --inspect flag to Node',
       type: 'boolean',
       requiresArg: false
     },

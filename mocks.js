@@ -23,7 +23,7 @@
 /**
  * Called when the require() method is called
  * @param {String} func The name of the current function being invoked
- * @param {String} path The name of the module being required
+ * @param {String} module The name of the module being required
  */
 exports.onRequire = function (func, module) {
   // Return an object or module to override the named module argument
