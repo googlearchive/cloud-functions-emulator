@@ -384,9 +384,7 @@ cli
       requiresArg: false
     }
   }, program.deploy)
-  .example('$0', 'Some description')
   .command('describe <function>', 'Describes the details of a single deployed function.', {}, program.describe)
-
   .command('logs <action>', 'Manages emulator logs access', function (yargs) {
     return yargs
       .command('read', 'Show logs produced by functions.', {
