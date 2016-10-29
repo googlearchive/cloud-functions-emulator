@@ -267,7 +267,7 @@ function getLogs (options) {
 function deploy (options) {
   doIfRunning(function () {
     var type = (options['trigger-http'] === true) ? 'H' : 'B';
-    controller.deploy(options.modulePath, options.entryPoint, type, function (err,
+    controller.deploy(options.modulePath, options.functionName, type, function (err,
       body) {
       if (err) {
         writer.error(err);
@@ -282,13 +282,13 @@ function deploy (options) {
 
 function undeploy (options) {
   doIfRunning(function () {
-    controller.undeploy(options.function, function (err, body) {
+    controller.undeploy(options.functionName, function (err, body) {
       if (err) {
         writer.error(err);
         writer.error('Delete aborted'.red);
         return;
       }
-      writer.log('Function ' + options.function + ' removed'.green);
+      writer.log('Function ' + options.functionName + ' removed'.green);
       list();
     });
   });
@@ -296,7 +296,7 @@ function undeploy (options) {
 
 function describe (options) {
   doIfRunning(function () {
-    controller.describe(options.function, function (err, body) {
+    controller.describe(options.functionName, function (err, body) {
       if (err) {
         writer.error(err);
         return;
@@ -308,7 +308,7 @@ function describe (options) {
 
 function call (options) {
   doIfRunning(function () {
-    controller.call(options.function, options.data, function (err, body, response) {
+    controller.call(options.functionName, options.data, function (err, body, response) {
       if (err) {
         writer.error(err);
         return;
@@ -378,8 +378,8 @@ cli
     program.call(opts);
   })
   .command('clear', 'Resets the emulator to its default state and clears and deployed functions.', {}, program.clear)
-  .command('delete <functionName>', 'Undeploys a previously deployed function (does NOT delete the function source code).', {}, program.undeploy)
-  .command('deploy <modulePath> <functionName>', 'Deploys a function with the given module path and functin name (entry point).', {
+  .command('delete <functionName>', 'Undeploys a previously deployed function (does NOT delete the function source code).', {}, program.delete)
+  .command('deploy <modulePath> <functionName>', 'Deploys a function with the given module path and function name (entry point).', {
     'trigger-http': {
       alias: 't',
       description: 'Deploys the function as an HTTP function.',

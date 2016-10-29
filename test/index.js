@@ -222,6 +222,34 @@ describe('Cloud Functions Emulator Tests', function () {
     });
   });
 
+  it('Returns the expected values in the list after deployment AND delete', function (done) {
+    controller.deploy(TEST_MODULE, 'hello', 'B', function (err) {
+      if (err) {
+        done(err);
+        return;
+      }
+
+      controller.undeploy('hello', function (err) {
+        if (err) {
+          done(err);
+          return;
+        }
+        controller.list(function (err, list) {
+          if (err) {
+            done(err);
+            return;
+          }
+          try {
+            chai.expect(list).to.deep.equal({});
+            done();
+          } catch (e) {
+            done(e);
+          }
+        });
+      });
+    });
+  });
+
   it('Calling a function works', function (done) {
     controller.deploy(TEST_MODULE, 'hello', 'B', function (err) {
       if (err) {
