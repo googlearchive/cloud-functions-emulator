@@ -331,7 +331,7 @@ function call (options) {
   });
 }
 
-var cli = require('yargs').version();
+var cli = require('yargs');
 var program = module.exports = {
   call: call,
   clear: clear,
@@ -345,6 +345,8 @@ var program = module.exports = {
     cli
       .help('h')
       .alias('h', 'help')
+      .version()
+      .alias('v', 'version')
       .strict()
       .parse(args)
       .argv;
