@@ -26,7 +26,7 @@ module.exports = {
     var logsDir = path.resolve(rootDir, config.logFilePath);
 
     if (!_pathExists(logsDir)) {
-      fs.mkdir(logsDir);
+      fs.mkdirSync(logsDir);
     }
     return logsDir;
   },

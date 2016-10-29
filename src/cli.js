@@ -331,7 +331,7 @@ function call (options) {
   });
 }
 
-var cli = require('yargs');
+var cli = require('yargs').version();
 var program = module.exports = {
   call: call,
   clear: clear,
