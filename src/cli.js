@@ -382,12 +382,12 @@ cli
   .command('deploy <modulePath> <entryPoint>', 'Deploys a function with the given module path and entry point.', {
     'trigger-http': {
       alias: 't',
-      description: 'Deploys the function an an HTTP function.',
+      description: 'Deploys the function as an HTTP function.',
       requiresArg: false
     }
   }, program.deploy)
   .command('describe <function>', 'Describes the details of a single deployed function.', {}, program.describe)
-  .command('logs <action>', 'Manages emulator logs access', function (yargs) {
+  .command('logs <action>', 'Manages emulator logs access.', function (yargs) {
     return yargs
       .command('read', 'Show logs produced by functions.', {
         limit: {
@@ -426,5 +426,5 @@ cli
       requiresArg: true
     }
   }, program.start)
-  .command('status', 'Removes any functions known to the emulator but which no longer exist in their corresponding module.', {}, program.status)
+  .command('status', 'Reports the current status of the emulator.', {}, program.status)
   .command('stop', 'Stops the emulator gracefully.', {}, program.stop);
