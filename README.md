@@ -27,6 +27,7 @@ version number and breaking changes will bump the minor version number.**
   * [Debugging](#debugging)
     * [Debugging with Visual Studio Code](#debugging-with-visual-studio-code)
     * [Debugging with Chrome Developer Tools](#debugging-with-chrome-developer-tools)
+  * [Using Mocks](#using-mocks)
   * [Known issues and FAQ](#known-issues-and-faq)
 
 ## Installation
@@ -198,6 +199,63 @@ Now when you invoke your function, you can debug!
     functions call helloWorld
 
 ![Debugging with Chrome Developer Tools](img/debugging.png "Debugging with Chrome Developer Tools")
+
+### Using Mocks
+
+When running functions locally you sometimes want to change the behavior of modules which connect to external services.
+For example you might be accessing a database, API or external system that you don't want to, or can't access from your local 
+environment.
+
+The Cloud Functions Emulator provides a way to inject *mock* versions of node modules imported into your function.
+
+1. Enable the use of mocks in `config.js`
+
+    ```
+    {
+        ...
+        enableMocks: true,
+        ...
+    }
+    ```
+
+2. Edit `mocks.js` and mock the dependencies you want
+
+    ```javascript
+    // You can create handcrafted mocks, or use a mocking library
+    var sinon = require('sinon');
+
+    /**
+    * Called when the require() method is called
+    * @param {String} func The name of the current function being invoked
+    * @param {String} path The name of the module being required
+    */
+    exports.onRequire = function (func, module) {
+        // Return an object or module to override the named module argument
+        if(module === 'redis') {
+            // Create a mock of redis
+            var mockRedis = sinon.mock(require("redis"));
+            mockRedis.expects('createClient').returns({});
+
+            // Mock more methods as needed...
+
+            return mockRedis;
+        }
+        return undefined;
+    };
+    ```
+
+3. You don't need to change your function code at all!
+
+    ```javascript
+
+    exports.helloRedis = function (event, callback) {
+        var redis = require("redis"); // <== this will be a mock
+        client = redis.createClient();
+
+        ...
+    };
+    ```    
+
 
 ### Known Issues and FAQ
 
