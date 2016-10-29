@@ -15,23 +15,29 @@
 
 var conf = {
 
-  // The local TCP port on which the emulator will run
+  // The local TCP port on which the emulator will run (default:8008)
   port: 8008,
 
-  // Set to true to see debug logs for the emulator itself
+  // Override to change the default debug port (default:5858)
+  debugPort: undefined,
+
+  // Set to true to see debug logs for the emulator itself (default:true)
   verbose: true,
 
   // Your Cloud Platform project ID
   projectId: null,
 
-  // The timeout in milliseconds to wait for the emulator to start
+  // The timeout in milliseconds to wait for the emulator to start (default:3000)
   timeout: 3000,
 
   // The name of the file into which function logs will be writter
   logFileName: 'cloud-functions-emulator.log',
 
   // The (relative) path to the logs directory
-  logFilePath: 'logs'
+  logFilePath: 'logs',
+
+  // If true, mocks.js will be loaded at startup (default: false)
+  useMocks: false
 
 };
 

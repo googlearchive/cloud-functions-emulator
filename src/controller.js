@@ -23,7 +23,6 @@ const spawn = require('child_process').spawn;
 const config = require('../config.js');
 const logs = require('./logs.js');
 const fs = require('fs');
-// const LOG_FILE_PATH = path.join(__dirname, config.logFilePath, config.logFileName)
 const PID_PATH = path.join(__dirname, 'process.pid');
 const EMULATOR_ROOT_URI = 'http://localhost:' + config.port;
 const EMULATOR_FUNC_URI = EMULATOR_ROOT_URI + '/function/';
@@ -79,8 +78,12 @@ var self = {
             console.error('--inspect flag requires Node 6+');
           }
         } else if (debug === true || debug === 'true') {
-          args.unshift('--debug');
-          console.log('Starting in debug mode.');
+          if(config.debugPort) {
+            args.unshift('--debug=' + config.debugPort);
+          } else {
+            args.unshift('--debug');
+          }
+          console.log('Starting in debug mode.  Debugger listening on port ' + ((config.debugPort) ? config.debugPort : 5858));
         }
 
         // Pass the debug flag to the environment of the child process so we can

@@ -105,7 +105,8 @@ var self = {
 
     // The functions file is a registry of deployed functions.  We want
     // function deployments to survive emulator restarts.
-    self._functionsFile = path.resolve(__dirname, 'functions.json');
+    var rootDir = path.resolve(__dirname, '../');
+    self._functionsFile = path.resolve(rootDir, 'functions.json');
 
     // Ensure the function registry file exists
     if (!self._pathExists(self._functionsFile)) {
@@ -119,14 +120,16 @@ var self = {
     self._setupApp();
 
     // Override Module._load to we can inject mocks into calls to require()
-    try {
-      var override = require('../mocks');
-      if (override) {
-        loadHandler.init(override);
-        console.debug('Mock handler found.  Require calls will be intercepted');
+    if(config.useMocks) {
+      try {
+        var override = require('../mocks');
+        if (override) {
+          loadHandler.init(override);
+          console.debug('Mock handler found.  Require calls will be intercepted');
+        }
+      } catch (e) {
+        console.error('Mocks enabled but no mock handler found.  Require calls will NOT be intercepted');
       }
-    } catch (e) {
-      console.debug('No mock handler found.  Require calls will NOT be intercepted');
     }
   },
 
