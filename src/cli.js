@@ -361,7 +361,7 @@ var program = module.exports = {
 
 cli
   .demand(1)
-  .command('call <function>', 'Invokes a function.', {
+  .command('call <functionName>', 'Invokes a function.', {
     data: {
       alias: 'd',
       default: '{}',
@@ -378,16 +378,16 @@ cli
     program.call(opts);
   })
   .command('clear', 'Resets the emulator to its default state and clears and deployed functions.', {}, program.clear)
-  .command('delete <function>', 'Undeploys a previously deployed function (does NOT delete the function source code).', {}, program.undeploy)
-  .command('deploy <modulePath> <entryPoint>', 'Deploys a function with the given module path and entry point.', {
+  .command('delete <functionName>', 'Undeploys a previously deployed function (does NOT delete the function source code).', {}, program.undeploy)
+  .command('deploy <modulePath> <functionName>', 'Deploys a function with the given module path and functin name (entry point).', {
     'trigger-http': {
       alias: 't',
       description: 'Deploys the function as an HTTP function.',
       requiresArg: false
     }
   }, program.deploy)
-  .command('describe <function>', 'Describes the details of a single deployed function.', {}, program.describe)
-  .command('logs <action>', 'Manages emulator logs access.', function (yargs) {
+  .command('describe <functionName>', 'Describes the details of a single deployed function.', {}, program.describe)
+  .command('logs <command>', 'Manages emulator logs access.', function (yargs) {
     return yargs
       .command('read', 'Show logs produced by functions.', {
         limit: {
