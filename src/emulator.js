@@ -120,7 +120,7 @@ var self = {
     self._setupApp();
 
     // Override Module._load to we can inject mocks into calls to require()
-    if(config.useMocks) {
+    if (config.useMocks) {
       try {
         var override = require('../mocks');
         if (override) {

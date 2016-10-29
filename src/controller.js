@@ -78,7 +78,7 @@ var self = {
             console.error('--inspect flag requires Node 6+');
           }
         } else if (debug === true || debug === 'true') {
-          if(config.debugPort) {
+          if (config.debugPort) {
             args.unshift('--debug=' + config.debugPort);
           } else {
             args.unshift('--debug');
