@@ -14,18 +14,21 @@
  */
 
 module.exports = {
-  hello: function (data, callback) {
+  hello: function (event, callback) {
     callback(null, 'Hello World');
   },
-  helloData: function (data, callback) {
-    callback(null, data['foo']);
+  helloData: function (event, callback) {
+    callback(null, event.data['foo']);
   },
-  helloJSON: function (data, callback) {
+  helloPromise: function (event) {
+    return event.data['foo'];
+  },
+  helloJSON: function (event, callback) {
     callback(null, {
       message: 'Hello World'
     });
   },
-  helloThrow: function (data, callback) {
+  helloThrow: function (event, callback) {
     throw new Error('uncaught exception!');
   }
 };
