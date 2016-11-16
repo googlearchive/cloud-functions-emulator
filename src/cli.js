@@ -1,6 +1,6 @@
 /**
  * Copyright 2016, Google, Inc.
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -72,8 +72,8 @@ function doIfRunning (fn) {
       fn();
     } else {
       writer.write((APP_NAME +
-        'is not running.  Use \'functions start\' to start the emulator\n'
-      ).cyan);
+      "is not running.  Use 'functions start' to start the emulator\n"
+        ).cyan);
     }
   });
 }
@@ -85,10 +85,11 @@ function start (options) {
   }
 
   var debug = (options && options.debug) || false;
+  var inspect = (options && options.inspect) || false;
 
   writer.log('Starting ' + APP_NAME + 'on port ' + config.port + '...');
 
-  controller.start(projectId, debug, function (err, status) {
+  controller.start(projectId, debug, inspect, function (err, status) {
     if (err) {
       writer.error(err);
       return;
@@ -145,7 +146,7 @@ function list () {
       if (count === 0) {
         table.push([{
           colSpan: 3,
-          content: 'No functions deployed ¯\\_(ツ)_/¯.  Run \'functions deploy\' to deploy a function'
+          content: "No functions deployed ¯\\_(ツ)_/¯.  Run 'functions deploy' to deploy a function"
             .gray
         }]);
       }
@@ -158,17 +159,19 @@ function list () {
 }
 
 function stop (options, callback) {
-  controller.stop(function (err) {
-    if (err) {
-      writer.error(err);
-      if (callback) {
-        callback(err);
+  doIfRunning(function () {
+    controller.stop(function (err) {
+      if (err) {
+        writer.error(err);
+        if (callback) {
+          callback(err);
+        }
+        return;
       }
-      return;
-    }
 
-    writer.write(APP_NAME);
-    writer.write('STOPPED\n'.red);
+      writer.write(APP_NAME);
+      writer.write('STOPPED\n'.red);
+    });
   });
 }
 
@@ -236,7 +239,7 @@ function prune () {
 }
 
 function status () {
-  controller.status(function (err, status) {
+  controller.status(function (err, status, env) {
     if (err) {
       writer.error(err);
       return;
@@ -246,7 +249,17 @@ function status () {
 
     if (status === controller.RUNNING) {
       writer.write('RUNNING'.green);
-      writer.write(' on port ' + config.port + '\n');
+      writer.write(' on port ' + config.port);
+
+      if (env) {
+        if (env.inspect && (env.inspect === 'true' || env.inspect === true)) {
+          writer.write(', with ' + 'INSPECT'.yellow + ' enabled on port ' + (config.debugPort || 9229));
+        } else if (env.debug && (env.debug === 'true' || env.debug === true)) {
+          writer.write(', with ' + 'DEBUG'.yellow + ' enabled on port ' + (config.debugPort || 5858));
+        }
+      }
+
+      writer.write('\n');
     } else {
       writer.write('STOPPED\n'.red);
     }
@@ -255,7 +268,7 @@ function status () {
 
 function getLogs (options) {
   var limit = 20;
-  if (options.limit) {
+  if (options && options.limit) {
     limit = parseInt(options.limit);
   }
   controller.getLogs(writer, limit);
@@ -264,7 +277,7 @@ function getLogs (options) {
 function deploy (options) {
   doIfRunning(function () {
     var type = (options['trigger-http'] === true) ? 'H' : 'B';
-    controller.deploy(options.modulePath, options.entryPoint, type, function (err,
+    controller.deploy(options.modulePath, options.functionName, type, function (err,
       body) {
       if (err) {
         writer.error(err);
@@ -279,13 +292,13 @@ function deploy (options) {
 
 function undeploy (options) {
   doIfRunning(function () {
-    controller.undeploy(options.function, function (err, body) {
+    controller.undeploy(options.functionName, function (err, body) {
       if (err) {
         writer.error(err);
         writer.error('Delete aborted'.red);
         return;
       }
-      writer.log('Function ' + options.function + ' removed'.green);
+      writer.log('Function ' + options.functionName + ' removed'.green);
       list();
     });
   });
@@ -293,7 +306,7 @@ function undeploy (options) {
 
 function describe (options) {
   doIfRunning(function () {
-    controller.describe(options.function, function (err, body) {
+    controller.describe(options.functionName, function (err, body) {
       if (err) {
         writer.error(err);
         return;
@@ -305,7 +318,7 @@ function describe (options) {
 
 function call (options) {
   doIfRunning(function () {
-    controller.call(options.function, options.data, function (err, body, response) {
+    controller.call(options.functionName, options.data, function (err, body, response) {
       if (err) {
         writer.error(err);
         return;
@@ -320,7 +333,7 @@ function call (options) {
           writer.error(
             APP_NAME +
             'exited unexpectedly.  Check the cloud-functions-emulator.log for more details'
-            .red);
+              .red);
           return;
         }
       });
@@ -339,7 +352,14 @@ var program = module.exports = {
   kill: kill,
   list: list,
   main: function (args) {
-    cli.help().strict().parse(args).argv;
+    cli
+      .help('h')
+      .alias('h', 'help')
+      .version()
+      .alias('v', 'version')
+      .strict()
+      .parse(args)
+      .argv;
   },
   prune: prune,
   restart: restart,
@@ -351,7 +371,7 @@ var program = module.exports = {
 
 cli
   .demand(1)
-  .command('call <function>', 'Invokes a function.', {
+  .command('call <functionName>', 'Invokes a function.', {
     data: {
       alias: 'd',
       default: '{}',
@@ -368,26 +388,27 @@ cli
     program.call(opts);
   })
   .command('clear', 'Resets the emulator to its default state and clears and deployed functions.', {}, program.clear)
-  .command('delete <function>', 'Undeploys a previously deployed function (does NOT delete the function source code).', {}, program.undeploy)
-  .command('deploy <modulePath> <entryPoint>', 'Deploys a function with the given module path and entry point.', {
+  .command('delete <functionName>', 'Undeploys a previously deployed function (does NOT delete the function source code).', {}, program.delete)
+  .command('deploy <modulePath> <functionName>', 'Deploys a function with the given module path and function name (entry point).', {
     'trigger-http': {
       alias: 't',
-      default: false,
-      description: 'Deploys the function an an HTTP function.',
-      type: 'boolean',
+      description: 'Deploys the function as an HTTP function.',
       requiresArg: false
     }
   }, program.deploy)
-  .command('describe <function>', 'Describes the details of a single deployed function.', {}, program.describe)
-  .command('get-logs', 'Displays the logs for the emulator.', {
-    limit: {
-      alias: 'l',
-      default: 20,
-      description: 'Number of log entries to be fetched.',
-      type: 'number',
-      requiresArg: true
-    }
-  }, program.getLogs)
+  .command('describe <functionName>', 'Describes the details of a single deployed function.', {}, program.describe)
+  .command('logs <command>', 'Manages emulator logs access.', function (yargs) {
+    return yargs
+      .command('read', 'Show logs produced by functions.', {
+        limit: {
+          alias: 'l',
+          default: 20,
+          description: 'Number of log entries to be fetched.',
+          type: 'number',
+          requiresArg: true
+        }
+      }, program.getLogs);
+  })
   .command('kill', 'Force kills the emulator process if it stops responding.', {}, program.kill)
   .command('list', 'Lists deployed functions.', {}, program.list)
   .command('prune', 'Removes any functions known to the emulator but which no longer exist in their corresponding module.', {}, program.prune)
@@ -400,6 +421,13 @@ cli
       type: 'boolean',
       requiresArg: false
     },
+    inspect: {
+      alias: 'i',
+      default: false,
+      description: 'Experimental! (Node 7+ only).  Pass the --inspect flag to Node',
+      type: 'boolean',
+      requiresArg: false
+    },
     projectId: {
       alias: 'p',
       default: process.env.GCLOUD_PROJECT,
@@ -408,5 +436,5 @@ cli
       requiresArg: true
     }
   }, program.start)
-  .command('status', 'Removes any functions known to the emulator but which no longer exist in their corresponding module.', {}, program.status)
+  .command('status', 'Reports the current status of the emulator.', {}, program.status)
   .command('stop', 'Stops the emulator gracefully.', {}, program.stop);

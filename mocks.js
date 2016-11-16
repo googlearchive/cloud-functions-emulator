@@ -13,19 +13,19 @@
  * limitations under the License.
  */
 
-module.exports = {
-  hello: function (data, callback) {
-    callback(null, 'Hello World');
-  },
-  helloData: function (data, callback) {
-    callback(null, data['foo']);
-  },
-  helloJSON: function (data, callback) {
-    callback(null, {
-      message: 'Hello World'
-    });
-  },
-  helloThrow: function (data, callback) {
-    throw new Error('uncaught exception!');
-  }
+'use strict';
+
+/**
+ * The mock callback allows you to override the value returned from a `require()` callback
+ * This file will be loaded at emulator start time if config.useMocks is set to true in config.js
+ */
+
+/**
+ * Called when the require() method is called
+ * @param {String} func The name of the current function being invoked
+ * @param {String} module The name of the module being required
+ */
+exports.onRequire = function (func, module) {
+  // Return an object or module to override the named module argument
+  return undefined;
 };

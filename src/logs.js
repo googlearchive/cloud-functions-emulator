@@ -1,6 +1,6 @@
 /**
  * Copyright 2016, Google, Inc.
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -15,10 +15,22 @@
 
 'use strict';
 
-var fs = require('fs');
-var EOL = require('os').EOL;
+const config = require('../config');
+const fs = require('fs');
+const path = require('path');
+const EOL = require('os').EOL;
 
 module.exports = {
+  assertLogsPath: function () {
+    var rootDir = path.resolve(__dirname, '../');
+    var logsDir = path.resolve(rootDir, config.logFilePath);
+
+    if (!_pathExists(logsDir)) {
+      fs.mkdirSync(logsDir);
+    }
+    return logsDir;
+  },
+
   readLogLines: function (filePath, num, output) {
     try {
       var buf = fs.readFileSync(filePath);
@@ -58,3 +70,16 @@ module.exports = {
     }
   }
 };
+
+function _pathExists (p) {
+  try {
+    fs.statSync(p);
+    return true;
+  } catch (e) {
+    if (e.code === 'ENOENT') {
+      return false;
+    } else {
+      throw e;
+    }
+  }
+}

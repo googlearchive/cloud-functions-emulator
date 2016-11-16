@@ -1,11 +1,11 @@
 {
   "name": "@google-cloud/functions-emulator",
   "description": "Google Cloud Functions Emulator",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "Apache-2.0",
   "author": "Google Inc.",
   "engines": {
-    "node": ">=4.3.2"
+    "node": "6.9.1"
   },
   "bin": {
     "functions": "./bin/functions"
@@ -17,7 +17,7 @@
     },
     {
       "name": "Jason Polites",
-      "email": "jasonpolites@google.com"
+      "email": "jason.polites@gmail.com"
     }
   ],
   "files": [
@@ -45,8 +45,10 @@
   "scripts": {
     "lint": "semistandard \"**/*.js\"",
     "mocha": "mocha test/ --recursive -t 20000 -R dot",
+    "mocha-debug": "mocha debug test/ --recursive -t 20000 -R dot",
     "cover": "nyc --cache mocha test/ --recursive -t 20000 -R dot && nyc report --reporter=html",
-    "test": "npm run lint && npm run cover"
+    "test": "npm run lint && npm run cover",
+    "format": "semistandard-format -w"
   },
   "dependencies": {
     "body-parser": "^1.15.2",
@@ -67,6 +69,7 @@
     "nyc": "^8.3.2",
     "proxyquire": "^1.7.10",
     "semistandard": "^9.0.0",
+    "semistandard-format": "^3.0.0",
     "sinon": "^1.17.6"
   },
   "repository": {

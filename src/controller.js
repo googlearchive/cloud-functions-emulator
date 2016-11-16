@@ -1,6 +1,6 @@
 /**
  * Copyright 2016, Google, Inc.
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -21,15 +21,13 @@ const path = require('path');
 const net = require('net');
 const spawn = require('child_process').spawn;
 const config = require('../config.js');
-const logreader = require('./logreader.js');
+const logs = require('./logs.js');
 const fs = require('fs');
-const LOG_FILE_PATH = path.join(__dirname, config.logFilePath, config.logFileName);
 const PID_PATH = path.join(__dirname, 'process.pid');
 const EMULATOR_ROOT_URI = 'http://localhost:' + config.port;
 const EMULATOR_FUNC_URI = EMULATOR_ROOT_URI + '/function/';
 
 var self = {
-
   STOPPED: 0,
   RUNNING: 1,
   ALREADY_RUNNING: 2,
@@ -39,10 +37,11 @@ var self = {
    * Starts the emulator process
    *
    * @param {String} projectId The Cloud Platform project ID to bind to this emulator instance
-   * @param {boolean} debug If true, start the emulator in debug mode
+   * @param {boolean} debug If true, start the spawned node process with --debug
+   * @param {boolean} inspect If true, start the spawned node process with --inspect
    * @param {Function} callback The callback function to be called upon success/failure
    */
-  start: function (projectId, debug, callback) {
+  start: function (projectId, debug, inspect, callback) {
     // Project ID is optional, but any function that needs to authenticate to
     // a Google API will require a valid project ID
     // The authentication against the project is handled by the gcloud-node
@@ -61,13 +60,30 @@ var self = {
         // Communication to the detached process is then done via HTTP
         var args = [path.join(__dirname, '/emulator.js'), config.port, projectId];
 
+        // We will pipe stdout from the child process to the emulator log file
+        var logFilePath = path.resolve(logs.assertLogsPath(), config.logFileName);
+
         // TODO:
         // For some bizzare reason boolean values in the environment of the
         // child process return as Strings in JSON documents sent over HTTP with
         // a content-type of application/json, so we need to check for String
         // 'true' as well as boolean.
-        if (debug === true || debug === 'true') {
-          args.unshift('--debug');
+        if (inspect === true || inspect === 'true') {
+          var semver = process.version.split('.');
+          var major = parseInt(semver[0].substring(1, semver[0].length));
+          if (major >= 6) {
+            args.unshift('--inspect');
+            console.log('Starting in inspect mode.  Check ' + logFilePath + ' for details on how to connect to the chrome debugger');
+          } else {
+            console.error('--inspect flag requires Node 6+');
+          }
+        } else if (debug === true || debug === 'true') {
+          if (config.debugPort) {
+            args.unshift('--debug=' + config.debugPort);
+          } else {
+            args.unshift('--debug');
+          }
+          console.log('Starting in debug mode.  Debugger listening on port ' + ((config.debugPort) ? config.debugPort : 5858));
         }
 
         // Pass the debug flag to the environment of the child process so we can
@@ -76,13 +92,15 @@ var self = {
         // TODO: This will become unwieldy if we add more startup arguments
         var env = process.env;
         env.DEBUG = debug;
+        env.INSPECT = inspect;
 
         // Make sure the child is detached, otherwise it will be bound to the
         // lifecycle of the parent process.  This means we should also ignore
         // the binding of stdout.
+        const out = fs.openSync(logFilePath, 'a');
         var child = spawn('node', args, {
           detached: true,
-          stdio: 'ignore',
+          stdio: ['ignore', out, out],
           env: env
         });
 
@@ -250,6 +268,7 @@ var self = {
           self.start(
             env.projectId,
             env.debug,
+            env.inspect,
             callback);
         });
       });
@@ -318,7 +337,13 @@ var self = {
         return;
       }
       if (callback) {
-        callback(null, self.RUNNING);
+        self.getCurrentEnvironment(function (err, env) {
+          if (err) {
+            callback(err);
+            return;
+          }
+          callback(null, self.RUNNING, env, env.INSPECT);
+        });
       }
     });
   },
@@ -338,7 +363,10 @@ var self = {
     if (!limit) {
       limit = 20;
     }
-    logreader.readLogLines(LOG_FILE_PATH, limit, function (val) {
+
+    var logFile = path.join(logs.assertLogsPath(), config.logFileName);
+
+    logs.readLogLines(logFile, limit, function (val) {
       writer.write(val);
     });
   },
@@ -359,9 +387,9 @@ var self = {
    */
   deploy: function (modulePath, entryPoint, type, callback) {
     self._action('POST', EMULATOR_FUNC_URI +
-      entryPoint +
-      '?path=' + path.resolve(modulePath) +
-      '&type=' + type,
+    entryPoint +
+    '?path=' + path.resolve(modulePath) +
+    '&type=' + type,
       function (err, response, body) {
         if (err) {
           if (callback) {
