@@ -454,11 +454,20 @@ var self = {
         };
 
         try {
+          // Wrap the payload in an event envelope
+          var evt = {
+            eventId: 'emulator-generated',
+            timestamp: Date.now(),
+            eventType: 'cloud-functions-emulator',
+            resource: 'cloud-functions-emulator',
+            data: req.body
+          };
+
           // Function arguments will be of length 1 if we expected a promise
           if (func.length === 1) {
             Promise.resolve()
               .then(function () {
-                var result = invoker.invoke(func, mod, req.body);
+                var result = invoker.invoke(func, mod, evt);
                 if (typeof result === 'undefined') {
                   console.debug(
                     'Function returned undefined, expected Promise or value');
@@ -473,7 +482,7 @@ var self = {
                   errback(err);
                 });
           } else {
-            invoker.invoke(func, mod, req.body, errback);
+            invoker.invoke(func, mod, evt, errback);
           }
         } catch (e) {
           errback(e);

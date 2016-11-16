@@ -294,6 +294,29 @@ describe('Cloud Functions Emulator Tests', function () {
     });
   });
 
+  it('Calling a Promise function with JSON data works', function (done) {
+    controller.deploy(TEST_MODULE, 'helloPromise', 'B', function (err) {
+      if (err) {
+        done(err);
+        return;
+      }
+      controller.call('helloPromise', {
+        foo: 'bar'
+      }, function (err, body) {
+        if (err) {
+          done(err);
+          return;
+        }
+        try {
+          chai.expect(body).to.equal('bar');
+          done();
+        } catch (e) {
+          done(e);
+        }
+      });
+    });
+  });
+
   it('Calling a function with a string of a JSON object works', function (done) {
     controller.deploy(TEST_MODULE, 'helloData', 'B', function (err) {
       if (err) {
