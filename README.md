@@ -77,7 +77,9 @@ For example:
 
     functions deploy ~/myModule helloWorld --trigger-http
 
-This would deploy the `helloWorld` function in the Node module contained in the ~/myModule path.  
+This would deploy the `helloWorld` function in the Node module contained in the `~/myModule` path.
+
+*Note: The module path should be a directory containing the Node module you want to deploy*  
 
 ### Invoking a Function
 
