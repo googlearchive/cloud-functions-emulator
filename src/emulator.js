@@ -200,57 +200,71 @@ var self = {
       var p = req.query.path;
       var name = req.params.name;
 
-      console.debug('Loading module in path ' + p);
-      var mod = null;
-
+      // Ensure the path is a directory
       try {
-        // Make sure we remove the module from cache first to capture any changes
-        self._unrequire(p);
-        mod = require(p);
+        if (!fs.lstatSync(p).isDirectory()) {
+          res.status(400).send('\nModule specified is not a directory\n');
+          return;
+        }
+
+        console.debug('Loading module in path ' + p);
+
+        var mod = null;
+
+        try {
+          // Make sure we remove the module from cache first to capture any changes
+          self._unrequire(p);
+          mod = require(p);
+        } catch (err) {
+          console.error(err);
+
+          res.status(400).send(
+            '\nFailed to require module being deployed.  Make sure your module compiles and you have run `npm install` on it first\n' +
+            err.stack);
+          return;
+        }
+
+        if (!mod[name]) {
+          res.status(404).send('\nNo function found in module ' + p +
+            ' with name ' + name);
+          return;
+        }
+
+        var type = req.query.type.toUpperCase();
+        var url = null;
+
+        if (type === 'B') {
+          type = 'BACKGROUND';
+        } else if (type === 'H') {
+          type = 'HTTP';
+        }
+
+        if (type === 'HTTP') {
+          url = 'http://localhost:' + config.port + '/' + name;
+        }
+
+        try {
+          self._functions[name] = {
+            name: name,
+            path: p,
+            type: type,
+            url: url
+          };
+
+          jsonfile.writeFileSync(self._functionsFile, self._functions);
+
+          console.debug('Deployed function ' + name + ' at path ' + p);
+
+          res.json(self._functions[name]);
+        } catch (err) {
+          console.debug(err.stack);
+          res.status(400).send(err.message);
+        }
       } catch (err) {
         console.error(err);
-
         res.status(400).send(
-          '\nFailed to require module being deployed.  Make sure your module compiles and you have run `npm install` on it first\n' +
+          '\nFailed during module path check\n' +
           err.stack);
-        return;
-      }
-
-      if (!mod[name]) {
-        res.status(404).send('\nNo function found in module ' + p +
-          ' with name ' + name);
-        return;
-      }
-
-      var type = req.query.type.toUpperCase();
-      var url = null;
-
-      if (type === 'B') {
-        type = 'BACKGROUND';
-      } else if (type === 'H') {
-        type = 'HTTP';
-      }
-
-      if (type === 'HTTP') {
-        url = 'http://localhost:' + config.port + '/' + name;
-      }
-
-      try {
-        self._functions[name] = {
-          name: name,
-          path: p,
-          type: type,
-          url: url
-        };
-
-        jsonfile.writeFileSync(self._functionsFile, self._functions);
-
-        console.debug('Deployed function ' + name + ' at path ' + p);
-
-        res.json(self._functions[name]);
-      } catch (err) {
-        console.debug(err.stack);
-        res.status(400).send(err.message);
       }
     });
 

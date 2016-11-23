@@ -15,11 +15,11 @@
 
 'use strict';
 
-var chai = require('chai');
-var path = require('path');
-var controller = require('../src/controller.js');
-
-var PROJECT_ID = 'foobar';
+const chai = require('chai');
+const path = require('path');
+const controller = require('../src/controller.js');
+const fs = require('fs');
+const PROJECT_ID = 'foobar';
 
 // Empty writer
 controller.writer = {
@@ -161,6 +161,27 @@ describe('Cloud Functions Emulator Tests', function () {
       }
       done(new Error("Deployment should have failed but didn't"));
     });
+  });
+
+  it('Fails deployment when the module path is not a directory', function (done) {
+    var filePath = path.join(TEST_MODULE, 'index.js');
+
+    // Ensure the file exists so we know the failure is for the right reason
+    try {
+      if (fs.lstatSync(filePath).isFile()) {
+        controller.deploy(filePath, 'hello', {}, function (err) {
+          if (err) {
+            done();
+            return;
+          }
+          done(new Error("Deployment should have failed but didn't"));
+        });
+      } else {
+        done(new Error('Test does not use a file path as the input to the deploy command'));
+      }
+    } catch (e) {
+      done(e);
+    }
   });
 
   it('Returns the expected values in the list after deployment', function (done) {
