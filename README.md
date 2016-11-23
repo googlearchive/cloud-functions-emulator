@@ -71,7 +71,13 @@ The emulator can host both BACKGROUND and HTTP (foreground) Cloud Functions.
 By default the emulator will consider functions deployed to be BACKGROUND
 functions. To deploy an HTTP function, use the `--trigger-http` argument:
 
-    functions deploy <module> <function> --trigger-http
+    functions deploy <module path> <function name> --trigger-http
+
+For example:
+
+    functions deploy ~/myModule helloWorld --trigger-http
+
+This would deploy the `helloWorld` function in the Node module contained in the ~/myModule path.  
 
 ### Invoking a Function
 
