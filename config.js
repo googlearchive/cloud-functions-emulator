@@ -22,7 +22,7 @@ var conf = {
   debugPort: undefined,
 
   // Set to true to see debug logs for the emulator itself (default:true)
-  verbose: true,
+  verbose: false,
 
   // Your Cloud Platform project ID
   projectId: null,

@@ -371,19 +371,31 @@ var program = module.exports = {
 
 cli
   .demand(1)
-  .command('call <functionName>', 'Invokes a function.', {
+  .command('call <functionName>', 'Invokes a function. You must specify either the "data" or the "file" option.', {
     data: {
       alias: 'd',
-      default: '{}',
-      description: 'The data to send to the function, expressed as a JSON document.',
-      type: 'string',
-      requiresArg: true
+      description: 'Specify inline the JSON data to send to the function.',
+      requiresArg: true,
+      type: 'string'
+    },
+    file: {
+      alias: 'f',
+      description: 'A path to a JSON file to send to the function.',
+      normalize: true,
+      requiresArg: true,
+      type: 'string'
     }
   }, function (opts) {
-    try {
-      opts.data = JSON.parse(opts.data);
-    } catch (err) {
-      throw new Error('"data" must be a valid JSON string!');
+    if (opts.data) {
+      try {
+        opts.data = JSON.parse(opts.data);
+      } catch (err) {
+        throw new Error('"data" must be a valid JSON string!');
+      }
+    } else if (opts.file) {
+      opts.data = fs.readFileSync(opts.file, 'utf8');
+    } else {
+      throw new Error('You must specify a "data" or "file" option!');
     }
     program.call(opts);
   })
@@ -437,4 +449,10 @@ cli
     }
   }, program.start)
   .command('status', 'Reports the current status of the emulator.', {}, program.status)
-  .command('stop', 'Stops the emulator gracefully.', {}, program.stop);
+  .command('stop', 'Stops the emulator gracefully.', {}, program.stop)
+  .example('$0 deploy ~/myModule helloWorld --trigger-http', 'Deploy helloWorld as an HTTP function from the module located in ~/myModule')
+  .example('$0 call helloWorld', 'Invoke the helloWorld function with no data argument')
+  .example('$0 call helloWorld --data \'{"foo": "bar"}\'', 'Invoke the helloWorld function with a JSON document argument')
+  .example('$0 call helloWorld --file ~/myData/datafile.json', 'Invoke the helloWorld function with a file argument')
+  .example('$0 logs read --limit 10', 'Display the most recent 10 lines from the logs')
+  .wrap(140);
