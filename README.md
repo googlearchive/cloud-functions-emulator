@@ -19,6 +19,7 @@ version number and breaking changes will bump the minor version number.**
 ## Table of Contents
 
 * [Installation](#installation)
+* [Authentication] (#authentication)
 * [Using the CLI](#using-the-cli)
   * [Deployment](#deployment)
   * [Invoking a Function](#invoking-a-function)
@@ -33,6 +34,49 @@ version number and breaking changes will bump the minor version number.**
 ## Installation
 
     npm install -g @google-cloud/functions-emulator
+
+## Authentication
+
+If you're using Cloud Functions to access other Google Cloud Platform APIs (e.g. Cloud Storage or the Vision API), 
+you can use the same [Application Default Credential](https://developers.google.com/identity/protocols/application-default-credentials) as you would when running your function in the cloud.
+
+For example, when using the [google-cloud](https://github.com/GoogleCloudPlatform/google-cloud-node) Node module for Cloud Storage,
+the following snippet:
+
+```javascript
+var gcloud = require('google-cloud');
+var storage = gcloud.storage;
+var gcs = storage({
+  projectId: 'grape-spaceship-123',
+  keyFilename: '/path/to/keyfile.json'
+});
+```
+Can be abbreviated to:
+
+```javascript
+var gcloud = require('google-cloud');
+var storage = gcloud.storage;
+var gcs = storage();
+```
+This abbreviated version will use the *Application Default Credential* as the authentication principal, 
+and in the emulator will use the `projectId` property of `config.js` as the projectId.
+
+In order for this credential to be correctly injected into the emulator, you need to have already authenticated the 
+[Cloud SDK](https://cloud.google.com/sdk/gcloud/), via either `init`
+
+    gcloud init
+
+or by manually invoking `auth`
+
+    gcloud auth login
+
+To verify that the *Application Default Credential* is present, you can request the current access token using:
+
+    gcloud beta auth application-default print-access-token
+
+*Note:  The current project defined in `gcloud config` must match the `projectId` set in `config.js` for the 
+Application Default Credential to work.  If you want to authenticate your Cloud Function against a different project 
+you will need to also include a keyfile as described in the google-cloud [authentication guide](https://googlecloudplatform.github.io/google-cloud-node/#/docs/google-cloud/0.44.0/guides/authentication)*
 
 ## Using the CLI
 
@@ -119,7 +163,7 @@ configure:
 |-------|---|----------|
 | port | integer | The TCP port on which the emulator will listen (default: 8008) |
 | verbose | boolean | `true` if you want to see logs from the emulator itself (default: `false`) |
-| projectId | string | Your GCP project ID (default: none) |
+| projectId | string | Your Cloud Platform project ID (default: none) |
 | timeout | integer | Timeout (ms) to wait for the emulator to start (default: 3000) |
 
 ### Logs
