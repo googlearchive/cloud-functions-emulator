@@ -482,6 +482,7 @@ var self = {
     if (!data) {
       data = {};
     }
+
     self._action('POST', EMULATOR_ROOT_URI + '/' + name, function (err, response, body) {
       if (err) {
         if (callback) {

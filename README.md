@@ -87,27 +87,44 @@ Print the available commands:
 ### Usage
 
     Commands:
-      call <function>      Invokes a function.
-      clear                Resets the emulator to its default state and clears and
-                           deployed functions.
-      delete <function>    Undeploys a previously deployed function (does NOT delete
-                           the function source code).
-      deploy               Deploys a function with the given module path and entry
-                           point.
-      describe <function>  Describes the details of a single deployed function.
-      logs                 Manages emulator logs access.
-      kill                 Force kills the emulator process if it stops responding.
-      list                 Lists deployed functions.
-      prune                Removes any functions known to the emulator but which no
-                           longer exist in their corresponding module.
-      restart              Restarts the emulator.
-      start                Starts the emulator.
-      status               Removes any functions known to the emulator but which no
-                           longer exist in their corresponding module.
-      stop                 Stops the emulator gracefully.
+      call <functionName>                 Invokes a function. You must specify either the "data" or the "file" option.
+      clear                               Resets the emulator to its default state and clears and deployed functions.
+      delete <functionName>               Undeploys a previously deployed function (does NOT delete the function source code).
+      deploy <modulePath> <functionName>  Deploys a function with the given module path and function name (entry point).
+      describe <functionName>             Describes the details of a single deployed function.
+      logs <command>                      Manages emulator logs access.
+      kill                                Force kills the emulator process if it stops responding.
+      list                                Lists deployed functions.
+      prune                               Removes any functions known to the emulator but which no longer exist in their corresponding module.
+      restart                             Restarts the emulator.
+      start                               Starts the emulator.
+      status                              Reports the current status of the emulator.
+      stop                                Stops the emulator gracefully.
 
     Options:
-      --help  Show help                                                    [boolean]
+      -h, --help     Show help                                                                                                         [boolean]
+      -v, --version  Show version number                                                                                               [boolean]
+
+    Examples:
+      functions deploy ~/myModule helloWorld --trigger-http    Deploy helloWorld as an HTTP function from the module located in ~/myModule
+      functions call helloWorld                                Invoke the helloWorld function with no data argument
+      functions call helloWorld --data '{"foo": "bar"}'        Invoke the helloWorld function with a JSON document argument
+      functions call helloWorld --file ~/myData/datafile.json  Invoke the helloWorld function with a file argument
+      functions logs read --limit 10                           Display the most recent 10 lines from the logs
+
+Get help on a specific command passing `--help` to the command, for example:
+
+    functions call --help
+
+which would print:
+
+    functions call <functionName>
+
+    Options:
+      -h, --help     Show help                                                                                                         [boolean]
+      --data, -d     Specify inline the JSON data to send to the function.                                                              [string]
+      --file, -f     A path to a JSON file to send to the function.                                                                     [string]
+      -v, --version  Show version number                                                                                               [boolean]
 
 ### Deployment
 
@@ -123,7 +140,7 @@ For example:
 
 This would deploy the `helloWorld` function in the Node module contained in the `~/myModule` path.
 
-*Note: The module path should be a directory containing the Node module you want to deploy*  
+*Note: The module path should be a directory containing the Node module you want to deploy*
 
 ### Invoking a Function
 
@@ -153,6 +170,27 @@ Deploy an HTTP function:
 Invoke the function (default port is 8008):
 
     curl http://localhost:8008/helloHttp
+
+#### Invoking Functions with arguments
+
+When using the `call` command, you can optionally provide a `--data` argument to
+send data to your function. This should be expressed as a JSON document, for
+example:
+
+    functions call helloWorld --data '{"foo": "bar"}'
+
+When calling HTTP functions in this way, your function will receive an HTTP POST
+with the JSON document as the request body
+
+Crafting lengthy JSON documents at the command line can be cumbersome, so you
+can specify a path to a JSON file with the `--file` option:
+
+    functions call helloWorld --file /usr/local/somedata.json
+
+This example will load `/usr/local/somedata.json` and pass its contents as the
+argument to the function.
+
+*Note: file arguments are assumed to be utf-8 encoded text files*
 
 ### Config
 
@@ -209,13 +247,13 @@ Refer to the documentation for [debugging in Visual Studio Code](https://code.vi
 
 ##### Node version 7+
 
-Node 7.0.0 introduces a new (experimental) `--inspect` flag to allow for integration with Chrome Developer Tools.  
+Node 7.0.0 introduces a new (experimental) `--inspect` flag to allow for integration with Chrome Developer Tools.
 To debug functions in the emulator when running Node 7+, start the emulator with the `--inspect` flag (instead of `--debug`)
 
     functions start --inspect
 
-This will start the internal Node process with this flag.  To access the debugger in Chrome, you'll need to inspect the 
-log file written by the emulator, which by default is located in `logs\cloud-functions-emulator.log`.  Look for a log entry 
+This will start the internal Node process with this flag.  To access the debugger in Chrome, you'll need to inspect the
+log file written by the emulator, which by default is located in `logs\cloud-functions-emulator.log`.  Look for a log entry
 that appears like this:
 
     Debugger listening on port 9229.
@@ -255,7 +293,7 @@ Now when you invoke your function, you can debug!
 ### Using Mocks
 
 When running functions locally you sometimes want to change the behavior of modules which connect to external services.
-For example you might be accessing a database, API or external system that you don't want to, or can't access from your local 
+For example you might be accessing a database, API or external system that you don't want to, or can't access from your local
 environment.
 
 The Cloud Functions Emulator provides a way to inject *mock* versions of node modules imported into your function.
@@ -306,7 +344,7 @@ The Cloud Functions Emulator provides a way to inject *mock* versions of node mo
 
         ...
     };
-    ```    
+    ```
 
 
 ### Known Issues and FAQ
@@ -350,13 +388,13 @@ The Cloud Functions Emulator provides a way to inject *mock* versions of node mo
     HTTP request but the emulator didn't give it one). Make sure to deploy HTTP functions
     with the `--trigger-http` flag.
 
-- If the emulator times out when starting, check the logs (`logs\cloud-functions-emulator.log`)  
+- If the emulator times out when starting, check the logs (`logs\cloud-functions-emulator.log`)
 
     If you see the following error:
 
     `Unable to open devtools socket: address already in use`
 
-    It means the chrome devtools debugger is running and using the default debug port.  Close the 
+    It means the chrome devtools debugger is running and using the default debug port.  Close the
     Chrome tab with the debugger and try again.
 
 ## License
