@@ -1,8 +1,6 @@
-#!/usr/bin/env node
-
 /**
  * Copyright 2016, Google, Inc.
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -14,9 +12,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-if (process.version !== 'v6.9.1') {
-  console.error('Node.js v6.9.1 is required to run the emulator!');
-  process.exit(1);
-}
 
-require('../src/cli').main(process.argv.slice(2));
+'use strict';
+
+/**
+ * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
+ */
+exports.command = 'config <command>';
+exports.describe = 'Manages emulator configuration.';
+exports.builder = (yargs) => {
+  return yargs
+    .demand(1)
+    .command(require('./list'))
+    .command(require('./set'));
+};
+
+/**
+ * Handler for the "config" command.
+ */
+exports.handler = () => {};

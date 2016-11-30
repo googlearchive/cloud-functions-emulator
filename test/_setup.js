@@ -1,8 +1,6 @@
-#!/usr/bin/env node
-
 /**
  * Copyright 2016, Google, Inc.
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -14,9 +12,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-if (process.version !== 'v6.9.1') {
-  console.error('Node.js v6.9.1 is required to run the emulator!');
-  process.exit(1);
-}
 
-require('../src/cli').main(process.argv.slice(2));
+'use strict';
+
+const assert = require('power-assert').customize({
+  output: {
+    maxDepth: 2
+  }
+});
+const sinon = require('sinon');
+
+global.assert = assert;
+global.sinon = sinon;

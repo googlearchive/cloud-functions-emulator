@@ -37,46 +37,61 @@ version number and breaking changes will bump the minor version number.**
 
 ## Authentication
 
-If you're using Cloud Functions to access other Google Cloud Platform APIs (e.g. Cloud Storage or the Vision API), 
-you can use the same [Application Default Credential](https://developers.google.com/identity/protocols/application-default-credentials) as you would when running your function in the cloud.
+If you're using Cloud Functions to access other Google Cloud Platform APIs (e.g.
+Google Cloud Storage or the Google Cloud Vision API), you can use the same
+[Application Default Credential][adc] as you would when running your function
+in the cloud.
 
-For example, when using the [google-cloud](https://github.com/GoogleCloudPlatform/google-cloud-node) Node module for Cloud Storage,
-the following snippet:
+For example, when using the [google-cloud][google-cloud-node] Node.js module for
+Cloud Storage, the following:
 
 ```javascript
-var gcloud = require('google-cloud');
-var storage = gcloud.storage;
-var gcs = storage({
+const Storage = require('@google-cloud/storage');
+const storage = Storage({
   projectId: 'grape-spaceship-123',
   keyFilename: '/path/to/keyfile.json'
 });
 ```
-Can be abbreviated to:
+can be abbreviated to:
 
 ```javascript
-var gcloud = require('google-cloud');
-var storage = gcloud.storage;
-var gcs = storage();
+const Storage = require('@google-cloud/storage');
+const storage = Storage();
 ```
-This abbreviated version will use the *Application Default Credential* as the authentication principal, 
-and in the emulator will use the `projectId` property of `config.js` as the projectId.
 
-In order for this credential to be correctly injected into the emulator, you need to have already authenticated the 
-[Cloud SDK](https://cloud.google.com/sdk/gcloud/), via either `init`
+This abbreviated version will use the *Application Default Credential* as the
+authentication principal, and in the emulator will use the `GCLOUD_PROJECT`
+environment variable or the `projectId` property of your `config.json` file as
+the projectId.
+
+In order for this credential to be correctly injected into the emulator, you
+need to have already authenticated the
+[Cloud SDK](https://cloud.google.com/sdk/gcloud/), via either `init`:
 
     gcloud init
 
-or by manually invoking `auth`
+or by manually invoking `auth`:
 
     gcloud auth login
 
-To verify that the *Application Default Credential* is present, you can request the current access token using:
+To activate the Application Default Credentials run:
+
+    gcloud beta auth application-default login
+
+To verify that the *Application Default Credential* is present, you can request
+the current access token using:
 
     gcloud beta auth application-default print-access-token
 
-*Note:  The current project defined in `gcloud config` must match the `projectId` set in `config.js` for the 
-Application Default Credential to work.  If you want to authenticate your Cloud Function against a different project 
-you will need to also include a keyfile as described in the google-cloud [authentication guide](https://googlecloudplatform.github.io/google-cloud-node/#/docs/google-cloud/0.44.0/guides/authentication)*
+*Note: The current project defined in `gcloud config` must match the `projectId`
+set in `config.json` for the Application Default Credential to work. If you want
+to authenticate your Cloud Function against a different project you will need to
+also include a keyfile as described in the `google-cloud-node`
+[authentication guide][auth].*
+
+[adc]: https://developers.google.com/identity/protocols/application-default-credentials
+[google-cloud-node]: https://github.com/GoogleCloudPlatform/google-cloud-node
+[auth]: https://googlecloudplatform.github.io/google-cloud-node/#/docs/google-cloud/latest/guides/authentication
 
 ## Using the CLI
 
@@ -89,26 +104,33 @@ Print the available commands:
     Commands:
       call <functionName>                 Invokes a function. You must specify either the "data" or the "file" option.
       clear                               Resets the emulator to its default state and clears and deployed functions.
-      delete <functionName>               Undeploys a previously deployed function (does NOT delete the function source code).
-      deploy <modulePath> <functionName>  Deploys a function with the given module path and function name (entry point).
+      config <command>                    Manages emulator configuration.
+      delete <functionName>               Undeploys a previously deployed function (does NOT delete the function source
+                                          code).
+      deploy <functionName> <modulePath>  Deploys a function with the given module path and function name (entry point).
       describe <functionName>             Describes the details of a single deployed function.
-      logs <command>                      Manages emulator logs access.
       kill                                Force kills the emulator process if it stops responding.
       list                                Lists deployed functions.
-      prune                               Removes any functions known to the emulator but which no longer exist in their corresponding module.
+      logs <command>                      Manages emulator logs access.
+      prune                               Removes any functions known to the emulator but which no longer exist in their
+                                          corresponding module.
       restart                             Restarts the emulator.
       start                               Starts the emulator.
       status                              Reports the current status of the emulator.
       stop                                Stops the emulator gracefully.
 
     Options:
-      -h, --help     Show help                                                                                                         [boolean]
-      -v, --version  Show version number                                                                                               [boolean]
+      --host, -h  The emulator's host.                                                                              [string]
+      --port, -p  The emulator's port.                                                                              [number]
+      --help      Show help                                                                                        [boolean]
+      --version   Show version number                                                                              [boolean]
 
     Examples:
-      functions deploy ~/myModule helloWorld --trigger-http    Deploy helloWorld as an HTTP function from the module located in ~/myModule
+      functions deploy ~/myModule helloWorld --trigger-http    Deploy helloWorld as an HTTP function from the module
+                                                                   located in ~/myModule
       functions call helloWorld                                Invoke the helloWorld function with no data argument
-      functions call helloWorld --data '{"foo": "bar"}'        Invoke the helloWorld function with a JSON document argument
+      functions call helloWorld --data '{"foo": "bar"}'        Invoke the helloWorld function with a JSON document
+                                                                   argument
       functions call helloWorld --file ~/myData/datafile.json  Invoke the helloWorld function with a file argument
       functions logs read --limit 10                           Display the most recent 10 lines from the logs
 
@@ -121,26 +143,30 @@ which would print:
     functions call <functionName>
 
     Options:
-      -h, --help     Show help                                                                                                         [boolean]
-      --data, -d     Specify inline the JSON data to send to the function.                                                              [string]
-      --file, -f     A path to a JSON file to send to the function.                                                                     [string]
-      -v, --version  Show version number                                                                                               [boolean]
+      --host, -h  The emulator's host.                                                                              [string]
+      --port, -p  The emulator's port.                                                                              [number]
+      --help      Show help                                                                                        [boolean]
+      --version   Show version number                                                                              [boolean]
+      --data, -d  Specify inline the JSON data to send to the function.                                             [string]
+      --file, -f  A path to a JSON file to send to the function.                                                    [string]
 
 ### Deployment
 
-The emulator can host both BACKGROUND and HTTP (foreground) Cloud Functions.
-By default the emulator will consider functions deployed to be BACKGROUND
+The emulator can host both BACKGROUND and HTTP (foreground) Cloud Functions. By
+default the emulator will consider functions deployed to be BACKGROUND
 functions. To deploy an HTTP function, use the `--trigger-http` argument:
 
-    functions deploy <module path> <function name> --trigger-http
+    functions deploy <functionName> <modulePath> --trigger-http
 
 For example:
 
-    functions deploy ~/myModule helloWorld --trigger-http
+    functions deploy helloWorld ~/myModule --trigger-http
 
-This would deploy the `helloWorld` function in the Node module contained in the `~/myModule` path.
+This would deploy the `helloWorld` function in the Node.js module contained in
+the `~/myModule` path.
 
-*Note: The module path should be a directory containing the Node module you want to deploy*
+*Note: The module path should be a directory containing the Node.js module you
+want to deploy.*
 
 ### Invoking a Function
 
@@ -151,7 +177,7 @@ Start the Emulator:
 Deploy a BACKGROUND function *(the first argument is the path to your module,
 the second argument is the name of the function)*:
 
-    functions deploy ../myModule helloWorld
+    functions deploy helloWorld ../myModule
 
 Invoke the function:
 
@@ -165,7 +191,7 @@ For HTTP functions, just use the `--trigger-http` argument.
 
 Deploy an HTTP function:
 
-    functions deploy ../myModule helloHttp --trigger-http
+    functions deploy helloHttp ../myModule --trigger-http
 
 Invoke the function (default port is 8008):
 
@@ -177,10 +203,10 @@ When using the `call` command, you can optionally provide a `--data` argument to
 send data to your function. This should be expressed as a JSON document, for
 example:
 
-    functions call helloWorld --data '{"foo": "bar"}'
+    functions call helloWorld --data '{"foo":"bar"}'
 
 When calling HTTP functions in this way, your function will receive an HTTP POST
-with the JSON document as the request body
+with the JSON document as the request body.
 
 Crafting lengthy JSON documents at the command line can be cumbersome, so you
 can specify a path to a JSON file with the `--file` option:
@@ -190,25 +216,40 @@ can specify a path to a JSON file with the `--file` option:
 This example will load `/usr/local/somedata.json` and pass its contents as the
 argument to the function.
 
-*Note: file arguments are assumed to be utf-8 encoded text files*
+*Note: file arguments are assumed to be `utf-8` encoded text files.*
 
 ### Config
 
-A local configuration (**config.js**) file is provided that allows you to
-configure:
+A `config.json` file in your home directory allows you to customize default
+settings for the emulator:
 
 | Property | Type | Description |
 |-------|---|----------|
-| port | integer | The TCP port on which the emulator will listen (default: 8008) |
-| verbose | boolean | `true` if you want to see logs from the emulator itself (default: `false`) |
-| projectId | string | Your Cloud Platform project ID (default: none) |
-| timeout | integer | Timeout (ms) to wait for the emulator to start (default: 3000) |
+| host | string | Host the emulator should listen on. Default: `localhost`. |
+| logFile | string | Path to the logs file. Default: `logs/cloud-functions-emulator.log`. |
+| port | integer | The TCP port on which the emulator will listen. Default: `8008`. |
+| projectId | string | Your Cloud Platform project ID. Default: `process.env.GCLOUD_PROJECT`. |
+| timeout | integer | Timeout (ms) to wait for the emulator to start. Default: `3000`. |
+| useMocks | boolean | Whether `mocks.js` should be loaded when the emulator starts. Default: `false`. |
+| verbose | boolean | Whether the emulator should write additional logs during operation. Default: `false`. |
+
+View table of current configuration:
+
+    functions config list
+
+or as JSON:
+
+    functions config list --json
+
+Update a particular setting:
+
+    functions config set verbose true
 
 ### Logs
 
 Functions running in the emulator run in their own (detached) process, so
 console logs from your function (e.g. `console.log()` calls) will not be piped to
-the stdout stream of the emulator. Instead a log file can be found in **app/logs/cloud-functions-emulator.log**
+the stdout stream of the emulator. Instead a log file can be found in **logs/cloud-functions-emulator.log**
 
 You can view the logs from your functions using the `logs read` command:
 
@@ -229,173 +270,189 @@ Mac/Linux:
 
 ### Debugging
 
-To start the emulator in *debug* mode, simply use the `--debug` flag:
-
-    functions start --debug
-
-While running in debug mode a separate debug server will be started on port 5858
-(default debugger port for Node). You can then attach to the debugger process
-with your favorite IDE.
-
-#### Debugging with Visual Studio Code
-
-If you started the emulator with the `--debug` flag, you can simply "Attach" to the emulator from withing Visual Studio Code.
-
-Refer to the documentation for [debugging in Visual Studio Code](https://code.visualstudio.com/Docs/editor/debugging) for more information.
-
-#### Debugging with Chrome Developer Tools
-
-##### Node version 7+
-
-Node 7.0.0 introduces a new (experimental) `--inspect` flag to allow for integration with Chrome Developer Tools.
-To debug functions in the emulator when running Node 7+, start the emulator with the `--inspect` flag (instead of `--debug`)
+To start the emulator in *debug* mode, use the `--inspect` flag:
 
     functions start --inspect
 
-This will start the internal Node process with this flag.  To access the debugger in Chrome, you'll need to inspect the
-log file written by the emulator, which by default is located in `logs\cloud-functions-emulator.log`.  Look for a log entry
-that appears like this:
+While running in debug mode a separate debug server will be started on port 9229
+(the default `--inspect` debugger port for Node.js v6.9.1). You can then attach
+to the debugger process with your favorite IDE.
+
+#### Debugging with Visual Studio Code
+
+If you started the emulator with the `--inspect` flag, you can simply "Attach"
+to the emulator from withing Visual Studio Code.
+
+Refer to the documentation for [debugging in Visual Studio Code](https://code.visualstudio.com/Docs/editor/debugging) for more information. Basically, you just need a `launch.json` file that looks
+like this:
+
+    {
+      "version": "0.2.0",
+      "configurations": [
+        {
+          "name": "Attach to Process",
+          "type": "node2",
+          "request": "attach",
+          "port": 9229
+        }
+      ]
+    }
+
+In Visual Studio Code, navigate to the source code for your locally deployed
+function and set a breakpoint inside your function. Then when the function is
+invoked, execution should pause on your breakpoint inside the Debug View of
+Visual Studio Code.
+
+#### Debugging with Chrome Developer Tools
+
+To access the debugger in Chrome, you'll need to inspect the log file written by
+the emulator, which by default is located in `logs\cloud-functions-emulator.log`.
+You can quickly view the logs with `functions logs read`.
+
+Look for a log entry that appears like this:
 
     Debugger listening on port 9229.
     Warning: This is an experimental feature and could change at any time.
     To start debugging, open the following URL in Chrome:
-        chrome-devtools://devtools/remote/serve_file/@60cd6e859b9f557d2312f5bf532f6aec5f284980/inspector.html?experiments=true&v8only=true&ws=localhost:9229/165471ce-1e76-421f-b52d-e3b8a14bcb0c
+        chrome-devtools://devtools/remote/serve_file/@60cd6e839b9f557d231sf5bf532f6aec5f284980/inspector.html?experiments=true&v8only=true&ws=localhost:9229/165s71ce-1e76-421f-b52d-e3b8a14bcb0c
 
-When you open the chrome devtools debugger you may not see your function source file.  Just invoke your function once to have its source file appear in the debugger window
-
-##### Node versions prior to 7
-
-If your IDE doesn't support connecting to a Node.js debugger process, you can
-easily debug your Cloud Functions in the emulator using [node-inspector](https://github.com/node-inspector/node-inspector)
-
-First, install node-inspector
-
-    npm install -g node-inspector
-
-Start the emulator in debug mode
-
-    functions start --debug
-
-Now start the node inspector process (we recommend doing this in a separate console window)
-
-    node-inspector
-
-This will start an HTTP server on port 8080, you can then browse to this URL in Chrome
-
-    open http://127.0.0.1:8080/?port=5858
-
-Now when you invoke your function, you can debug!
-
-    functions call helloWorld
+When you open the chrome devtools debugger you may not see your function source
+file. Just invoke your function once to have its source file appear in the
+debugger window. You can then set breakpoints and debug like normal.
 
 ![Debugging with Chrome Developer Tools](img/debugging.png "Debugging with Chrome Developer Tools")
 
+#### Using the old debugger
+
+If you can't or won't use the `--inspect` flag, you can use the older
+`--debug` flag and debug your Cloud Functions in the emulator using
+[node-inspector][].
+
+First, install node-inspector:
+
+    npm install -g node-inspector
+
+Start the emulator with the `--debug` flag:
+
+    functions start --debug
+
+Now start the node inspector process in a separate console window:
+
+    node-inspector
+
+This will start an HTTP server on port 8080, you can then browse to this URL in
+Chrome:
+
+    open http://127.0.0.1:8080/?port=5858
+
+Now when you invoke your function, you can debug:
+
+    functions call helloWorld
+
+[node-inspector]: https://github.com/node-inspector/node-inspector
+
 ### Using Mocks
 
-When running functions locally you sometimes want to change the behavior of modules which connect to external services.
-For example you might be accessing a database, API or external system that you don't want to, or can't access from your local
-environment.
+When running functions locally you sometimes want to change the behavior of
+modules which connect to external services. For example you might be accessing a
+database, API or external system that you don't want to, or can't access from
+your local environment.
 
-The Cloud Functions Emulator provides a way to inject *mock* versions of node modules imported into your function.
+The Cloud Functions Emulator provides a way to inject *mock* versions of Node.js
+modules imported into your function.
 
-1. Enable the use of mocks in `config.js`
+1. Enable the use of mocks:
 
-    ```
-    {
-        ...
-        enableMocks: true,
-        ...
-    }
-    ```
+        functions start --useMocks
+
+    or
+
+        functions config set useMocks true
+        functions start
 
 2. Edit `mocks.js` and mock the dependencies you want
 
-    ```javascript
-    // You can create handcrafted mocks, or use a mocking library
-    var sinon = require('sinon');
+        // You can create handcrafted mocks, or use a mocking library
+        var sinon = require('sinon');
 
-    /**
-    * Called when the require() method is called
-    * @param {String} func The name of the current function being invoked
-    * @param {String} module The name of the module being required
-    */
-    exports.onRequire = function (func, module) {
-        // Return an object or module to override the named module argument
-        if(module === 'redis') {
-            // Create a mock of redis
-            var mockRedis = sinon.mock(require("redis"));
-            mockRedis.expects('createClient').returns({});
+        /**
+         * Called when the require() method is called
+         * @param {String} func The name of the current function being invoked
+         * @param {String} module The name of the module being required
+         */
+        exports.onRequire = function (func, module) {
+            // Return an object or module to override the named module argument
+            if (module === 'redis') {
+                // Create a mock of redis
+                var mockRedis = sinon.mock(require('redis'));
+                mockRedis.expects('createClient').returns({});
 
-            // Mock more methods as needed...
+                // Mock more methods as needed...
 
-            return mockRedis;
-        }
-        return undefined;
-    };
-    ```
+                return mockRedis;
+            }
+            return undefined;
+        };
 
 3. You don't need to change your function code at all!
 
-    ```javascript
+        exports.helloRedis = function (event, callback) {
+          var redis = require('redis'); // this will be a mock
+          cvar lient = redis.createClient();
 
-    exports.helloRedis = function (event, callback) {
-        var redis = require("redis"); // <== this will be a mock
-        client = redis.createClient();
-
-        ...
-    };
-    ```
+          // ...
+        };
 
 
 ### Known Issues and FAQ
 
- - If you see the following error in the console when you stop the debugger:
+- If you see the following error in the console when you stop the debugger:
 
-    `Assertion failed: ((err) == (0)), function Stop, file ../src/debug-agent.cc, line 155.`
+        Assertion failed: ((err) == (0)), function Stop, file ../src/debug-agent.cc, line 155.
 
     You can safely ignore it. It's an [open issue](https://github.com/nodejs/node/issues/781) in Node.js
 
- - If you restart the emulator while the debug server is running you may need to refresh the browser for
-   the default debug breakpoint to fire.
+- If you restart the emulator while the debug server is running you may need to
+refresh the browser for the default debug breakpoint to fire.
 
- - Disconnecting the debugger can sometimes leave the emulator in a *weird* state.
-   If you want to kill the emulator process (because it's stuck), then you'll have
-   to kill the underlying `node` process
+- Disconnecting the debugger can sometimes leave the emulator in a *weird*
+state. If you want to kill the emulator process (because it's stuck), then
+you'll have to kill the underlying `node` process:
 
-   `functions kill`
+        functions kill
 
-   If that doesn't work, then you may need to go medieval
+    If that doesn't work, then you may need to go medieval
 
-   Mac/Linux:
+        Mac/Linux:
 
-    `pgrep -f emulator.js | xargs kill`
+        pgrep -f emulator.js | xargs kill
 
-- If you see the following error when deploying
+- If you see the following error when deploying:
 
-    `Error: Module version mismatch`
+        Error: Module version mismatch
 
-    This usually means that the module you are trying to deploy has a dependency that either
-    conflicts with the same dependency in the emulator, but has a different version, or it
-    indicates that the dependencies in the module being deployed was built with a different
-    version of npm. In most cases, deleteing `node_modules` from the module being deployed and
-    re-running `npm install` will resolve this.
+    This usually means that the module you are trying to deploy has a dependency
+    that either conflicts with the same dependency in the emulator, but has a
+    different version, or it indicates that the dependencies in the module being
+    deployed was built with a different version of npm. In most cases, deleting
+    `node_modules` from the module being deployed and re-running `npm install`
+    will resolve this.
 
-- If you see the following error when trying to invoke a function
+- If you see the following error when trying to invoke a function:
 
-    `TypeError: res.send is not a function`
+        TypeError: res.send is not a function
 
-    It means you deployed an HTTP function as a BACKGROUND function (so it's expecting an
-    HTTP request but the emulator didn't give it one). Make sure to deploy HTTP functions
-    with the `--trigger-http` flag.
+    It means you deployed an HTTP function as a BACKGROUND function (so it's
+    expecting an HTTP request but the emulator didn't give it one). Make sure
+    to deploy HTTP functions with the `--trigger-http` flag.
 
-- If the emulator times out when starting, check the logs (`logs\cloud-functions-emulator.log`)
+- If the emulator times out when starting, check the logs
+(`logs\cloud-functions-emulator.log`). If you see the following error:
 
-    If you see the following error:
+        Unable to open devtools socket: address already in use
 
-    `Unable to open devtools socket: address already in use`
-
-    It means the chrome devtools debugger is running and using the default debug port.  Close the
-    Chrome tab with the debugger and try again.
+    It means the chrome devtools debugger is running and using the default debug
+    port. Close the Chrome tab with the debugger and try again.
 
 ## License
 

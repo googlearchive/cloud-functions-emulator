@@ -15,23 +15,22 @@
 
 'use strict';
 
-const config = require('../config');
 const fs = require('fs');
 const path = require('path');
 const EOL = require('os').EOL;
 
 module.exports = {
-  assertLogsPath: function () {
-    var rootDir = path.resolve(__dirname, '../');
-    var logsDir = path.resolve(rootDir, config.logFilePath);
+  assertLogsPath (logFile) {
+    logFile = path.resolve(logFile);
+    const parts = path.parse(logFile);
 
-    if (!_pathExists(logsDir)) {
-      fs.mkdirSync(logsDir);
+    if (!_pathExists(parts.dir)) {
+      fs.mkdirSync(parts.dir);
     }
-    return logsDir;
+    return logFile;
   },
 
-  readLogLines: function (filePath, num, output) {
+  readLogLines (filePath, num, output) {
     try {
       var buf = fs.readFileSync(filePath);
       var chr = null;
