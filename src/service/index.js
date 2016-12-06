@@ -15,25 +15,8 @@
 
 'use strict';
 
-const cli = require('yargs');
-
-cli
-  .options({
-    host: {
-      alias: 'h',
-      description: 'The host to listen on.',
-      global: true,
-      requiresArg: true,
-      type: 'string'
-    },
-    port: {
-      alias: 'p',
-      description: 'The port to listen on.',
-      global: true,
-      requiresArg: true,
-      type: 'number'
-    }
-  });
-
-module.exports = cli;
-
+exports.Service = require('./service');
+exports.GrpcService = require('./grpc-service');
+exports.RestService = require('./rest-service');
+exports.grpcService = (...args) => new exports.GrpcService(...args);
+exports.restService = (...args) => new exports.RestService(...args);

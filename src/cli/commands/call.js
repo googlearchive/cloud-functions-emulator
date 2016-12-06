@@ -18,7 +18,6 @@
 const fs = require('fs');
 
 const Controller = require('../controller');
-const utils = require('../utils');
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
@@ -36,6 +35,12 @@ exports.builder = {
     alias: 'f',
     description: 'A path to a JSON file to send to the function.',
     normalize: true,
+    requiresArg: true,
+    type: 'string'
+  },
+  region: {
+    default: 'us-central1',
+    description: 'The compute region (e.g. us-central1) to use.',
     requiresArg: true,
     type: 'string'
   }
@@ -66,15 +71,15 @@ exports.handler = (opts) => {
     throw new Error('You must specify a "data" or "file" option!');
   }
 
-  const contoller = new Controller(opts);
+  const controller = new Controller(opts);
 
-  return contoller.doIfRunning()
-    .then(() => contoller.call(opts.functionName, opts.data))
-    .then((response) => {
-      utils.writer.write('Function completed in:  ');
-      utils.writer.write((response.headers['x-response-time'] + '\n').green);
+  return controller.doIfRunning()
+    .then(() => controller.call(opts.functionName, opts.data))
+    .then(([body, response]) => {
+      controller.write('Function completed in:  ');
+      controller.write((response.headers['x-response-time'] + '\n').green);
 
-      utils.writer.log(response.body);
+      controller.log(body);
     })
-    .catch(utils.handleError);
+    .catch((err) => controller.handleError(err));
 };

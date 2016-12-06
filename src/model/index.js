@@ -15,25 +15,10 @@
 
 'use strict';
 
-const cli = require('yargs');
+const Functions = require('./functions');
 
-cli
-  .options({
-    host: {
-      alias: 'h',
-      description: 'The host to listen on.',
-      global: true,
-      requiresArg: true,
-      type: 'string'
-    },
-    port: {
-      alias: 'p',
-      description: 'The port to listen on.',
-      global: true,
-      requiresArg: true,
-      type: 'number'
-    }
-  });
-
-module.exports = cli;
-
+exports.CloudFunction = require('./cloudfunction');
+exports.Functions = Functions;
+exports.functions = (...args) => new Functions(...args);
+exports.Operation = require('./operation');
+exports.protos = require('./protos');

@@ -18,7 +18,6 @@
 const Controller = require('../controller');
 const start = require('./start').handler;
 const stop = require('./stop').handler;
-const utils = require('../utils');
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
@@ -51,5 +50,5 @@ exports.handler = (opts) => {
         return start(opts);
       }
     })
-    .catch(utils.handleError);
+    .catch((err) => controller.handleError(err));
 };

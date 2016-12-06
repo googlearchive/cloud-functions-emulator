@@ -15,25 +15,16 @@
 
 'use strict';
 
-const cli = require('yargs');
+const Model = require('../../src/model');
 
-cli
-  .options({
-    host: {
-      alias: 'h',
-      description: 'The host to listen on.',
-      global: true,
-      requiresArg: true,
-      type: 'string'
-    },
-    port: {
-      alias: 'p',
-      description: 'The port to listen on.',
-      global: true,
-      requiresArg: true,
-      type: 'number'
-    }
+describe('model', () => {
+  it('should export properties', () => {
+    assert.deepEqual(Object.keys(Model), [
+      'CloudFunction',
+      'Functions',
+      'functions',
+      'Operation',
+      'protos'
+    ]);
   });
-
-module.exports = cli;
-
+});

@@ -17,7 +17,6 @@
 
 const Controller = require('../controller');
 const list = require('./list').handler;
-const utils = require('../utils');
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
@@ -37,9 +36,9 @@ exports.handler = (opts) => {
   return controller.doIfRunning()
     .then(() => controller.clear())
     .then(() => {
-      utils.writer.write(controller.name);
-      utils.writer.write(' CLEARED\n'.green);
+      controller.write(controller.name);
+      controller.write(' CLEARED\n'.green);
     })
     .then(() => list(opts))
-    .catch(utils.handleError);
+    .catch((err) => controller.handleError(err));
 };

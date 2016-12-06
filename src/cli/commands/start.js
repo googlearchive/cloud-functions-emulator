@@ -17,14 +17,8 @@
 
 const Controller = require('../controller');
 const list = require('./list').handler;
-const utils = require('../utils');
 
-/**
- * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
- */
-exports.command = 'start';
-exports.describe = 'Starts the emulator.';
-exports.builder = {
+const options = exports.options = {
   debug: {
     alias: 'd',
     description: 'Start the emulator in debug mode.',
@@ -49,11 +43,32 @@ exports.builder = {
     requiresArg: true,
     type: 'string'
   },
+  serviceMode: {
+    alias: 's',
+    description: 'Service mode. Choices are "rest" or "grpc".',
+    requiresArg: true,
+    type: 'string'
+  },
   projectId: {
     alias: 'P',
     description: 'Your Google Cloud Platform project ID.',
     requiresArg: true,
     type: 'string'
+  },
+  runSupervisor: {
+    description: 'Whether to run the Supervisor as part of the Emulator.',
+    requiresArg: false,
+    type: 'boolean'
+  },
+  supervisorHost: {
+    description: 'The host the Supervisor should run on.',
+    requiresArg: true,
+    type: 'string'
+  },
+  supervisorPort: {
+    description: 'The port the Supervisor should run on.',
+    requiresArg: true,
+    type: 'number'
   },
   timeout: {
     alias: 't',
@@ -76,6 +91,21 @@ exports.builder = {
 };
 
 /**
+ * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
+ */
+exports.command = 'start';
+exports.describe = 'Starts the emulator.';
+exports.builder = (yargs) => {
+  yargs.options(options);
+
+  for (let key in options) {
+    if (options[key].type === 'boolean') {
+      yargs.default(key, undefined);
+    }
+  }
+};
+
+/**
  * Handler for the "start" command.
  *
  * @param {object} opts Configuration options.
@@ -89,20 +119,18 @@ exports.handler = (opts) => {
   return controller.status()
     .then((status) => {
       if (status.state === controller.STATE.RUNNING) {
-        utils.writer.write(controller.name);
-        utils.writer.write(' RUNNING\n'.cyan);
+        controller.write(controller.name);
+        controller.write(' RUNNING\n'.cyan);
         return;
       }
 
-      utils.writer.log(`Starting ${controller.name}...`);
+      controller.log(`Starting ${controller.name}...`);
       return controller.start()
         .then(() => {
-          utils.writer.write(controller.name);
-          utils.writer.write(' STARTED\n'.green);
+          controller.write(controller.name);
+          controller.write(' STARTED\n'.green);
         });
     })
     .then(() => list(opts))
-    .catch((err) => {
-      utils.writer.error(err);
-    });
+    .catch((err) => controller.handleError(err));
 };

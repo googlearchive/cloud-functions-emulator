@@ -18,7 +18,6 @@
 const Table = require('cli-table2');
 
 const Controller = require('../../controller');
-const utils = require('../../utils');
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
@@ -35,7 +34,7 @@ exports.builder = {
 };
 
 /**
- * Handler for the "list" command.
+ * Handler for the "config list" command.
  */
 exports.handler = (opts) => {
   const controller = new Controller(opts);
@@ -43,9 +42,9 @@ exports.handler = (opts) => {
   const path = controller._config.path;
 
   if (opts.json) {
-    utils.writer.log(JSON.stringify(config, null, 2));
+    controller.log(JSON.stringify(config, null, 2));
   } else {
-    utils.writer.log('Config file: ' + path.green);
+    controller.log(`Config file: ${path.green}`);
 
     const table = new Table({
       head: ['Key'.cyan, 'Value'.cyan],
@@ -57,12 +56,9 @@ exports.handler = (opts) => {
     for (let key in config) {
       value = config[key];
 
-      table.push([
-        key.white,
-        `${value}`.white
-      ]);
+      table.push([key.white, `${value}`.white]);
     }
 
-    utils.writer.log(table.toString());
+    controller.log(table.toString());
   }
 };

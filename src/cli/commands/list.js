@@ -19,7 +19,6 @@ const fs = require('fs');
 const Table = require('cli-table2');
 
 const Controller = require('../controller');
-const utils = require('../utils');
 
 function pathExists (p) {
   try {
@@ -35,7 +34,14 @@ function pathExists (p) {
  */
 exports.command = 'list';
 exports.describe = 'Lists deployed functions.';
-exports.builder = {};
+exports.builder = {
+  region: {
+    default: 'us-central1',
+    description: 'The compute region (e.g. us-central1) to use.',
+    requiresArg: true,
+    type: 'string'
+  }
+};
 
 /**
  * Handler for the "list" command.
@@ -47,44 +53,57 @@ exports.handler = (opts) => {
 
   return controller.doIfRunning()
     .then(() => controller.list())
-    .then((functions) => {
+    .then((cloudfunctions) => {
       const table = new Table({
-        head: ['Name'.cyan, 'Type'.cyan, 'Path'.cyan],
-        colWidths: [15, 12, 52]
+        head: ['Name'.cyan, 'Trigger'.cyan, 'URL/Topic/Bucket'.cyan],
+        colWidths: [16, 16, 88] // 120 total
       });
 
-      let type, path;
-      let count = 0;
+      cloudfunctions.forEach((cloudfunction) => {
+        let trigger;
+        if (cloudfunction.httpsTrigger) {
+          trigger = 'HTTP';
+        } else if (cloudfunction.pubsubTrigger) {
+          trigger = 'Topic';
+        } else if (cloudfunction.gcsTrigger) {
+          trigger = 'Bucket';
+        } else {
+          trigger = 'Unknown';
+        }
+        let triggerPath;
+        if (cloudfunction.httpsTrigger) {
+          triggerPath = cloudfunction.httpsTrigger.url || 'Unknown';
+        } else if (cloudfunction.pubsubTrigger) {
+          triggerPath = cloudfunction.pubsubTrigger || 'Unknown';
+        } else if (cloudfunction.gcsTrigger) {
+          triggerPath = cloudfunction.gcsTrigger || 'Unknown';
+        } else {
+          triggerPath = 'Unknown';
+        }
 
-      for (let func in functions) {
-        type = functions[func].type;
-        path = functions[func].path;
-
-        if (pathExists(path)) {
+        if (pathExists(cloudfunction.gcsUrl)) {
           table.push([
-            func.white,
-            type.white,
-            path.white
+            cloudfunction.shortName.white,
+            trigger.white,
+            triggerPath.white
           ]);
         } else {
           table.push([
-            func.white,
-            type.white,
-            path.red
+            cloudfunction.shortName.white,
+            trigger.white,
+            triggerPath.red
           ]);
         }
+      });
 
-        count++;
-      }
-
-      if (count === 0) {
+      if (cloudfunctions.length === 0) {
         table.push([{
           colSpan: 3,
-          content: 'No functions deployed ¯\\_(ツ)_/¯.  Run "functions deploy" to deploy a function'.gray
+          content: 'No functions deployed ¯\\_(ツ)_/¯.  Run "functions deploy" to deploy a function.'.white
         }]);
       }
 
-      utils.writer.log(table.toString());
+      controller.log(table.toString());
     })
-    .catch(utils.handleError);
+    .catch((err) => controller.handleError(err));
 };

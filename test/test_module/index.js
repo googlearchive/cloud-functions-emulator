@@ -14,21 +14,44 @@
  */
 
 module.exports = {
-  hello: function (event, callback) {
-    callback(null, 'Hello World');
+  hello (event, callback) {
+    console.log('first stdout');
+    setTimeout(() => {
+      console.error('second stderr');
+    }, 50);
+    setTimeout(() => {
+      callback(null, 'Hello World');
+      console.log('late stdout');
+    }, 100);
   },
-  helloData: function (event, callback) {
+  helloData (event, callback) {
     callback(null, event.data['foo']);
   },
-  helloPromise: function (event) {
+  helloPromise (event) {
     return event.data['foo'];
   },
-  helloJSON: function (event, callback) {
+  helloJSON (event, callback) {
     callback(null, {
       message: 'Hello World'
     });
   },
-  helloThrow: function (event, callback) {
+  helloGET (req, res) {
+    res.send({
+      method: req.method,
+      headers: req.headers
+    }).end();
+  },
+  helloPOST (req, res) {
+    res.send({
+      method: req.method,
+      headers: req.headers,
+      body: req.body
+    }).end();
+  },
+  helloThrow (event, callback) {
     throw new Error('uncaught exception!');
+  },
+  helloReject (event, callback) {
+    return Promise.reject(new Error('uncaught exception!'));
   }
 };

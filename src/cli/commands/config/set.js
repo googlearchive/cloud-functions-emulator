@@ -16,7 +16,6 @@
 'use strict';
 
 const Controller = require('../../controller');
-const utils = require('../../utils');
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
@@ -26,14 +25,18 @@ exports.describe = 'Set the value for a specific configuration property.';
 exports.builder = {};
 
 /**
- * Handler for the "set" command.
+ * Handler for the "config set" command.
  */
 exports.handler = (opts) => {
   const controller = new Controller(opts);
   const config = controller._config;
 
-  config.set(opts.key, JSON.parse(opts.value));
+  try {
+    config.set(opts.key, JSON.parse(opts.value));
+  } catch (err) {
+    config.set(opts.key, opts.value);
+  }
 
-  utils.writer.log(`${opts.key.cyan} set to: ` + JSON.stringify(opts.value).green);
-  utils.writer.log('\nYou must restart the emulator for changes to take effect...');
+  controller.log(`${opts.key.cyan} set to: ${JSON.stringify(opts.value).green}`);
+  controller.log('\nYou must restart the emulator for changes to take effect...');
 };

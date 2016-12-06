@@ -16,7 +16,6 @@
 'use strict';
 
 const Controller = require('../controller');
-const utils = require('../utils');
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
@@ -42,12 +41,12 @@ exports.handler = (opts) => {
 
   return controller.doIfRunning()
     .then(() => {
-      utils.writer.log(`Stopping ${controller.name}...`);
+      controller.log(`Stopping ${controller.name}...`);
       return controller.stop();
     })
     .then(() => {
-      utils.writer.write(controller.name);
-      utils.writer.write(' STOPPED\n'.red);
+      controller.write(controller.name);
+      controller.write(' STOPPED\n'.red);
     })
-    .catch(utils.handleError);
+    .catch((err) => controller.handleError(err));
 };

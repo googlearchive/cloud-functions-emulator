@@ -15,15 +15,23 @@
 
 'use strict';
 
+const Table = require('cli-table2');
+
 const Controller = require('../controller');
-const utils = require('../utils');
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
 exports.command = 'describe <functionName>';
 exports.describe = 'Describes the details of a single deployed function.';
-exports.builder = {};
+exports.builder = {
+  region: {
+    default: 'us-central1',
+    description: 'The compute region (e.g. us-central1) to use.',
+    requiresArg: true,
+    type: 'string'
+  }
+};
 
 /**
  * Handler for the "describe" command.
@@ -36,6 +44,38 @@ exports.handler = (opts) => {
 
   return controller.doIfRunning()
     .then(() => controller.describe(opts.functionName))
-    .then(utils.printDescribe)
-    .catch(utils.handleError);
+    .then((cloudfunction) => {
+      const table = new Table({
+        head: ['Property'.cyan, 'Value'.cyan],
+        colWidths: [16, 104] // 120 total
+      });
+
+      let trigger;
+      if (cloudfunction.httpsTrigger) {
+        trigger = 'HTTP';
+      } else if (cloudfunction.pubsubTrigger) {
+        trigger = 'Topic';
+      } else if (cloudfunction.gcsTrigger) {
+        trigger = 'Bucket';
+      } else {
+        trigger = 'Unknown';
+      }
+
+      table.push(['Name', cloudfunction.name.white]);
+      table.push(['Trigger', trigger.white]);
+      if (cloudfunction.httpsTrigger && cloudfunction.httpsTrigger.url) {
+        table.push(['Url', cloudfunction.httpsTrigger.url.white]);
+      } else if (cloudfunction.pubsubTrigger) {
+        table.push(['Topic', cloudfunction.pubsubTrigger.white]);
+      } else if (cloudfunction.gcsTrigger) {
+        table.push(['Bucket', cloudfunction.gcsTrigger.white]);
+      }
+      if (cloudfunction.localPath) {
+        table.push(['Local path', cloudfunction.localPath.white]);
+      }
+      table.push(['Archive', cloudfunction.gcsUrl.white]);
+
+      controller.log(table.toString());
+    })
+    .catch((err) => controller.handleError(err));
 };

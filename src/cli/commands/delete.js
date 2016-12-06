@@ -17,14 +17,20 @@
 
 const Controller = require('../controller');
 const list = require('./list').handler;
-const utils = require('../utils');
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
 exports.command = 'delete <functionName>';
 exports.describe = 'Undeploys a previously deployed function (does NOT delete the function source code).';
-exports.builder = {};
+exports.builder = {
+  region: {
+    default: 'us-central1',
+    description: 'The compute region (e.g. us-central1) to use.',
+    requiresArg: true,
+    type: 'string'
+  }
+};
 
 /**
  * Handler for the "delete" command.
@@ -38,8 +44,8 @@ exports.handler = (opts) => {
   return controller.doIfRunning()
     .then(() => controller.undeploy(opts.functionName))
     .then(() => {
-      utils.writer.log(`Function ${opts.functionName} deleted.`.green);
+      controller.log(`Function ${opts.functionName} deleted.`.green);
       list(opts);
     })
-    .catch(utils.handleError);
+    .catch((err) => controller.handleError(err));
 };

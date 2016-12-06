@@ -15,25 +15,11 @@
 
 'use strict';
 
-const cli = require('yargs');
+class Client {
+  constructor (functions, opts) {
+    this.functions = functions;
+    this.config = opts;
+  }
+}
 
-cli
-  .options({
-    host: {
-      alias: 'h',
-      description: 'The host to listen on.',
-      global: true,
-      requiresArg: true,
-      type: 'string'
-    },
-    port: {
-      alias: 'p',
-      description: 'The port to listen on.',
-      global: true,
-      requiresArg: true,
-      type: 'number'
-    }
-  });
-
-module.exports = cli;
-
+module.exports = Client;

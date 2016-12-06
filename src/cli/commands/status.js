@@ -15,8 +15,9 @@
 
 'use strict';
 
+const Table = require('cli-table2');
+
 const Controller = require('../controller');
-const utils = require('../utils');
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
@@ -35,25 +36,55 @@ exports.handler = (opts) => {
 
   return controller.status()
     .then((status) => {
-      utils.writer.write(`${controller.name}`);
+      const table = new Table({
+        head: [{ colSpan: 2, content: controller.name.cyan }],
+        colWidths: [16]
+      });
 
       if (status.state === controller.STATE.RUNNING) {
-        utils.writer.write(' is ');
-        utils.writer.write('RUNNING'.green);
-        utils.writer.write(` on port ${status.metadata.port}`);
+        let time = Math.floor((Date.now() - status.metadata.started) / (1000));
+        if (time > (60 * 60)) {
+          time = `${Math.floor(time / (60 * 60))} hour(s)`;
+        } else if (time > 60) {
+          time = `${Math.floor(time / 60)} minute(s)`;
+        } else {
+          time = `${Math.floor(time)} seconds`;
+        }
 
-        if (status.metadata) {
-          if (status.metadata.inspect && (status.metadata.inspect === 'true' || status.metadata.inspect === true)) {
-            utils.writer.write(', with ' + 'INSPECT'.yellow + ' enabled on port ' + (opts.debugPort || 9229));
-          } else if (status.metadata.debug && (status.metadata.debug === 'true' || status.metadata.debug === true)) {
-            utils.writer.write(', with ' + 'DEBUG'.yellow + ' enabled on port ' + (opts.debugPort || 5858));
+        table.push(['Status'.white, 'RUNNING'.green]);
+        table.push(['Uptime'.white, time]);
+        table.push(['Host'.white, `http://${status.metadata.host}:${status.metadata.port}/`]);
+        table.push(['Log file'.white, status.metadata.logFile]);
+        table.push(['Service mode'.white, status.metadata.serviceMode]);
+
+        if (status.metadata.inspect && (status.metadata.inspect === 'true' || status.metadata.inspect === true)) {
+          table.push(['Debug port (--inspect)'.white, status.metadata.debugPort]);
+        } else if (status.metadata.debug && (status.metadata.debug === 'true' || status.metadata.debug === true)) {
+          table.push(['Debug port (--debug)'.white, status.metadata.debugPort]);
+        }
+      } else {
+        let time;
+        if (status.metadata.stopped) {
+          time = Math.floor((Date.now() - status.metadata.stopped) / (1000));
+          if (time > (60 * 60)) {
+            time = `${Math.floor(time / (60 * 60))} hour(s)`;
+          } else if (time > 60) {
+            time = `${Math.floor(time / 60)} minute(s)`;
+          } else {
+            time = `${Math.floor(time)} second(s)`;
           }
         }
 
-        utils.writer.write('\n');
-      } else {
-        utils.writer.write(' STOPPED\n'.yellow);
+        table.push(['Status'.white, 'STOPPED'.yellow]);
+        if (time) {
+          table.push(['Last up'.white, `${time.yellow} ago`]);
+        }
+        if (status.metadata.logFile) {
+          table.push(['Last log file'.white, status.metadata.logFile]);
+        }
       }
+
+      controller.log(table.toString());
     })
-    .catch(utils.handleError);
+    .catch((err) => controller.handleError(err));
 };
