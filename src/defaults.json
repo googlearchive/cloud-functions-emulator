@@ -1,0 +1,11 @@
+{
+  "debug": false,
+  "debugPort": 5858,
+  "host": "localhost",
+  "inspect": false,
+  "logFile": "logs/cloud-functions-emulator.log",
+  "port": 8008,
+  "timeout": 3000,
+  "useMocks": false,
+  "verbose": false
+}

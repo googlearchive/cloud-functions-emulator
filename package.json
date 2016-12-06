@@ -1,12 +1,13 @@
 {
   "name": "@google-cloud/functions-emulator",
   "description": "Google Cloud Functions Emulator",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "license": "Apache-2.0",
   "author": "Google Inc.",
   "engines": {
     "node": "6.9.1"
   },
+  "main": "src/emulator/index.js",
   "bin": {
     "functions": "./bin/functions"
   },
@@ -31,10 +32,12 @@
     "globals": [
       "after",
       "afterEach",
+      "assert",
       "before",
       "beforeEach",
       "describe",
-      "it"
+      "it",
+      "sinon"
     ],
     "ignore": [
       "**/node_modules/**",
@@ -44,33 +47,34 @@
   },
   "scripts": {
     "lint": "semistandard \"**/*.js\"",
-    "mocha": "mocha test/ --recursive -t 20000 -R dot",
-    "mocha-debug": "mocha debug test/ --recursive -t 20000 -R dot",
-    "cover": "nyc --cache mocha test/ --recursive -t 20000 -R dot && nyc report --reporter=html",
+    "mocha": "mocha test/_setup test/ --recursive -t 5000 -R dot",
+    "mocha-debug": "mocha debug test/_setup test/ --recursive -t 5000 -R dot",
+    "cover": "nyc --cache mocha test/_setup test/ --recursive -t 5000 -R dot && nyc report --reporter=html",
     "test": "npm run lint && npm run cover",
-    "format": "semistandard-format -w"
+    "format": "semistandard-format -w",
+    "start": "node ."
   },
   "dependencies": {
-    "body-parser": "^1.15.2",
-    "cli-table2": "^0.2.0",
-    "colors": "^1.1.2",
-    "connect-timeout": "^1.7.0",
-    "express": "^4.14.0",
-    "jsonfile": "^2.4.0",
-    "request": "^2.75.0",
-    "response-time": "^2.3.1",
-    "winston": "^2.2.0",
-    "yargs": "^6.0.0"
+    "body-parser": "1.15.2",
+    "cli-table2": "0.2.0",
+    "colors": "1.1.2",
+    "configstore": "^2.1.0",
+    "express": "4.14.0",
+    "got": "^6.6.3",
+    "lodash.merge": "^4.6.0",
+    "response-time": "2.3.2",
+    "winston": "2.3.0",
+    "yargs": "6.4.0"
   },
   "devDependencies": {
-    "chai": "^3.5.0",
-    "istanbul": "^0.4.5",
-    "mocha": "^3.1.0",
-    "nyc": "^8.3.2",
-    "proxyquire": "^1.7.10",
-    "semistandard": "^9.0.0",
-    "semistandard-format": "^3.0.0",
-    "sinon": "^1.17.6"
+    "istanbul": "0.4.5",
+    "mocha": "3.2.0",
+    "nyc": "10.0.0",
+    "power-assert": "1.4.2",
+    "proxyquire": "1.7.10",
+    "semistandard": "9.1.0",
+    "semistandard-format": "3.0.0",
+    "sinon": "1.17.6"
   },
   "repository": {
     "type": "git",
