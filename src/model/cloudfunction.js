@@ -20,9 +20,9 @@ const merge = require('lodash.merge');
 
 const protos = require('./protos');
 
-const LOCATION_REG_EXP = /^projects\/([\-\w]+)\/locations\/([\-\w]+)$/;
-const NAME_REG_EXP = /^projects\/([\-\w]+)\/locations\/([\-\w]+)\/functions\/([A-Za-z][A-Za-z0-9\-]*)$/;
-const SHORT_NAME_REG_EXP = /^[A-Za-z][A-Za-z0-9\-]*$/;
+const LOCATION_REG_EXP = /^projects\/([-\w]+)\/locations\/([-\w]+)$/;
+const NAME_REG_EXP = /^projects\/([-\w]+)\/locations\/([-\w]+)\/functions\/([A-Za-z][-A-Za-z0-9]*)$/;
+const SHORT_NAME_REG_EXP = /^[A-Za-z][-A-Za-z0-9]*$/;
 
 /**
  * The CloudFunction class is an abstraction around objects of type

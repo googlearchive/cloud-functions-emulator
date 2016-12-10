@@ -47,9 +47,9 @@
   },
   "scripts": {
     "lint": "semistandard \"**/*.js\"",
-    "mocha": "mocha test/_setup test/ --recursive -t 5000 -R spec",
-    "mocha-debug": "mocha debug test/_setup test/ --recursive -t 5000 -R spec",
-    "cover": "nyc --cache mocha test/_setup test/ --recursive -t 5000 -R spec && nyc report --reporter=html",
+    "mocha": "mocha test/_setup test/ --recursive -t 10000 -R spec",
+    "mocha-debug": "mocha debug test/_setup test/ --recursive -t 10000 -R spec",
+    "cover": "nyc --cache mocha test/_setup test/ --recursive -t 10000 -R spec && nyc report --reporter=html",
     "test": "npm run lint && npm run cover",
     "format": "semistandard-format -w",
     "start": "node .",

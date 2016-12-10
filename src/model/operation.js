@@ -21,7 +21,7 @@ const uuid = require('uuid');
 
 const protos = require('./protos');
 
-const NAME_REG_EXP = /^operations\/([A-Za-z0-9\-]+)$/;
+const NAME_REG_EXP = /^operations\/([-A-Za-z0-9]+)$/;
 
 /**
  * The Operation class is an abstraction around objects of type
