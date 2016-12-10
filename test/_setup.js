@@ -24,3 +24,12 @@ const sinon = require('sinon');
 
 global.assert = assert;
 global.sinon = sinon;
+global.assert.errorType = (err, code, message, details = []) => {
+  assert(err.code === code);
+  assert(err.message === message);
+  assert((err.details || []).length === details.length);
+  details.forEach((detail, i) => {
+    assert(err.details[i]);
+    assert(err.details[i].typeUrl.includes(detail));
+  });
+};

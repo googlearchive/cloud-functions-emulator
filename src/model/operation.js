@@ -85,16 +85,6 @@ class Operation {
   }
 
   /**
-   * Generates a new Operation name.
-   *
-   * @method Operation.generateId
-   * @returns {string} The auto-generated Operation name.
-   */
-  static generateId () {
-    return `operations/${uuid.v4()}`;
-  }
-
-  /**
    * Decodes an Operation message.
    *
    * @method Operation.decode
@@ -138,6 +128,16 @@ class Operation {
     }
 
     return operation;
+  }
+
+  /**
+   * Generates a new Operation name.
+   *
+   * @method Operation.generateId
+   * @returns {string} The auto-generated Operation name.
+   */
+  static generateId () {
+    return `operations/${uuid.v4()}`;
   }
 
   /**

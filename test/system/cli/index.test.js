@@ -18,18 +18,18 @@
 const Configstore = require('configstore');
 const path = require('path');
 
-const pkg = require('../../package.json');
+const pkg = require('../../../package.json');
 const run = require('./utils').run;
 
 const cmd = 'node bin/functions';
-const cwd = path.join(__dirname, '../..');
+const cwd = path.join(__dirname, '../../..');
 const name = 'hello';
 const operations = new Configstore(path.join(pkg.name, '.operations'));
 const prefix = 'Google Cloud Functions Emulator';
 
 const args = `--serviceMode rest --host localhost --port 8008 --debug false --inspect false --runSupervisor true --supervisorHost localhost --supervisorPort 8009`;
 
-describe('cli', () => {
+describe('system/cli', () => {
   before(() => {
     // Clear all Operations data
     operations.clear();

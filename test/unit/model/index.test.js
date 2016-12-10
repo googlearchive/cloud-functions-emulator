@@ -15,10 +15,10 @@
 
 'use strict';
 
-const Model = require('../../src/model');
+const Model = require('../../../src/model');
 
-describe('model', () => {
-  it('should export properties', () => {
+describe('unit/model', () => {
+  it('should export correct properties', () => {
     assert.deepEqual(Object.keys(Model), [
       'CloudFunction',
       'Functions',
