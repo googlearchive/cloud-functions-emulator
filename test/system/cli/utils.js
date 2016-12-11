@@ -15,7 +15,7 @@
 
 'use strict';
 
-const execSync = require('child_process').execSync;
+const execSync = require(`child_process`).execSync;
 
 exports.run = (cmd, cwd) => {
   return execSync(cmd, { cwd }).toString().trim();

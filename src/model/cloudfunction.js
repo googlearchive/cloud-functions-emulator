@@ -38,10 +38,20 @@ const SHORT_NAME_REG_EXP = /^[A-Za-z][-A-Za-z0-9]*$/;
  * @returns {CloudFunction}
  */
 class CloudFunction {
-  constructor (name, props = {}) {
-    const matches = name.match(NAME_REG_EXP) || [];
-    const shortName = matches[3];
+  constructor (name = '', props = {}) {
+    let matches, shortName;
+    if (name && name.match) {
+      matches = name.match(NAME_REG_EXP) || [];
+      shortName = matches[3];
+    }
+
     if (!shortName || typeof shortName !== 'string' || shortName.length > 63 || !CloudFunction.SHORT_NAME_REG_EXP.test(shortName)) {
+      if (typeof name === 'string' && !shortName) {
+        shortName = name.split('/').pop();
+      }
+      if (!shortName) {
+        shortName = name;
+      }
       const message = `Invalid value '${shortName}': Function name must contain only lower case Latin letters, digits and a hyphen (-). It must start with letter, must not end with a hyphen, and must be at most 63 characters long.`;
       const err = new Error(message);
       err.code = grpc.status.INVALID_ARGUMENT;
@@ -109,16 +119,6 @@ class CloudFunction {
   }
 
   /**
-   * The CloudFunction's short name.
-   *
-   * @property CloudFunction#shortName
-   * @type {string}
-   */
-  get shortName () {
-    return this.name.match(CloudFunction.NAME_REG_EXP)[3];
-  }
-
-  /**
    * Decodes a CloudFunction message.
    *
    * @method CloudFunction.decode
@@ -129,14 +129,20 @@ class CloudFunction {
     // Decode the top-level CloudFunction message fields
     cloudfunction = protos.decode(cloudfunction, protos.CloudFunction);
 
+    // TODO: Verify "oneOf" property of the trigger type fields
+    // TODO: Verify "oneOf" property of function source
+
     return cloudfunction;
   }
 
-  setTimeout (timeout) {
-    if (!timeout || typeof timeout !== 'string') {
-      throw new Error('"timeout" must be a Google Duration string!');
-    }
-    this.timeout = timeout;
+  /**
+   * The CloudFunction's short name.
+   *
+   * @property CloudFunction#shortName
+   * @type {string}
+   */
+  get shortName () {
+    return this.name.match(CloudFunction.NAME_REG_EXP)[3];
   }
 
   setGcsUrl (gcsUrl) {
@@ -144,6 +150,13 @@ class CloudFunction {
       throw new Error('"gcsUrl" must be a non-empty string!');
     }
     this.gcsUrl = gcsUrl;
+  }
+
+  setTimeout (timeout) {
+    if (!timeout || typeof timeout !== 'string') {
+      throw new Error('"timeout" must be a Google Duration string!');
+    }
+    this.timeout = timeout;
   }
 
   /**

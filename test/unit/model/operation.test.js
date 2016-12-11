@@ -16,6 +16,7 @@
 'use strict';
 
 const clone = require('lodash.clonedeep');
+const grpc = require('grpc');
 const merge = require('lodash.merge');
 const proxyquire = require('proxyquire');
 
@@ -25,9 +26,6 @@ describe('unit/model/operation', () => {
 
   beforeEach(() => {
     mocks = {
-      grpc: {
-
-      },
       protos: {
         decode: (arg1) => clone(arg1),
         decodeAnyType: sinon.stub(),
@@ -37,7 +35,6 @@ describe('unit/model/operation', () => {
     sinon.spy(mocks.protos, 'decode');
 
     Operation = proxyquire('../../../src/model/operation', {
-      grpc: mocks.grpc,
       './protos': mocks.protos
     });
   });
@@ -73,7 +70,7 @@ describe('unit/model/operation', () => {
           assert(err.message === message);
           assert.errorType(
             err,
-            mocks.grpc.status.INVALID_ARGUMENT,
+            grpc.status.INVALID_ARGUMENT,
             message,
             [
               'BadRequest',
@@ -193,7 +190,7 @@ describe('unit/model/operation', () => {
           assert(err.message === message);
           assert.errorType(
             err,
-            mocks.grpc.status.INVALID_ARGUMENT,
+            grpc.status.INVALID_ARGUMENT,
             message,
             [
               'BadRequest'
