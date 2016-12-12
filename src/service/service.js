@@ -15,33 +15,21 @@
 
 'use strict';
 
-const merge = require('lodash.merge');
-
-const Model = require('../model');
-const Supervisor = require('../supervisor');
+const _ = require('lodash');
 
 class Service {
-  constructor (opts) {
-    this.config = opts;
-    this.functions = Model.functions(opts);
-    this.supervisor = Supervisor.supervisor(merge({}, opts, {
-      host: opts.host,
-      port: opts.supervisorPort,
-      functions: this.functions
-    }));
+  constructor (functions, supervisor, config) {
+    this.functions = functions;
+    this.supervisor = supervisor;
+    this.config = _.cloneDeep(config);
   }
 
   start () {
-    if (this.config.runSupervisor) {
-      this.supervisor.start();
-    }
-    console.debug(`Starting service at ${this.config.host}:${this.config.port}...`);
+    console.debug(`Starting ${this.type} service at ${this.config.host}:${this.config.port}...`);
   }
 
   stop () {
-    if (this.config.runSupervisor) {
-      this.supervisor.stop();
-    }
+    console.debug(`${this.type} service stopped.`);
   }
 }
 

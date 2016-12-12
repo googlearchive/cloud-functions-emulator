@@ -15,29 +15,24 @@
 
 'use strict';
 
+const _ = require('lodash');
 const bodyParser = require('body-parser');
 const express = require('express');
 const fork = require('child_process').fork;
-const grpc = require('grpc');
 const http = require('http');
-const merge = require('lodash.merge');
 const path = require('path');
 const uuid = require('uuid');
 
+const errors = require('../utils/errors');
 const Model = require('../model');
 const worker = require('./worker');
 
+const { CloudFunction } = Model;
+
 class Supervisor {
-  constructor (opts, functions) {
-    this.config = opts;
-
+  constructor (functions, opts) {
     this.functions = functions;
-
-    if (this.functions) {
-      delete this.config.functions;
-    } else {
-      this.functions = Model.functions(this.config);
-    }
+    this.config = _.cloneDeep(opts);
 
     this.server = express();
     this.server.use(bodyParser.json());
@@ -75,7 +70,7 @@ class Supervisor {
         res.status(500).send(err.stack).end();
       } else if (typeof err === 'object') {
         if (err.code) {
-          if (err.code === grpc.status.FAILED_PRECONDITION) {
+          if (err.code === errors.status.FAILED_PRECONDITION) {
             res.status(400).json({
               error: {
                 code: 400,
@@ -84,7 +79,7 @@ class Supervisor {
                 errors: [err.message || http.STATUS_CODES['400']]
               }
             }).end();
-          } else if (err.code === grpc.status.NOT_FOUND) {
+          } else if (err.code === errors.status.NOT_FOUND) {
             res.status(404).json({
               error: {
                 code: 404,
@@ -116,7 +111,7 @@ class Supervisor {
 
   handleRequest (req, res) {
     return Promise.resolve()
-      .then(() => this.functions.getFunction(Model.Functions.formatName(req.params.project, req.params.location, req.params.name)))
+      .then(() => this.functions.getFunction(CloudFunction.formatName(req.params.project, req.params.location, req.params.name)))
       .then((cloudfunction) => {
         const context = {
           method: req.method,
@@ -146,12 +141,12 @@ class Supervisor {
    * Invokes a function.
    */
   invoke (cloudfunction, data, context = {}, opts = {}) {
-    if (opts.isolation === 'inprocess') {
+    if (this.config.isolation === 'inprocess') {
       return this.invokeInline(cloudfunction, data, context, opts);
-    } else if (opts.isolation === 'childprocess') {
+    } else if (this.config.isolation === 'childprocess') {
       return this.invokeSecure(cloudfunction, data, context, opts);
     } else {
-      throw new Error(`Isolation model "${opts.isolation}" not supported!`);
+      throw new Error(`Isolation model "${this.config.isolation}" not supported!`);
     }
   }
 
@@ -187,9 +182,7 @@ class Supervisor {
    */
   invokeSecure (cloudfunction, data, context = {}, opts = {}) {
     return new Promise((resolve, reject) => {
-      context.inspect = opts.inspect;
-      context.debug = opts.debug;
-      context.originalUrl = `/${opts.projectId}/${opts.region}/${cloudfunction.shortName}`;
+      context.originalUrl = `/${this.config.projectId}/${this.config.region}/${cloudfunction.shortName}`;
       context.headers = {};
 
       // Prepare an execution event
@@ -220,10 +213,10 @@ class Supervisor {
 
       let execArgv = [];
 
-      if (opts.inspect) {
-        execArgv = ['--inspect', '--debug-brk'];
-      } else if (opts.debug) {
-        execArgv = ['--debug', '--debug-brk'];
+      if (this.config.inspect) {
+        execArgv = [`--inspect=${this.config.inspectPort}`, '--debug-brk'];
+      } else if (this.config.debug) {
+        execArgv = [`--debug=${this.config.debugPort}`, '--debug-brk'];
       }
 
       console.log(`Function execution started: ${event.eventId}`);
@@ -233,9 +226,9 @@ class Supervisor {
         // Execute the process in the context of the user's code
         cwd: cloudfunction.localPath,
         // Emulate the environment variables of the production service
-        env: merge({}, process.env, {
+        env: _.merge({}, process.env, {
           FUNCTION_NAME: cloudfunction.shortName,
-          GCLOUD_PROJECT: opts.projectId
+          GCLOUD_PROJECT: this.config.projectId
         }),
         // Optionally prepare to debug the child process
         execArgv,

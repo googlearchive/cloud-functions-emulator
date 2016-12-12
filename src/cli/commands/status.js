@@ -53,9 +53,9 @@ exports.handler = (opts) => {
 
         table.push(['Status'.white, 'RUNNING'.green]);
         table.push(['Uptime'.white, time]);
-        table.push(['Host'.white, `http://${status.metadata.host}:${status.metadata.port}/`]);
+        table.push(['Rest Service'.white, `http://${status.metadata.restHost}:${status.metadata.restPort}/`]);
+        table.push(['gRPC Service'.white, `http://${status.metadata.grpcHost}:${status.metadata.grpcPort}/`]);
         table.push(['Log file'.white, status.metadata.logFile]);
-        table.push(['Service mode'.white, status.metadata.serviceMode]);
 
         if (status.metadata.inspect && (status.metadata.inspect === 'true' || status.metadata.inspect === true)) {
           table.push(['Debug port (--inspect)'.white, status.metadata.debugPort]);

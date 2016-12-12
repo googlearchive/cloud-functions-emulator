@@ -19,15 +19,17 @@ const bodyParser = require('body-parser');
 const Configstore = require('configstore');
 const express = require('express');
 const got = require('got');
-const grpc = require('grpc');
 const http = require('http');
 const path = require('path');
 const responseTime = require('response-time');
 const url = require('url');
 
-const Functions = require('../model').Functions;
+const errors = require('../utils/errors');
+const Model = require('../model');
 const pkg = require('../../package.json');
 const Service = require('./service');
+
+const { CloudFunction, Operation } = Model;
 
 // TODO: Support more than one version.
 const API_VERSION = 'v1beta2';
@@ -37,6 +39,7 @@ class RestService extends Service {
   constructor (...args) {
     super(...args);
 
+    this.type = 'REST';
     this._discovery = new Configstore(path.join(pkg.name, '/.discovery'));
 
     // Standard ExpressJS app. Where possible this should mimic the *actual*
@@ -90,7 +93,7 @@ class RestService extends Service {
         (req, res, next) => this.getOperation(req, res).catch(next)
       )
       .all('*', (req, res, next) => {
-        next({ code: grpc.status.NOT_FOUND });
+        next({ code: errors.status.NOT_FOUND });
       });
 
     // Define error handlers last
@@ -107,7 +110,7 @@ class RestService extends Service {
         res.status(500).send(err.stack).end();
       } else if (typeof err === 'object') {
         if (err.code) {
-          if (err.code === grpc.status.FAILED_PRECONDITION) {
+          if (err.code === errors.status.FAILED_PRECONDITION) {
             res.status(400).json({
               error: {
                 code: 400,
@@ -116,7 +119,7 @@ class RestService extends Service {
                 errors: [err.message || http.STATUS_CODES['400']]
               }
             }).end();
-          } else if (err.code === grpc.status.NOT_FOUND) {
+          } else if (err.code === errors.status.NOT_FOUND) {
             res.status(404).json({
               error: {
                 code: 404,
@@ -150,8 +153,9 @@ class RestService extends Service {
    *
    */
   callFunction (req, res) {
-    const name = Functions.formatName(req.params.project, req.params.location, req.params.name);
-    return this.functions.callFunction(name, req.body.data)
+    const name = CloudFunction.formatName(req.params.project, req.params.location, req.params.name);
+    return this.functions.getFunction(name)
+      .then((cloudfunction) => this.supervisor.invoke(cloudfunction, req.body.data, {}, this.config))
       .then((response) => {
         res.status(200).send(response).end();
       });
@@ -161,7 +165,7 @@ class RestService extends Service {
    *
    */
   createFunction (req, res) {
-    const location = Functions.formatLocation(req.params.project, req.params.location);
+    const location = CloudFunction.formatLocation(req.params.project, req.params.location);
     return this.functions.createFunction(location, req.body)
       .then((operation) => {
         res.status(200).json(operation).end();
@@ -179,7 +183,7 @@ class RestService extends Service {
    * @param {object} res The response.
    */
   deleteFunction (req, res) {
-    const name = Functions.formatName(req.params.project, req.params.location, req.params.name);
+    const name = CloudFunction.formatName(req.params.project, req.params.location, req.params.name);
     return this.functions.deleteFunction(name)
       .then((operation) => {
         res.status(200).json(operation).end();
@@ -212,7 +216,7 @@ class RestService extends Service {
           .catch((err) => {
             if (err && err.statusCode === 404) {
               return Promise.reject({
-                code: grpc.status.NOT_FOUND,
+                code: errors.status.NOT_FOUND,
                 message: 'Discovery document not found for API service.'
               });
             }
@@ -242,7 +246,7 @@ class RestService extends Service {
    * @param {object} res The response.
    */
   getFunction (req, res) {
-    const name = Functions.formatName(req.params.project, req.params.location, req.params.name);
+    const name = CloudFunction.formatName(req.params.project, req.params.location, req.params.name);
     return this.functions.getFunction(name)
       .then((cloudfunction) => {
         res.status(200).json(cloudfunction).end();
@@ -258,7 +262,7 @@ class RestService extends Service {
    * @param {object} res The response
    */
   getOperation (req, res) {
-    const name = Functions.formatOperationName(req.params.operation);
+    const name = Operation.formatName(req.params.operation);
     return this.functions.getOperation(name)
       .then((operation) => {
         if (!operation) {
@@ -290,7 +294,7 @@ class RestService extends Service {
    * @param {object} res The response.
    */
   listFunctions (req, res) {
-    const location = Functions.formatLocation(req.params.project, req.params.location);
+    const location = CloudFunction.formatLocation(req.params.project, req.params.location);
     return this.functions.listFunctions(location, {
       pageSize: req.query.pageSize,
       pageToken: req.query.pageToken
@@ -304,14 +308,12 @@ class RestService extends Service {
     super.start();
 
     this._server = this.server.listen(this.config.port, this.config.host, () => {
-      console.debug(`REST service listening at ${this._server.address().address}:${this._server.address().port}.`);
+      console.debug(`${this.type} service listening at ${this._server.address().address}:${this._server.address().port}.`);
     });
   }
 
   stop () {
-    this._server.close(() => {
-      console.debug('REST service stopped.');
-    });
+    this._server.close(() => super.stop());
   }
 }
 

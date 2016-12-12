@@ -20,20 +20,20 @@ const grpc = require('grpc');
 const Client = require('./client');
 const Model = require('../model');
 
-const { Functions, protos } = Model;
+const { CloudFunction, protos } = Model;
 
 const { CloudFunctionsService, Operations } = protos;
 
 class GrpcClient extends Client {
-  constructor (functions, opts) {
-    super(functions, opts);
+  constructor (opts) {
+    super(opts);
 
     this.functionsClient = new CloudFunctionsService(
-      `${this.config.host}:${this.config.port}`,
+      `${this.config.grpcHost}:${this.config.grpcPort}`,
       grpc.credentials.createInsecure()
     );
     this.operationsClient = new Operations(
-      `${this.config.host}:${this.config.port}`,
+      `${this.config.grpcHost}:${this.config.grpcPort}`,
       grpc.credentials.createInsecure()
     );
   }
@@ -41,7 +41,7 @@ class GrpcClient extends Client {
   callFunction (name, data) {
     return new Promise((resolve, reject) => {
       this.functionsClient.callFunction({
-        name: Functions.formatName(this.config.projectId, this.config.region, name),
+        name: CloudFunction.formatName(this.config.projectId, this.config.region, name),
         data: data
       }, (err, operation) => {
         if (err) {
@@ -56,7 +56,7 @@ class GrpcClient extends Client {
   createFunction (cloudfunction) {
     return new Promise((resolve, reject) => {
       this.functionsClient.createFunction({
-        location: Functions.formatLocation(this.config.projectId, this.config.region),
+        location: CloudFunction.formatLocation(this.config.projectId, this.config.region),
         function: cloudfunction.toProtobuf()
       }, (err, operation) => {
         if (err) {
@@ -71,7 +71,7 @@ class GrpcClient extends Client {
   deleteFunction (name) {
     return new Promise((resolve, reject) => {
       this.functionsClient.deleteFunction({
-        name: Functions.formatName(this.config.projectId, this.config.region, name)
+        name: CloudFunction.formatName(this.config.projectId, this.config.region, name)
       }, (err, operation) => {
         if (err) {
           reject(err);
@@ -88,12 +88,12 @@ class GrpcClient extends Client {
   getFunction (name) {
     return new Promise((resolve, reject) => {
       this.functionsClient.getFunction({
-        name: Functions.formatName(this.config.projectId, this.config.region, name)
+        name: CloudFunction.formatName(this.config.projectId, this.config.region, name)
       }, (err, cloudfunction) => {
         if (err) {
           reject(err);
         } else {
-          resolve([this.functions.cloudfunction(cloudfunction.name, cloudfunction)]);
+          resolve([new CloudFunction(cloudfunction.name, cloudfunction)]);
         }
       });
     });
@@ -103,13 +103,13 @@ class GrpcClient extends Client {
     return new Promise((resolve, reject) => {
       this.functionsClient.listFunctions({
         pageSize: 100,
-        location: Functions.formatLocation(this.config.projectId, this.config.region)
+        location: CloudFunction.formatLocation(this.config.projectId, this.config.region)
       }, (err, response) => {
         if (err) {
           reject(err);
         } else {
           resolve([
-            response.functions.map((cloudfunction) => this.functions.cloudfunction(cloudfunction.name, cloudfunction))
+            response.functions.map((cloudfunction) => new CloudFunction(cloudfunction.name, cloudfunction))
           ]);
         }
       });

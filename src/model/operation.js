@@ -15,13 +15,25 @@
 
 'use strict';
 
-const grpc = require('grpc');
-const merge = require('lodash.merge');
+const _ = require('lodash');
+const path = require('path');
 const uuid = require('uuid');
 
+const Errors = require('../utils/errors');
 const protos = require('./protos');
+const Schema = require('../utils/schema');
 
 const NAME_REG_EXP = /^operations\/([-A-Za-z0-9]+)$/;
+
+const OperationSchema = {
+  type: 'object',
+  properties: {
+    name: {
+      type: 'string'
+    }
+  },
+  required: ['name']
+};
 
 /**
  * The Operation class is an abstraction around objects of type
@@ -38,40 +50,19 @@ const NAME_REG_EXP = /^operations\/([-A-Za-z0-9]+)$/;
 class Operation {
   constructor (name, props = {}) {
     if (!name || typeof name !== 'string' || !Operation.NAME_REG_EXP.test(name)) {
-      const message = `Invalid value '${name}': Operation name must contain only lower case Latin letters, digits and hyphens (-).`;
-      const err = new Error(message);
-      err.code = grpc.status.INVALID_ARGUMENT;
-      err.details = [
-        {
-          typeUrl: 'types.googleapis.com/google.rpc.BadRequest',
-          value: {
-            fieldViolations: [
-              {
-                field: 'name',
-                description: message
-              }
-            ]
-          }
-        },
-        {
-          typeUrl: 'types.googleapis.com/google.rpc.ResourceInfo',
-          value: {
-            resourceType: protos.getPath(protos.Operation),
-            resourceName: name,
-            description: err.message
-          }
-        },
-        {
-          typeUrl: 'types.googleapis.com/google.rpc.DebugInfo',
-          value: {
-            stackEntries: err.stack.split('\n'),
-            detail: err.message
-          }
-        }
-      ];
+      const err = new Errors.InvalidArgumentError(`Invalid value '${name}': Operation name must contain only lower case Latin letters, digits and hyphens (-).`);
+      err.details.push(new Errors.BadRequest(err, 'name'));
+      err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.Operation), name));
       throw err;
     }
-    merge(this, Operation.decode(props), { name });
+    _.merge(this, Operation.decode(props), { name });
+    const errors = Schema.validate(this, Operation.schema);
+    if (errors) {
+      const err = new Errors.InvalidArgumentError('Invalid Operation property!');
+      err.details.push(new Errors.BadRequest(err, errors));
+      err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.Operation), name));
+      throw err;
+    }
   }
 
   /**
@@ -82,6 +73,16 @@ class Operation {
    */
   static get NAME_REG_EXP () {
     return NAME_REG_EXP;
+  }
+
+  /**
+   * The JSON Schema for the Operation class.
+   *
+   * @property Operation.schema
+   * @type {object}
+   */
+  static get schema () {
+    return OperationSchema;
   }
 
   /**
@@ -106,7 +107,7 @@ class Operation {
     if (operation.error && operation.response) {
       const message = `Operation may only have one of 'error' or 'response'!`;
       const err = new Error(message);
-      err.code = grpc.status.INVALID_ARGUMENT;
+      err.code = Errors.status.INVALID_ARGUMENT;
       err.details = [
         {
           typeUrl: 'google.rpc.BadRequest',
@@ -131,6 +132,17 @@ class Operation {
   }
 
   /**
+   * Returns a formatted Operation name string.
+   *
+   * @method Operation.formatName
+   * @param {string} name The value for the name path parameter.
+   * @returns {string} The formatted name string.
+   */
+  static formatName (name) {
+    return path.join('operations', name);
+  }
+
+  /**
    * Generates a new Operation name.
    *
    * @method Operation.generateId
@@ -138,6 +150,20 @@ class Operation {
    */
   static generateId () {
     return `operations/${uuid.v4()}`;
+  }
+
+  /**
+   * Parses a formatted Operation name string.
+   *
+   * @method Operation.parseName
+   * @param {string} name The formatted Operation name string.
+   * @returns {object} The parsed parameters.
+   */
+  static parseName (name = '') {
+    const matches = name.match(Operation.NAME_REG_EXP);
+    return {
+      operation: matches[1]
+    };
   }
 
   /**

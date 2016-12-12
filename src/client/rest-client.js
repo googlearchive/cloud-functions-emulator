@@ -15,22 +15,23 @@
 
 'use strict';
 
-const get = require('lodash.get');
+const _ = require('lodash');
 const google = require('googleapis');
-const merge = require('lodash.merge');
 const net = require('net');
 const path = require('path');
 const url = require('url');
 
 const Client = require('./client');
-const Functions = require('../model').Functions;
+const Model = require('../model');
+
+const { CloudFunction } = Model;
 
 class RestClient extends Client {
   _action (method, params) {
     return this.getService()
       .then((functionsService) => {
         return new Promise((resolve, reject) => {
-          get(functionsService, method).call(functionsService, params, (err, body, response) => {
+          _.get(functionsService, method).call(functionsService, params, (err, body, response) => {
             if (err) {
               reject(err);
             } else {
@@ -45,7 +46,7 @@ class RestClient extends Client {
     return this._action(
       'projects.locations.functions.call',
       {
-        name: Functions.formatName(this.config.projectId, this.config.region, name),
+        name: CloudFunction.formatName(this.config.projectId, this.config.region, name),
         resource: { data }
       }
     );
@@ -55,7 +56,7 @@ class RestClient extends Client {
     return this._action(
       'projects.locations.functions.create',
       {
-        location: Functions.formatLocation(this.config.projectId, this.config.region),
+        location: CloudFunction.formatLocation(this.config.projectId, this.config.region),
         resource: cloudfunction
       }
     );
@@ -65,7 +66,7 @@ class RestClient extends Client {
     return this._action(
       'projects.locations.functions.delete',
       {
-        name: Functions.formatName(this.config.projectId, this.config.region, name)
+        name: CloudFunction.formatName(this.config.projectId, this.config.region, name)
       }
     );
   }
@@ -74,7 +75,7 @@ class RestClient extends Client {
     return new Promise((resolve, reject) => {
       const discoveryPath = '$discovery/rest';
       const parts = url.parse(this.getUrl(discoveryPath));
-      const discoveryUrl = url.format(merge(parts, {
+      const discoveryUrl = url.format(_.merge(parts, {
         pathname: discoveryPath,
         search: '?version=v1beta2'
       }));
@@ -92,8 +93,8 @@ class RestClient extends Client {
   getUrl (pathname) {
     return url.format({
       protocol: 'http:',
-      hostname: this.config.host,
-      port: this.config.port,
+      hostname: this.config.restHost,
+      port: this.config.restPort,
       pathname: path.join('v1beta2', pathname)
     });
   }
@@ -102,9 +103,9 @@ class RestClient extends Client {
     return this._action(
       'projects.locations.functions.get',
       {
-        name: Functions.formatName(this.config.projectId, this.config.region, name)
+        name: CloudFunction.formatName(this.config.projectId, this.config.region, name)
       }
-    ).then(([body, response]) => [this.functions.cloudfunction(body.name, body), response]);
+    ).then(([body, response]) => [new CloudFunction(body.name, body), response]);
   }
 
   listFunctions () {
@@ -112,14 +113,14 @@ class RestClient extends Client {
       'projects.locations.functions.list',
       {
         pageSize: 100,
-        location: Functions.formatLocation(this.config.projectId, this.config.region)
+        location: CloudFunction.formatLocation(this.config.projectId, this.config.region)
       }
-    ).then(([body, response]) => [body.functions.map((cloudfunction) => this.functions.cloudfunction(cloudfunction.name, cloudfunction)), response]);
+    ).then(([body, response]) => [body.functions.map((cloudfunction) => new CloudFunction(cloudfunction.name, cloudfunction)), response]);
   }
 
   testConnection () {
     return new Promise((resolve, reject) => {
-      const client = net.connect(this.config.port, this.config.host, () => {
+      const client = net.connect(this.config.restPort, this.config.restHost, () => {
         client.end();
         resolve();
       });

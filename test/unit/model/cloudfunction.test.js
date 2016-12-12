@@ -15,9 +15,8 @@
 
 'use strict';
 
-const clone = require(`lodash.clonedeep`);
+const _ = require('lodash');
 const grpc = require(`grpc`);
-const merge = require(`lodash.merge`);
 const proxyquire = require(`proxyquire`);
 
 describe(`unit/model/cloudfunction`, () => {
@@ -27,7 +26,7 @@ describe(`unit/model/cloudfunction`, () => {
   beforeEach(() => {
     mocks = {
       protos: {
-        decode: (arg1) => clone(arg1),
+        decode: (arg1) => _.cloneDeep(arg1),
         decodeAnyType: sinon.stub(),
         encodeAnyType: sinon.stub()
       }
@@ -73,9 +72,9 @@ describe(`unit/model/cloudfunction`, () => {
             grpc.status.INVALID_ARGUMENT,
             message,
             [
+              `DebugInfo`,
               `BadRequest`,
-              `ResourceInfo`,
-              `DebugInfo`
+              `ResourceInfo`
             ]
           );
           return true;
@@ -135,7 +134,7 @@ describe(`unit/model/cloudfunction`, () => {
       props = { done: true };
       cloudfunction = new CloudFunction(TEST_NAME, props);
 
-      assert.deepEqual(cloudfunction, merge(props, { name: TEST_NAME }));
+      assert.deepEqual(cloudfunction, _.merge(props, { name: TEST_NAME }));
       assert(CloudFunction.decode.callCount === 2);
       assert.deepEqual(CloudFunction.decode.getCall(1).args, [props]);
     });
@@ -179,6 +178,22 @@ describe(`unit/model/cloudfunction`, () => {
       assert(cloudfunction !== props);
       assert(mocks.protos.decode.callCount === 2);
     });
+  });
+
+  describe(`CloudFunction.formatLocation`, () => {
+    it(`should return a formatted CloudFunction location string`);
+  });
+
+  describe(`CloudFunction.formatName`, () => {
+    it(`should return a formatted CloudFunction name string`);
+  });
+
+  describe(`CloudFunction.parseLocation`, () => {
+    it(`should parse a formatted CloudFunction location string`);
+  });
+
+  describe(`CloudFunction.parseName`, () => {
+    it(`should parse a formatted CloudFunction name string`);
   });
 
   describe(`CloudFunction#shortName`, () => {

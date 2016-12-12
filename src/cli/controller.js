@@ -15,10 +15,10 @@
 
 'use strict';
 
+const _ = require('lodash');
 const archiver = require('archiver');
 const Configstore = require('configstore');
 const fs = require('fs');
-const merge = require('lodash.merge');
 const path = require('path');
 const spawn = require('child_process').spawn;
 const Storage = require('@google-cloud/storage');
@@ -29,6 +29,8 @@ const Model = require('../model');
 const defaults = require('../defaults.json');
 const logs = require('../emulator/logs');
 const pkg = require('../../package.json');
+
+const { CloudFunction } = Model;
 
 const TIMEOUT_POLL_INCREMENT = 500;
 const STATE = {
@@ -50,7 +52,7 @@ class Controller {
     // Load and apply defaults to the user's Emulator configuration
     this._config = new Configstore(path.join(pkg.name, '/config'), defaults);
     // Merge the user's configuration with command-line options
-    this.config = merge({}, defaults, this._config.all, opts);
+    this.config = _.merge({}, defaults, this._config.all, opts);
 
     // Ensure we've got a project ID
     this.config.projectId || (this.config.projectId = process.env.GCLOUD_PROJECT);
@@ -61,22 +63,22 @@ class Controller {
     // We will pipe stdout from the child process to the emulator log file
     this.config.logFile = logs.assertLogsPath(this.config.logFile);
 
-    this.functions = Model.functions(this.config);
-
-    const clientConfig = merge(this.config, {
-      host: this.server.get('host') || this.config.host,
-      port: this.server.get('port') || this.config.port
+    const clientConfig = _.merge(this.config, {
+      grpcHost: this.server.get('grpcHost') || this.config.grpcHost,
+      grpcPort: this.server.get('grpcPort') || this.config.grpcPort,
+      restHost: this.server.get('restHost') || this.config.restHost,
+      restPort: this.server.get('restPort') || this.config.restPort
     });
 
     // Initialize the client that will communicate with the Emulator
-    if (this.config.serviceMode === 'rest') {
+    if (this.config.service === 'rest') {
       // The REST client uses the Google APIs Node.js client (googleapis)
-      this.client = Client.restClient(this.functions, clientConfig);
-    } else if (this.config.serviceMode === 'grpc') {
+      this.client = Client.restClient(clientConfig);
+    } else if (this.config.service === 'grpc') {
       // The gRPC client uses the Google Cloud Node.js client (@google-cloud/functions)
-      this.client = Client.grpcClient(this.functions, clientConfig);
+      this.client = Client.grpcClient(clientConfig);
     } else {
-      throw new Error('"serviceMode" must be one of "rest" or "grpc"!');
+      throw new Error('"service" must be one of "rest" or "grpc"!');
     }
   }
 
@@ -219,7 +221,7 @@ class Controller {
    */
   deploy (name, opts) {
     return new Promise((resolve, reject) => {
-      const cloudfunction = this.functions.cloudfunction(Model.Functions.formatName(this.config.projectId, this.config.region, name));
+      const cloudfunction = new CloudFunction(CloudFunction.formatName(this.config.projectId, this.config.region, name));
 
       if (opts.timeout) {
         cloudfunction.setTimeout(opts.timeout);
@@ -382,33 +384,30 @@ class Controller {
   start () {
     return Promise.resolve()
       .then(() => {
-        const debug = this.config.debug;
-        const debugPort = this.config.debugPort;
-        const inspect = this.config.inspect;
-        const logFile = this.config.logFile;
-
         // Starting the Emulator amounts to spawning a child node process.
         // The child process will be detached so we don't hold an open socket
         // in the console. The detached process runs an HTTP server (ExpressJS).
         // Communication to the detached process is then done via HTTP
         const args = [
           '.',
-          '--host',
-          this.config.host,
-          '--port',
-          this.config.port,
+          '--grpcHost',
+          this.config.grpcHost,
+          '--grpcPort',
+          this.config.grpcPort,
           '--projectId',
           this.config.projectId,
           '--timeout',
           this.config.timeout,
           '--verbose',
           this.config.verbose,
-          '--serviceMode',
-          this.config.serviceMode,
           '--useMocks',
           this.config.useMocks,
           '--logFile',
-          logFile,
+          this.config.logFile,
+          '--restHost',
+          this.config.restHost,
+          '--restPort',
+          this.config.restPort,
           '--runSupervisor',
           this.config.runSupervisor,
           '--supervisorHost',
@@ -417,29 +416,21 @@ class Controller {
           this.config.supervisorPort
         ];
 
-        // TODO:
-        // For some bizzare reason boolean values in the environment of the
-        // child process return as Strings in JSON documents sent over HTTP with
-        // a content-type of application/json, so we need to check for String
-        // 'true' as well as boolean.
-        if (inspect === true || inspect === 'true') {
-          const semver = process.version.split('.');
-          const major = parseInt(semver[0].substring(1, semver[0].length));
-          if (major >= 6) {
-            args.unshift('--inspect');
-            console.log(`Starting in inspect mode. Check ${logFile} for details on how to connect to the chrome debugger.`);
-          } else {
-            console.error('--inspect flag requires Node 6.3.0+');
+        // Only debug the Emulator if the isolation model is "inprocess"
+        if (this.isolation === 'inprocess') {
+          if (this.config.inspect) {
+            args.unshift(`--inspect=${this.config.inspectPort}`);
+            console.log(`Starting in inspect mode. Check ${this.config.logFile} for details on how to connect to the chrome debugger.`);
+          } else if (this.config.debug) {
+            args.unshift(`--debug=${this.config.debugPort}`);
+            console.log(`Starting in debug mode. Debugger listening on port ${this.config.debugPort}`);
           }
-        } else if (debug === true || debug === 'true') {
-          args.unshift(`--debug=${debugPort}`);
-          console.log(`Starting in debug mode. Debugger listening on port ${debugPort}`);
         }
 
         // Make sure the child is detached, otherwise it will be bound to the
         // lifecycle of the parent process. This means we should also ignore the
         // binding of stdout.
-        const out = fs.openSync(logFile, 'a');
+        const out = fs.openSync(this.config.logFile, 'a');
         const child = spawn('node', args, {
           cwd: path.join(__dirname, '../..'),
           detached: true,
@@ -448,15 +439,19 @@ class Controller {
 
         // Update status of settings
         this.server.set({
-          debug,
-          debugPort,
-          host: this.config.host,
-          inspect,
-          logFile,
-          serviceMode: this.config.serviceMode,
+          debug: this.config.debug,
+          debugPort: this.config.debugPort,
+          grpcHost: this.config.grpcHost,
+          grpcPort: this.config.grpcPort,
+          inspect: this.config.inspect,
+          inspectPort: this.config.inspectPort,
+          logFile: this.config.logFile,
+          projectId: this.config.projectId,
+          restHost: this.config.restHost,
+          restPort: this.config.restPort,
           started: Date.now(),
-          port: this.config.port,
-          projectId: this.config.projectId
+          supervisorHost: this.config.supervisorHost,
+          supervisorPort: this.config.supervisorPort
         });
 
         // Write the pid to the file system in case we need to kill it later

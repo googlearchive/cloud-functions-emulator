@@ -19,16 +19,26 @@ const cli = require('yargs');
 
 cli
   .options({
-    host: {
-      alias: 'h',
-      description: 'The host to listen on.',
+    grpcHost: {
+      description: 'The host the gRPC Service should run on.',
       global: true,
       requiresArg: true,
       type: 'string'
     },
-    port: {
-      alias: 'p',
-      description: 'The port to listen on.',
+    grpcPort: {
+      description: 'The port the gRPC Service should run on.',
+      global: true,
+      requiresArg: true,
+      type: 'number'
+    },
+    restHost: {
+      description: 'The host the REST Service should run on.',
+      global: true,
+      requiresArg: true,
+      type: 'string'
+    },
+    restPort: {
+      description: 'The port the REST Service should run on.',
       global: true,
       requiresArg: true,
       type: 'number'

@@ -15,36 +15,35 @@
 
 'use strict';
 
-const clone = require('lodash.clonedeep');
-const grpc = require('grpc');
-const merge = require('lodash.merge');
-const proxyquire = require('proxyquire');
+const _ = require(`lodash`);
+const grpc = require(`grpc`);
+const proxyquire = require(`proxyquire`);
 
-describe('unit/model/operation', () => {
+describe(`unit/model/operation`, () => {
   let Operation, mocks;
-  const TEST_NAME = 'operations/abcd1234';
+  const TEST_NAME = `operations/abcd1234`;
 
   beforeEach(() => {
     mocks = {
       protos: {
-        decode: (arg1) => clone(arg1),
+        decode: (arg1) => _.cloneDeep(arg1),
         decodeAnyType: sinon.stub(),
         encodeAnyType: sinon.stub()
       }
     };
-    sinon.spy(mocks.protos, 'decode');
+    sinon.spy(mocks.protos, `decode`);
 
-    Operation = proxyquire('../../../src/model/operation', {
+    Operation = proxyquire(`../../../src/model/operation`, {
       './protos': mocks.protos
     });
   });
 
-  describe('Operation', () => {
-    it('should be a function', () => {
-      assert(typeof Operation === 'function');
+  describe(`Operation`, () => {
+    it(`should be a function`, () => {
+      assert(typeof Operation === `function`);
     });
 
-    it('should throw when not called with "new"', () => {
+    it(`should throw when not called with "new"`, () => {
       assert.throws(
         () => {
           Operation();
@@ -57,7 +56,7 @@ describe('unit/model/operation', () => {
       );
     });
 
-    it('should validate the "name" argument', () => {
+    it(`should validate the "name" argument`, () => {
       let name;
 
       assert.throws(
@@ -73,14 +72,14 @@ describe('unit/model/operation', () => {
             grpc.status.INVALID_ARGUMENT,
             message,
             [
-              'BadRequest',
-              'ResourceInfo',
-              'DebugInfo'
+              `DebugInfo`,
+              `BadRequest`,
+              `ResourceInfo`
             ]
           );
           return true;
         },
-        'should require the "name" argument'
+        `should require the "name" argument`
       );
 
       name = 1234;
@@ -93,10 +92,10 @@ describe('unit/model/operation', () => {
           assert(err.message === `Invalid value '${name}': Operation name must contain only lower case Latin letters, digits and hyphens (-).`);
           return true;
         },
-        'should verify that "name" is a string'
+        `should verify that "name" is a string`
       );
 
-      name = 'opera/fail';
+      name = `opera/fail`;
       assert.throws(
         () => {
           new Operation(name); // eslint-disable-line
@@ -106,7 +105,7 @@ describe('unit/model/operation', () => {
           assert(err.message === `Invalid value '${name}': Operation name must contain only lower case Latin letters, digits and hyphens (-).`);
           return true;
         },
-        'should validate the format of "name"'
+        `should validate the format of "name"`
       );
 
       assert.doesNotThrow(
@@ -118,12 +117,12 @@ describe('unit/model/operation', () => {
           assert.ifError(err);
           return true;
         },
-        'should accept a valid "name" argument'
+        `should accept a valid "name" argument`
       );
     });
 
-    it('should decode the props', () => {
-      sinon.spy(Operation, 'decode');
+    it(`should decode the props`, () => {
+      sinon.spy(Operation, `decode`);
 
       let props = {};
       let operation = new Operation(TEST_NAME);
@@ -135,24 +134,24 @@ describe('unit/model/operation', () => {
       props = { done: true };
       operation = new Operation(TEST_NAME, props);
 
-      assert.deepEqual(operation, merge(props, { name: TEST_NAME }));
+      assert.deepEqual(operation, _.merge(props, { name: TEST_NAME }));
       assert(Operation.decode.callCount === 2);
       assert.deepEqual(Operation.decode.getCall(1).args, [props]);
     });
 
-    it('should return an Operation instance', () => {
+    it(`should return an Operation instance`, () => {
       assert(new Operation(TEST_NAME) instanceof Operation);
     });
   });
 
-  describe('Operation.NAME_REG_EXP', () => {
-    it('should be an instance of RegExp', () => {
+  describe(`Operation.NAME_REG_EXP`, () => {
+    it(`should be an instance of RegExp`, () => {
       assert(Operation.NAME_REG_EXP instanceof RegExp);
     });
   });
 
-  describe('Operation.decode', () => {
-    it('should decode the props', () => {
+  describe(`Operation.decode`, () => {
+    it(`should decode the props`, () => {
       let props;
       let operation = Operation.decode();
 
@@ -175,7 +174,7 @@ describe('unit/model/operation', () => {
       assert(mocks.protos.decodeAnyType.callCount === 1);
     });
 
-    it('should disallow both "error" and "response"', () => {
+    it(`should disallow both "error" and "response"`, () => {
       let props = {
         error: {},
         response: {}
@@ -193,7 +192,7 @@ describe('unit/model/operation', () => {
             grpc.status.INVALID_ARGUMENT,
             message,
             [
-              'BadRequest'
+              `BadRequest`
             ]
           );
           return true;
@@ -202,19 +201,27 @@ describe('unit/model/operation', () => {
     });
   });
 
-  describe('Operation.generateId', () => {
-    it('should generate a unique name', () => {
+  describe(`Operation.formatName`, () => {
+    it(`should return a formatted Operation name string`);
+  });
+
+  describe(`Operation.generateId`, () => {
+    it(`should generate a unique name`, () => {
       const name = Operation.generateId();
       assert(typeof name === 'string');
       assert(/^operations\/[-A-Za-z0-9]+$/.test(name));
     });
   });
 
-  describe('Operation#toProtobuf', () => {
-    it('should return a representation suitable for serialization to a protobuf', () => {
-      sinon.spy(Operation, 'decode');
+  describe(`Operation.parseName`, () => {
+    it(`should parse a formatted Operation name string`);
+  });
 
-      const message = 'error';
+  describe(`Operation#toProtobuf`, () => {
+    it(`should return a representation suitable for serialization to a protobuf`, () => {
+      sinon.spy(Operation, `decode`);
+
+      const message = `error`;
       const operation = new Operation(TEST_NAME, {
         metadata: {},
         error: {
@@ -272,9 +279,9 @@ describe('unit/model/operation', () => {
     });
   });
 
-  describe('Operation#toJSON', () => {
-    it('should return a representation suitable for serialization to JSON', () => {
-      sinon.spy(Operation, 'decode');
+  describe(`Operation#toJSON`, () => {
+    it(`should return a representation suitable for serialization to JSON`, () => {
+      sinon.spy(Operation, `decode`);
 
       const operation = new Operation(TEST_NAME);
 

@@ -15,18 +15,17 @@
 
 'use strict';
 
-const clone = require('lodash.clonedeep');
+const _ = require('lodash');
 const Configstore = require('configstore');
-const grpc = require('grpc');
-const merge = require('lodash.merge');
 const path = require('path');
 const uuid = require('uuid');
 
 const CloudFunction = require('./cloudfunction');
+const Errors = require('../utils/errors');
 const Operation = require('./operation');
 const pkg = require('../../package.json');
 const protos = require('./protos');
-const Supervisor = require('../supervisor');
+const Schema = require('../utils/schema');
 
 class ConfigAdapter {
   constructor (opts = {}) {
@@ -89,53 +88,58 @@ class ConfigAdapter {
   }
 }
 
-class Functions {
-  constructor (opts = {}) {
-    this.config = opts;
-    this.adapter = new ConfigAdapter(opts);
-    this.supervisor = Supervisor.supervisor(opts, this);
-  }
-
-  static formatLocation (project, location) {
-    return path.join('projects', project, 'locations', location);
-  }
-
-  static formatName (project, location, name) {
-    return path.join('projects', project, 'locations', location, 'functions', name);
-  }
-
-  static formatOperationName (name) {
-    return path.join('operations', name);
-  }
-
-  static parseLocation (location) {
-    const matches = location.match(CloudFunction.LOCATION_REG_EXP);
-    return {
-      project: matches[1],
-      location: matches[2]
-    };
-  }
-
-  static parseName (name) {
-    const matches = name.match(CloudFunction.NAME_REG_EXP);
-    return {
-      project: matches[1],
-      location: matches[2],
-      name: matches[3]
-    };
-  }
-
-  static parseOperationName (name) {
-    return {
-      operation: name.split('/')[1]
-    };
-  }
-
-  static toProto (cloudfunction) {
-    if (!(cloudfunction instanceof CloudFunction)) {
-      cloudfunction = new CloudFunction(cloudfunction.name, cloudfunction);
+const FunctionsConfigSchema = {
+  type: 'object',
+  properties: {
+    projectId: {
+      type: 'string'
+    },
+    region: {
+      type: 'string'
+    },
+    storage: {
+      type: 'string',
+      enum: ['configstore']
+    },
+    supervisorHost: {
+      type: 'string'
+    },
+    supervisorPort: {
+      type: 'number'
     }
-    return cloudfunction.toProto();
+  },
+  required: ['projectId', 'region', 'storage', 'supervisorHost', 'supervisorPort']
+};
+
+/**
+ * TODO
+ *
+ * @class Functions
+ * @param {object} config Configuration settings.
+ * @returns {Functions}
+ */
+class Functions {
+  constructor (config = {}) {
+    const errors = Schema.validate(config, Functions.configSchema);
+    if (errors) {
+      const err = new Errors.InvalidArgumentError('CloudFunctions config is invalid!');
+      err.details.push(new Errors.BadRequest(err, errors));
+      throw err;
+    }
+    this.config = _.merge({}, config);
+    if (this.config.storage === 'configstore') {
+      this.adapter = new ConfigAdapter(this.config);
+    }
+  }
+
+  /**
+   * The schema for the config argument passed to the Functions constructor.
+   *
+   * @name Functions.configSchema
+   * @type {object}
+   */
+  static get configSchema () {
+    return FunctionsConfigSchema;
   }
 
   /**
@@ -150,35 +154,11 @@ class Functions {
     return this.adapter.getFunction(name)
       .then((cloudfunction) => {
         if (cloudfunction) {
-          const parts = Functions.parseName(name);
-          const message = `Function ${parts.name} in region ${parts.location} in project ${parts.project} already exists`;
-          const err = new Error(message);
-
-          const error = {
-            code: grpc.status.ALREADY_EXISTS,
-            message: err.message,
-            details: [
-              {
-                typeUrl: 'types.googleapis.com/google.rpc.ResourceInfo',
-                value: {
-                  resourceType: protos.getPath(protos.CloudFunction),
-                  resourceName: name,
-                  description: err.message
-                }
-              },
-              {
-                typeUrl: 'types.googleapis.com/google.rpc.DebugInfo',
-                value: {
-                  stackEntries: err.stack.split('\n'),
-                  detail: err.message
-                }
-              }
-            ]
-          };
-
-          console.error('Functions', error);
-
-          return Promise.reject(error);
+          const parts = CloudFunction.parseName(name);
+          const err = new Errors.ConflictError(`Function ${parts.name} in region ${parts.location} in project ${parts.project} already exists`);
+          err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
+          console.error(err);
+          return Promise.reject(err);
         }
       });
   }
@@ -192,12 +172,6 @@ class Functions {
         // Function was deployed from the local file system, so we're not going
         // to do anything else here.
       });
-  }
-
-  callFunction (name, data, context = {}) {
-    console.debug('Functions', 'callFunction', name, data);
-    return this.getFunction(name)
-      .then((cloudfunction) => this.supervisor.invoke(cloudfunction, data, context, this.config));
   }
 
   /**
@@ -231,7 +205,7 @@ class Functions {
       .then(() => {
         const request = {
           location,
-          function: clone(cloudfunction)
+          function: _.cloneDeep(cloudfunction)
         };
 
         // TODO: Filter out fields that cannot be edited by the user
@@ -241,7 +215,7 @@ class Functions {
           cloudfunction.httpsTrigger.url = `http://${this.config.supervisorHost}:${this.config.supervisorPort}/${this.config.projectId}/${this.config.region}/${cloudfunction.shortName}`;
         }
 
-        merge(cloudfunction, {
+        _.merge(cloudfunction, {
           // Just set status to READY because deployment is instant
           status: protos.CloudFunctionStatus.READY
         });
@@ -277,7 +251,7 @@ class Functions {
                       operation.done = true;
                       operation.response = {
                         typeUrl: protos.getPath(protos.CloudFunction),
-                        value: clone(cloudfunction)
+                        value: _.cloneDeep(cloudfunction)
                       };
 
                       // Fire off the request to update the Operation
@@ -305,44 +279,20 @@ class Functions {
    * @returns {Promise}
    */
   _deleteFunctionError (name, err, operation) {
-    const error = {
-      code: grpc.status.INTERNAL,
-      message: err.message,
-      details: [
-        {
-          typeUrl: 'types.googleapis.com/google.rpc.ResourceInfo',
-          value: {
-            resourceType: protos.getPath(protos.CloudFunction),
-            resourceName: name,
-            description: err.message
-          }
-        }
-      ]
-    };
-
-    // Provide the stack trace, if any
-    if (err.stack) {
-      err.details.push({
-        typeUrl: 'types.googleapis.com/google.rpc.DebugInfo',
-        value: {
-          stackEntries: err.stack.split('\n'),
-          detail: err.message
-        }
-      });
-    }
+    err = new Errors.InternalError(err.message);
+    err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
 
     if (operation) {
       operation.done = true;
-      operation.error = clone(error);
+      operation.error = _.cloneDeep(err);
 
       // Fire off the request to update the Operation
       this.adapter.updateOperation(operation.name, operation)
         .catch((err) => this._deleteFunctionError(name, err));
     }
 
-    console.error('Functions', error);
-
-    return Promise.reject(error);
+    console.error(err);
+    return Promise.reject(err);
   }
 
   /**
@@ -409,35 +359,11 @@ class Functions {
    * @returns {Promise}
    */
   _getFunctionNotFoundError (name) {
-    const parts = Functions.parseName(name);
-    const message = `Function ${parts.name} in region ${parts.location} in project ${parts.project} does not exist`;
-    const err = new Error(message);
-
-    const error = {
-      code: grpc.status.NOT_FOUND,
-      message: err.message,
-      details: [
-        {
-          typeUrl: 'types.googleapis.com/google.rpc.DebugInfo',
-          value: {
-            stackEntries: err.stack.split('\n'),
-            detail: err.message
-          }
-        },
-        {
-          typeUrl: 'types.googleapis.com/google.rpc.ResourceInfo',
-          value: {
-            resourceType: protos.getPath(protos.CloudFunction),
-            resourceName: name,
-            description: err.message
-          }
-        }
-      ]
-    };
-
-    console.error('Functions', error);
-
-    return Promise.reject(error);
+    const parts = CloudFunction.parseName(name);
+    const err = new Errors.NotFoundError(`Function ${parts.name} in region ${parts.location} in project ${parts.project} does not exist`);
+    err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
+    console.error(err);
+    return Promise.reject(err);
   }
 
   /**
@@ -451,35 +377,10 @@ class Functions {
    * @returns {Promise}
    */
   _getFunctionError (name, err) {
-    const error = {
-      code: grpc.status.INTERNAL,
-      message: err.message,
-      details: [
-        {
-          typeUrl: 'types.googleapis.com/google.rpc.ResourceInfo',
-          value: {
-            resourceType: protos.getPath(protos.CloudFunction),
-            resourceName: name,
-            description: err.message
-          }
-        }
-      ]
-    };
-
-    // Provide the stack trace, if any
-    if (err.stack) {
-      err.details.push({
-        typeUrl: 'types.googleapis.com/google.rpc.DebugInfo',
-        value: {
-          stackEntries: err.stack.split('\n'),
-          detail: err.message
-        }
-      });
-    }
-
-    console.error('Functions', error);
-
-    return Promise.reject(error);
+    err = new Errors.InternalError(err.message);
+    err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
+    console.error(err);
+    return Promise.reject(err);
   }
 
   /**
@@ -498,7 +399,7 @@ class Functions {
         }
 
         return this.cloudfunction(name, cloudfunction);
-      }, (err) => this.getFunctionError(name, err));
+      }, (err) => this._getFunctionError(name, err));
   }
 
   /**
@@ -510,34 +411,10 @@ class Functions {
    * @returns {Promise}
    */
   _getOperationNotFoundError (name) {
-    const message = `Operation ${name} does not exist`;
-    const err = new Error(message);
-
-    const error = {
-      code: grpc.status.NOT_FOUND,
-      message: err.message,
-      details: [
-        {
-          typeUrl: 'types.googleapis.com/google.rpc.DebugInfo',
-          value: {
-            stackEntries: err.stack.split('\n'),
-            detail: err.message
-          }
-        },
-        {
-          typeUrl: 'types.googleapis.com/google.rpc.ResourceInfo',
-          value: {
-            resourceType: protos.getPath(protos.Operation),
-            resourceName: name,
-            description: err.message
-          }
-        }
-      ]
-    };
-
-    console.error('Functions', error);
-
-    return Promise.reject(error);
+    const err = new Errors.NotFoundError(`Operation ${name} does not exist`);
+    err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.Operation), name));
+    console.error(err);
+    return Promise.reject(err);
   }
 
   /**
@@ -551,34 +428,9 @@ class Functions {
    * @returns {Promise}
    */
   _getOperationError (name, err) {
-    const error = {
-      code: grpc.status.INTERNAL,
-      message: err.message,
-      details: [
-        {
-          typeUrl: 'types.googleapis.com/google.rpc.ResourceInfo',
-          value: {
-            resourceType: protos.getPath(protos.Operation),
-            resourceName: name,
-            description: err.message
-          }
-        }
-      ]
-    };
-
-    // Provide the stack trace, if any
-    if (err.stack) {
-      err.details.push({
-        typeUrl: 'types.googleapis.com/google.rpc.DebugInfo',
-        value: {
-          stackEntries: err.stack.split('\n'),
-          detail: err.message
-        }
-      });
-    }
-
-    console.error('Functions', error);
-
+    err = new Errors.InternalError(err.message);
+    err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.Operation), name));
+    console.error(err);
     return Promise.reject(err);
   }
 
@@ -591,14 +443,10 @@ class Functions {
    */
   getOperation (name) {
     console.debug('Functions', 'getOperation', name);
-    return this.adapter.getOperation(name)
-      .then((operation) => {
-        if (!operation) {
-          return this._getOperationNotFoundError(name);
-        }
-
-        return this.operation(name, operation);
-      }, (err) => this._getOperationError(err));
+    return this.adapter.getOperation(name).then(
+      (operation) => operation ? this.operation(name, operation) : this._getOperationNotFoundError(name),
+      (err) => this._getOperationError(err)
+    );
   }
 
   /**

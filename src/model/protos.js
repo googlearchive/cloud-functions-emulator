@@ -15,12 +15,9 @@
 
 'use strict';
 
-const camelCase = require('lodash.camelcase');
-const clone = require('lodash.clonedeep');
-const get = require('lodash.get');
+const _ = require('lodash');
 const grpc = require('grpc');
 const googleProtoFiles = require('google-proto-files');
-const merge = require('lodash.merge');
 const path = require('path');
 
 const protoRootDir = googleProtoFiles('..');
@@ -40,7 +37,7 @@ function loadFile (path) {
   }, 'proto', options);
 }
 
-const protos = merge(
+const protos = _.merge(
   loadFile(functionsProtoPath),
   loadFile(operationsProtoPath),
   loadFile(errorsProtoPath)
@@ -48,7 +45,7 @@ const protos = merge(
 
 function getProto (key) {
   key = key.replace('types.googleapis.com/', '');
-  return get(protos, key);
+  return _.get(protos, key);
 }
 
 const pathsMap = new Map();
@@ -69,15 +66,15 @@ function decode (toDecode = {}, Ctor = null) {
 
   if (Ctor) {
     // Apply defaults
-    toDecode = merge(new Ctor({}), toDecode);
+    toDecode = _.merge(new Ctor({}), toDecode);
     for (let key in Ctor.prototype) {
       if (!Ctor.prototype.hasOwnProperty(key)) {
         continue;
       }
       // Pick out the proto Message props
       if (key.indexOf('get') === 0 && key.length > 3 && key[3] !== '_') {
-        let prop = camelCase(key.substring(3));
-        const value = decoded[prop] = clone(toDecode[prop]);
+        let prop = _.camelCase(key.substring(3));
+        const value = decoded[prop] = _.cloneDeep(toDecode[prop]);
         if (value && value.typeUrl && value.value) {
           // This is an Object of type "google.protobuf.Any"
           decodeAnyType(value);
@@ -86,9 +83,9 @@ function decode (toDecode = {}, Ctor = null) {
     }
   } else if (toDecode.typeUrl && toDecode.value) {
     // This is an Object of type "google.protobuf.Any"
-    decodeAnyType(merge(decoded, toDecode));
+    decodeAnyType(_.merge(decoded, toDecode));
   } else {
-    merge(decoded, toDecode);
+    _.merge(decoded, toDecode);
   }
 
   return decoded;
@@ -162,8 +159,8 @@ function encodeAnyType (obj) {
   }
 }
 
-merge(exports, getProto('google.cloud.functions.v1beta2'));
-merge(exports, getProto('google.longrunning'));
+_.merge(exports, getProto('google.cloud.functions.v1beta2'));
+_.merge(exports, getProto('google.longrunning'));
 
 exports.protos = protos;
 exports.get = getProto;

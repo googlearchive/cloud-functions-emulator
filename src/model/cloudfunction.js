@@ -15,14 +15,43 @@
 
 'use strict';
 
-const grpc = require('grpc');
-const merge = require('lodash.merge');
+const _ = require('lodash');
+const path = require('path');
 
+const Errors = require('../utils/errors');
 const protos = require('./protos');
+const Schema = require('../utils/schema');
 
 const LOCATION_REG_EXP = /^projects\/([-\w]+)\/locations\/([-\w]+)$/;
 const NAME_REG_EXP = /^projects\/([-\w]+)\/locations\/([-\w]+)\/functions\/([A-Za-z][-A-Za-z0-9]*)$/;
 const SHORT_NAME_REG_EXP = /^[A-Za-z][-A-Za-z0-9]*$/;
+
+const CloudFunctionSchema = {
+  type: 'object',
+  properties: {
+    gcsTrigger: {
+      type: 'string'
+    },
+    gcsUrl: {
+      type: 'string'
+    },
+    httpsTrigger: {
+      type: ['null', 'object'],
+      properties: {
+        url: {
+          type: 'string'
+        }
+      }
+    },
+    name: {
+      type: 'string'
+    },
+    pubsubTrigger: {
+      type: 'string'
+    }
+  },
+  required: ['name']
+};
 
 /**
  * The CloudFunction class is an abstraction around objects of type
@@ -52,40 +81,19 @@ class CloudFunction {
       if (!shortName) {
         shortName = name;
       }
-      const message = `Invalid value '${shortName}': Function name must contain only lower case Latin letters, digits and a hyphen (-). It must start with letter, must not end with a hyphen, and must be at most 63 characters long.`;
-      const err = new Error(message);
-      err.code = grpc.status.INVALID_ARGUMENT;
-      err.details = [
-        {
-          typeUrl: 'types.googleapis.com/google.rpc.BadRequest',
-          value: {
-            fieldViolations: [
-              {
-                field: 'name',
-                description: message
-              }
-            ]
-          }
-        },
-        {
-          typeUrl: 'types.googleapis.com/google.rpc.ResourceInfo',
-          value: {
-            resourceType: protos.getPath(protos.CloudFunction),
-            resourceName: name,
-            description: err.message
-          }
-        },
-        {
-          typeUrl: 'types.googleapis.com/google.rpc.DebugInfo',
-          value: {
-            stackEntries: err.stack.split('\n'),
-            detail: err.message
-          }
-        }
-      ];
+      const err = new Errors.InvalidArgumentError(`Invalid value '${shortName}': Function name must contain only lower case Latin letters, digits and a hyphen (-). It must start with letter, must not end with a hyphen, and must be at most 63 characters long.`);
+      err.details.push(new Errors.BadRequest(err, 'name'));
+      err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
       throw err;
     }
-    merge(this, CloudFunction.decode(props), { name });
+    _.merge(this, CloudFunction.decode(props), { name });
+    const errors = Schema.validate(this, CloudFunction.schema);
+    if (errors) {
+      const err = new Errors.InvalidArgumentError('Invalid CloudFunction property!');
+      err.details.push(new Errors.BadRequest(err, errors));
+      err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
+      throw err;
+    }
   }
 
   /**
@@ -119,6 +127,26 @@ class CloudFunction {
   }
 
   /**
+   * The JSON Schema for the CloudFunction class.
+   *
+   * @property CloudFunction.schema
+   * @type {object}
+   */
+  static get schema () {
+    return CloudFunctionSchema;
+  }
+
+  /**
+   * The CloudFunction's short name.
+   *
+   * @property CloudFunction#shortName
+   * @type {string}
+   */
+  get shortName () {
+    return this.name.match(CloudFunction.NAME_REG_EXP)[3];
+  }
+
+  /**
    * Decodes a CloudFunction message.
    *
    * @method CloudFunction.decode
@@ -136,13 +164,59 @@ class CloudFunction {
   }
 
   /**
-   * The CloudFunction's short name.
+   * Returns a formatted CloudFunction location string.
    *
-   * @property CloudFunction#shortName
-   * @type {string}
+   * @method CloudFunction.formatLocation
+   * @param {string} project The value for the project path parameter.
+   * @param {string} location The value for the location path parameter.
+   * @returns {string} The formatted location string.
    */
-  get shortName () {
-    return this.name.match(CloudFunction.NAME_REG_EXP)[3];
+  static formatLocation (project, location) {
+    return path.join('projects', project, 'locations', location);
+  }
+
+  /**
+   * Returns a formatted CloudFunction name string.
+   *
+   * @method CloudFunction.formatName
+   * @param {string} project The value for the project path parameter.
+   * @param {string} location The value for the location path parameter.
+   * @param {string} name The value for the name path parameter.
+   * @returns {string} The formatted name string.
+   */
+  static formatName (project, location, name) {
+    return path.join('projects', project, 'locations', location, 'functions', name);
+  }
+
+  /**
+   * Parses a formatted CloudFunction location string.
+   *
+   * @method CloudFunction.parseLocation
+   * @param {string} location The formatted CloudFunction location string.
+   * @returns {object} The parsed parameters.
+   */
+  static parseLocation (location = '') {
+    const matches = location.match(CloudFunction.LOCATION_REG_EXP);
+    return {
+      project: matches[1],
+      location: matches[2]
+    };
+  }
+
+  /**
+   * Parses a formatted CloudFunction name string.
+   *
+   * @method CloudFunction.parseName
+   * @param {string} name The formatted CloudFunction name string.
+   * @returns {object} The parsed parameters.
+   */
+  static parseName (name = '') {
+    const matches = name.match(CloudFunction.NAME_REG_EXP);
+    return {
+      project: matches[1],
+      location: matches[2],
+      name: matches[3]
+    };
   }
 
   setGcsUrl (gcsUrl) {

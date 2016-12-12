@@ -41,6 +41,7 @@ class RpcService extends Service {
   constructor (...args) {
     super(...args);
 
+    this.type = 'gRPC';
     this.server = new Server();
 
     this.server.addProtoService(protos.Operations.service, {
@@ -70,7 +71,8 @@ class RpcService extends Service {
    * @param {function} The callback function.
    */
   callFunction (call, cb) {
-    return this.functions.callFunction(call.request.name, call.request.data)
+    return this.functions.getFunction(call.request.name)
+      .then((cloudfunction) => this.supervisor.invoke(cloudfunction, call.request.data, {}, this.config))
       .then((response) => {
         cb(null, response);
       });
@@ -199,13 +201,11 @@ class RpcService extends Service {
 
     this.server.bind(`${this.config.host}:${this.config.port}`, ServerCredentials.createInsecure());
     this.server.start();
-    console.debug(`gRPC service listening at ${this.config.host}:${this.config.port}.`);
+    console.debug(`${this.type} service listening at ${this.config.host}:${this.config.port}.`);
   }
 
   stop () {
-    this.server.tryShutdown(() => {
-      console.debug('gRPC service stopped.');
-    });
+    this.server.tryShutdown(() => super.stop());
   }
 }
 

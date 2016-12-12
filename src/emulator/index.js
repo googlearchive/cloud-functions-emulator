@@ -15,22 +15,20 @@
 
 'use strict';
 
-const merge = require('lodash.merge');
+const _ = require('lodash');
 const path = require('path');
 const winston = require('winston');
 
 const cli = require('../config');
+const defaults = require('../defaults.json');
 const loadHandler = require('./loadhandler');
 const logs = require('./logs');
+const Model = require('../model');
 const Service = require('../service');
-
-const startOptions = Object.assign({}, require('../cli/commands/start').options);
-delete startOptions.debug;
-delete startOptions.debugPort;
-delete startOptions.inspect;
+const Supervisor = require('../supervisor');
 
 cli
-  .options(Object.assign(startOptions, {
+  .options(_.merge(require('../cli/commands/start').options, {
     config: {
       alias: 'c',
       description: 'Path to a config .json file.'
@@ -44,14 +42,12 @@ cli
 
 function main (opts) {
   if (opts.config) {
-    Object.assign(opts, require(path.resolve(opts.config)));
+    _.merge(opts, require(path.resolve(opts.config)));
   }
-  opts.projectId || (opts.projectId = process.env.GCLOUD_PROJECT);
-  const defaults = require('../defaults.json');
-  opts = merge(defaults, opts);
-  if (opts.logFile) {
-    opts.logFile = logs.assertLogsPath(opts.logFile);
-  }
+  opts = _.merge(defaults, opts);
+
+  opts.projectId = opts.projectId || process.env.GCLOUD_PROJECT;
+  opts.logFile = opts.logFile ? logs.assertLogsPath(opts.logFile) : opts.logFile;
 
   // Add a global error handler to catch all unexpected exceptions in the process
   // Note that this will not include any unexpected system errors (syscall failures)
@@ -70,7 +66,7 @@ function main (opts) {
 
   // Setup the winston logger.  We're going to write to a file which will
   // automatically roll when it exceeds ~1MB.
-  var logLevel = 'info';
+  let logLevel = 'info';
 
   if (opts.verbose === true) {
     logLevel = 'debug';
@@ -103,19 +99,30 @@ function main (opts) {
   console.debug = (...args) => logger.debug(...args);
 
   if (opts.projectId) {
-    console.debug(`Set project ID to ${opts.projectId}`);
+    console.debug(`Using project ID: ${opts.projectId}`);
   }
 
-  let service;
-
-  // Create App
-  if (opts.serviceMode === 'rest') {
-    service = Service.restService(opts);
-  } else if (opts.serviceMode === 'grpc') {
-    service = Service.grpcService(opts);
-  } else {
-    throw new Error('"serviceMode" must be "rest" or "grpc".');
-  }
+  // Create the various services
+  const functions = Model.functions(opts);
+  const supervisor = Supervisor.supervisor(functions, {
+    debug: opts.debug,
+    debugPort: opts.debugPort,
+    host: opts.supervisorHost,
+    inspect: opts.inspect,
+    inspectPort: opts.inspectPort,
+    isolation: opts.isolation,
+    port: opts.supervisorPort,
+    projectId: opts.projectId,
+    region: opts.region
+  });
+  const restService = Service.restService(functions, supervisor, {
+    host: opts.restHost,
+    port: opts.restPort
+  });
+  const grpcService = Service.grpcService(functions, supervisor, {
+    host: opts.grpcHost,
+    port: opts.grpcPort
+  });
 
   // Override Module._load to we can inject mocks into calls to require()
   if (opts.useMocks) {
@@ -130,12 +137,21 @@ function main (opts) {
     }
   }
 
-  service.start();
+  // Cause each service to start listening for connections
+  if (opts.runSupervisor) {
+    supervisor.start();
+  }
+  restService.start();
+  grpcService.start();
 
   // The CLI uses SIGTERM to tell the Emulator that it needs to shut down.
   process.on('SIGTERM', () => {
+    if (opts.runSupervisor) {
+      supervisor.stop();
+    }
     // TODO: Wait for currently running functions to finish
-    service.stop();
+    restService.stop();
+    grpcService.stop();
   });
 }
 

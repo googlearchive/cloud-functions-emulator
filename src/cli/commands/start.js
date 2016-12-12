@@ -37,15 +37,21 @@ const options = exports.options = {
     type: 'boolean',
     requiresArg: false
   },
+  inspectPort: {
+    alias: 'I',
+    description: 'Override to change the default inspect port.',
+    requiresArg: true,
+    type: 'number'
+  },
   logFile: {
     alias: 'L',
     description: 'The path to the logs file to which function logs will be written.',
     requiresArg: true,
     type: 'string'
   },
-  serviceMode: {
+  service: {
     alias: 's',
-    description: 'Service mode. Choices are "rest" or "grpc".',
+    description: 'Which wire protocol to use when communicating with the Emulator. Choices are "rest" or "grpc".',
     requiresArg: true,
     type: 'string'
   },

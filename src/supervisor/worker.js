@@ -21,6 +21,11 @@ const express = require('express');
 const serializerr = require('serializerr');
 const request = require('supertest');
 
+const Debug = require('../utils/debug');
+
+const inspect = Debug.getInspect();
+const debug = Debug.getDebug();
+
 function main (name, cloudfunction, context, event, callback) {
   if (!callback) {
     callback = (err, result) => {
@@ -83,7 +88,7 @@ function main (name, cloudfunction, context, event, callback) {
           .set(context.headers)
           .send(event.data);
 
-        if (context.inspect || context.debug) {
+        if (inspect.enabled || debug.enabled) {
           debugger; // eslint-disable-line
         }
         // The following line invokes the function
@@ -107,7 +112,7 @@ function main (name, cloudfunction, context, event, callback) {
     if (handler.length >= 2) {
       // Pass in the event and the errback
       try {
-        if (context.inspect || context.debug) {
+        if (inspect.enabled || debug.enabled) {
           debugger; // eslint-disable-line
         }
         // The following line invokes the function
@@ -120,7 +125,7 @@ function main (name, cloudfunction, context, event, callback) {
       // Just pass in the event, and wrap in a promise
       return Promise.resolve()
         .then(() => {
-          if (context.inspect || context.debug) {
+          if (inspect.enabled || debug.enabled) {
             debugger; // eslint-disable-line
           }
           // The following line invokes the function
