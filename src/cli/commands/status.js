@@ -41,7 +41,6 @@ exports.handler = (opts) => {
         colWidths: [16]
       });
       const config = status.metadata;
-      console.log(JSON.stringify(config, null, 2));
 
       if (status.state === controller.STATE.RUNNING) {
         let time = Math.floor((Date.now() - config.started) / (1000));
