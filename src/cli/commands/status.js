@@ -40,9 +40,11 @@ exports.handler = (opts) => {
         head: [{ colSpan: 2, content: controller.name.cyan }],
         colWidths: [16]
       });
+      const config = status.metadata;
+      console.log(JSON.stringify(config, null, 2));
 
       if (status.state === controller.STATE.RUNNING) {
-        let time = Math.floor((Date.now() - status.metadata.started) / (1000));
+        let time = Math.floor((Date.now() - config.started) / (1000));
         if (time > (60 * 60)) {
           time = `${Math.floor(time / (60 * 60))} hour(s)`;
         } else if (time > 60) {
@@ -53,19 +55,39 @@ exports.handler = (opts) => {
 
         table.push(['Status'.white, 'RUNNING'.green]);
         table.push(['Uptime'.white, time]);
-        table.push(['Rest Service'.white, `http://${status.metadata.restHost}:${status.metadata.restPort}/`]);
-        table.push(['gRPC Service'.white, `http://${status.metadata.grpcHost}:${status.metadata.grpcPort}/`]);
-        table.push(['Log file'.white, status.metadata.logFile]);
-
-        if (status.metadata.inspect && (status.metadata.inspect === 'true' || status.metadata.inspect === true)) {
-          table.push(['Debug port (--inspect)'.white, status.metadata.debugPort]);
-        } else if (status.metadata.debug && (status.metadata.debug === 'true' || status.metadata.debug === true)) {
-          table.push(['Debug port (--debug)'.white, status.metadata.debugPort]);
+        table.push(['Process ID'.white, config.pid]);
+        table.push(['Rest Service'.white, `http://${config.restHost}:${config.restPort}/`]);
+        table.push(['gRPC Service'.white, `http://${config.grpcHost}:${config.grpcPort}/`]);
+        if (config.inspect) {
+          table.push(['Debug port (--inspect)'.white, config.debugPort]);
+        } else if (config.debug) {
+          table.push(['Debug port (--debug)'.white, config.debugPort]);
         }
+        table.push(['Log file'.white, config.logFile]);
+        table.push(['Project ID'.white, config.projectId]);
+        table.push(['Region'.white, config.region]);
+        table.push(['Storage Mode'.white, config.storage]);
+
+        if (config.mocks) {
+          table.push(['Mocks'.white, 'LOADED'.green]);
+        } else {
+          table.push(['Mocks'.white, 'NOT LOADED'.yellow]);
+        }
+
+        table.push([{ colSpan: 2, content: 'Supervisor'.cyan }]);
+
+        if (config.runSupervisor) {
+          table.push(['Status'.white, 'RUNNING'.green]);
+          table.push(['Isolation Mode'.white, config.isolation]);
+        } else {
+          table.push(['Status'.white, 'DETACHED'.yellow]);
+        }
+
+        table.push(['Trigger URL'.white, `http://${config.supervisorHost}:${config.supervisorPort}/${config.projectId}/${config.region}/FUNCTION_NAME`]);
       } else {
         let time;
-        if (status.metadata.stopped) {
-          time = Math.floor((Date.now() - status.metadata.stopped) / (1000));
+        if (config.stopped) {
+          time = Math.floor((Date.now() - config.stopped) / (1000));
           if (time > (60 * 60)) {
             time = `${Math.floor(time / (60 * 60))} hour(s)`;
           } else if (time > 60) {
@@ -79,8 +101,8 @@ exports.handler = (opts) => {
         if (time) {
           table.push(['Last up'.white, `${time.yellow} ago`]);
         }
-        if (status.metadata.logFile) {
-          table.push(['Last log file'.white, status.metadata.logFile]);
+        if (config.logFile) {
+          table.push(['Last log file'.white, config.logFile]);
         }
       }
 

@@ -16,7 +16,6 @@
 'use strict';
 
 const _ = require('lodash');
-const path = require('path');
 
 const Errors = require('../utils/errors');
 const protos = require('./protos');
@@ -172,7 +171,7 @@ class CloudFunction {
    * @returns {string} The formatted location string.
    */
   static formatLocation (project, location) {
-    return path.join('projects', project, 'locations', location);
+    return `projects/${project}/locations/${location}`;
   }
 
   /**
@@ -185,7 +184,7 @@ class CloudFunction {
    * @returns {string} The formatted name string.
    */
   static formatName (project, location, name) {
-    return path.join('projects', project, 'locations', location, 'functions', name);
+    return `projects/${project}/locations/${location}/functions/${name}`;
   }
 
   /**

@@ -390,30 +390,18 @@ class Controller {
         // Communication to the detached process is then done via HTTP
         const args = [
           '.',
-          '--grpcHost',
-          this.config.grpcHost,
-          '--grpcPort',
-          this.config.grpcPort,
-          '--projectId',
-          this.config.projectId,
-          '--timeout',
-          this.config.timeout,
-          '--verbose',
-          this.config.verbose,
-          '--useMocks',
-          this.config.useMocks,
-          '--logFile',
-          this.config.logFile,
-          '--restHost',
-          this.config.restHost,
-          '--restPort',
-          this.config.restPort,
-          '--runSupervisor',
-          this.config.runSupervisor,
-          '--supervisorHost',
-          this.config.supervisorHost,
-          '--supervisorPort',
-          this.config.supervisorPort
+          `--grpcHost=${this.config.grpcHost}`,
+          `--grpcPort=${this.config.grpcPort}`,
+          `--projectId=${this.config.projectId}`,
+          `--timeout=${this.config.timeout}`,
+          `--verbose=${this.config.verbose}`,
+          `--useMocks=${this.config.useMocks}`,
+          `--logFile=${this.config.logFile}`,
+          `--restHost=${this.config.restHost}`,
+          `--restPort=${this.config.restPort}`,
+          `--runSupervisor=${this.config.runSupervisor}`,
+          `--supervisorHost=${this.config.supervisorHost}`,
+          `--supervisorPort=${this.config.supervisorPort}`
         ];
 
         // Only debug the Emulator if the isolation model is "inprocess"
@@ -445,14 +433,21 @@ class Controller {
           grpcPort: this.config.grpcPort,
           inspect: this.config.inspect,
           inspectPort: this.config.inspectPort,
+          isolation: this.config.isolation,
           logFile: this.config.logFile,
           projectId: this.config.projectId,
+          region: this.config.region,
           restHost: this.config.restHost,
           restPort: this.config.restPort,
+          runSupervisor: this.config.runSupervisor,
           started: Date.now(),
+          storage: this.config.storage,
           supervisorHost: this.config.supervisorHost,
-          supervisorPort: this.config.supervisorPort
+          supervisorPort: this.config.supervisorPort,
+          useMocks: this.config.useMocks,
+          verbose: this.config.verbose
         });
+        this.server.delete('stopped');
 
         // Write the pid to the file system in case we need to kill it later
         // This can be done by the user in the 'kill' command

@@ -16,7 +16,6 @@
 'use strict';
 
 const _ = require('lodash');
-const path = require('path');
 const uuid = require('uuid');
 
 const Errors = require('../utils/errors');
@@ -139,7 +138,7 @@ class Operation {
    * @returns {string} The formatted name string.
    */
   static formatName (name) {
-    return path.join('operations', name);
+    return `operations/${name}`;
   }
 
   /**
