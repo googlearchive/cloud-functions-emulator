@@ -57,10 +57,15 @@ exports.handler = (opts) => {
         table.push(['Process ID'.white, config.pid]);
         table.push(['Rest Service'.white, `http://${config.restHost}:${config.restPort}/`]);
         table.push(['gRPC Service'.white, `http://${config.grpcHost}:${config.grpcPort}/`]);
-        if (config.inspect) {
-          table.push(['Debug port (--inspect)'.white, config.debugPort]);
+        if (config.inspect || config.debug) {
+          table.push(['Debugger'.white, 'ACTIVE'.green]);
+          if (config.inspect) {
+            table.push(['Debugger Port'.white, `${config.inspectPort}`.white]);
+          } else {
+            table.push(['Debugger Port'.white, `${config.debugPort}`.white]);
+          }
         } else if (config.debug) {
-          table.push(['Debug port (--debug)'.white, config.debugPort]);
+          table.push(['Debugger'.white, 'INACTIVE'.yellow]);
         }
         table.push(['Log file'.white, config.logFile]);
         table.push(['Project ID'.white, config.projectId]);

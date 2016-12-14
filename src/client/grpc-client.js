@@ -40,14 +40,22 @@ class GrpcClient extends Client {
 
   callFunction (name, data) {
     return new Promise((resolve, reject) => {
+      const start = Date.now();
       this.functionsClient.callFunction({
         name: CloudFunction.formatName(this.config.projectId, this.config.region, name),
-        data: data
-      }, (err, operation) => {
+        data: JSON.stringify(data)
+      }, (err, body) => {
         if (err) {
           reject(err);
         } else {
-          resolve(operation);
+          const end = Date.now();
+          const response = {
+            headers: {
+              'x-response-time': `${end - start}ms`
+            },
+            body
+          };
+          resolve([body, response]);
         }
       });
     });
@@ -78,7 +86,6 @@ class GrpcClient extends Client {
         } else {
           operation.metadata = JSON.parse(Buffer.from(operation.metadata.value, 'base64').toString());
           operation.metadata.request = operation.metadata.request.value.toString('utf8');
-          console.log(JSON.stringify(operation, null, 2));
           resolve(operation);
         }
       });

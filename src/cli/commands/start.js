@@ -133,8 +133,37 @@ exports.handler = (opts) => {
       controller.log(`Starting ${controller.name}...`);
       return controller.start()
         .then(() => {
+          let promise;
+
           controller.write(controller.name);
-          controller.write(' STARTED\n'.green);
+          controller.write(' STARTED\n\n'.green);
+
+          // Only start the Emulator itself in debug or inspect mode if the
+          // isolation model is "inprocess"
+          if (controller.server.get('isolation') === 'inprocess') {
+            if (controller.server.get('inspect')) {
+              promise = controller.getDebuggingUrl().then((debugUrl) => {
+                let debugStr = `Started in inspect mode. Connect to the debugger on port ${controller.server.get('inspectPort')} (e.g. using the "node2" launch type in VSCode), or open the following URL in Chrome:`;
+                if (debugUrl) {
+                  // If found, include it in the string that gets printed
+                  debugStr += `\n\n    ${debugUrl}\n`;
+                } else {
+                  debugStr += `\n\nError: Could not find Chrome debugging URL in log file. Look for it yourself in ${controller.server.get('logFile')}.`;
+                }
+                console.log(debugStr);
+              });
+            } else if (controller.server.get('debug')) {
+              console.log(`Connect to the debugger on port ${controller.server.get('debugPort')} (e.g. using the "node" launch type in VSCode).`);
+            }
+          } else {
+            if (controller.server.get('inspect')) {
+              console.log(`Inspect mode is enabled for the Supervisor. During function execution the debugger will listen on port ${controller.server.get('inspectPort')} and the Chrome debugging URL will be printed to the console.`);
+            } else if (controller.server.get('debug')) {
+              console.log(`Debug mode is enabled for the Supervisor. During function execution the debugger will listen on port ${controller.server.get('debugPort')}.`);
+            }
+          }
+
+          return promise;
         });
     })
     .then(() => list(opts))

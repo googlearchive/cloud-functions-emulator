@@ -26,7 +26,7 @@ exports.command = 'call <functionName>';
 exports.describe = 'Invokes a function. You must specify either the "data" or the "file" option.';
 exports.builder = {
   data: {
-    alias: 'd',
+    default: '{}',
     description: 'Specify inline the JSON data to send to the function.',
     requiresArg: true,
     type: 'string'
@@ -55,18 +55,18 @@ exports.builder = {
  * @param {string} [opts.file] TODO.
  */
 exports.handler = (opts) => {
-  if (!opts.file && !opts.data) {
-    opts.data = '{}';
-  }
-
-  if (opts.data) {
+  if (opts.file) {
+    try {
+      opts.data = JSON.parse(fs.readFileSync(opts.file, 'utf8'));
+    } catch (err) {
+      throw new Error('"data" must be a valid JSON string!');
+    }
+  } else if (opts.data) {
     try {
       opts.data = JSON.parse(opts.data);
     } catch (err) {
       throw new Error('"data" must be a valid JSON string!');
     }
-  } else if (opts.file) {
-    opts.data = fs.readFileSync(opts.file, 'utf8');
   } else {
     throw new Error('You must specify a "data" or "file" option!');
   }
@@ -74,12 +74,38 @@ exports.handler = (opts) => {
   const controller = new Controller(opts);
 
   return controller.doIfRunning()
-    .then(() => controller.call(opts.functionName, opts.data))
-    .then(([body, response]) => {
-      controller.write('Function completed in:  ');
-      controller.write((response.headers['x-response-time'] + '\n').green);
+    .then(() => {
+      let promise;
 
-      controller.log(body);
+      if (controller.server.get('inspect')) {
+        promise = controller.getDebuggingUrl().then((debugUrl) => {
+          let debugStr = `Function execution paused. Connect to the debugger on port ${controller.server.get('inspectPort')} (e.g. using the "node2" launch type in VSCode), or open the following URL in Chrome:`;
+          if (debugUrl) {
+            // If found, include it in the string that gets printed
+            debugStr += `\n\n    ${debugUrl}\n`;
+          } else {
+            debugStr += `\n\nError: Could not find Chrome debugging URL in log file. Look for it yourself in ${controller.server.get('logFile')}.`;
+          }
+          console.log(debugStr);
+        });
+      } else if (controller.server.get('debug')) {
+        console.log(`Function execution paused. Connect to the debugger on port ${controller.server.get('debugPort')} (e.g. using the "node" launch type in VSCode).\n`);
+      }
+
+      return (promise || Promise.resolve()).then(() => controller.call(opts.functionName, opts.data));
+    })
+    .then(([body, response]) => {
+      controller.log(`ExecutionId: ${body.executionId}`);
+      if (!controller.server.get('inspect') && !controller.server.get('debug')) {
+        controller.log(`Function completed in: ${response.headers['x-response-time'].green}`);
+      }
+      if (body.result) {
+        controller.log('Result:', body.result);
+      } else if (body.error) {
+        controller.log('Error:', body.error);
+      } else {
+        throw new Error('Unknown response!');
+      }
     })
     .catch((err) => controller.handleError(err));
 };

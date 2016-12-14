@@ -288,6 +288,24 @@ class Controller {
     console.error(...args);
   }
 
+  getDebuggingUrl () {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        fs.readFile(this.server.get('logFile'), { encoding: 'utf8' }, (err, content = '') => {
+          let matches;
+
+          // Ignore any error
+          if (!err) {
+            // Attempt to find the Chrome debugging URL in the last 500 characters that were logged
+            matches = content.substring(content.length - 500).match(/(chrome-devtools:\/\/devtools\S+)\s/);
+          }
+
+          resolve(matches ? matches[1] : undefined);
+        });
+      }, 300);
+    });
+  }
+
   /**
    * Writes lines from the Emulator log file in FIFO order.
    * Lines are taken from the end of the file according to the limit argument.
@@ -404,14 +422,21 @@ class Controller {
           `--supervisorPort=${this.config.supervisorPort}`
         ];
 
-        // Only debug the Emulator if the isolation model is "inprocess"
-        if (this.isolation === 'inprocess') {
+        // Only start the Emulator itself in debug or inspect mode if the
+        // isolation model is "inprocess"
+        if (this.config.isolation === 'inprocess') {
           if (this.config.inspect) {
             args.unshift(`--inspect=${this.config.inspectPort}`);
-            console.log(`Starting in inspect mode. Check ${this.config.logFile} for details on how to connect to the chrome debugger.`);
           } else if (this.config.debug) {
             args.unshift(`--debug=${this.config.debugPort}`);
-            console.log(`Starting in debug mode. Debugger listening on port ${this.config.debugPort}`);
+          }
+        } else {
+          if (this.config.inspect) {
+            args.push(`--inspect=${this.config.inspect}`);
+            args.push(`--inspectPort=${this.config.inspectPort}`);
+          } else if (this.config.debug) {
+            args.push(`--debug=${this.config.debug}`);
+            args.push(`--debugPort=${this.config.debugPort}`);
           }
         }
 

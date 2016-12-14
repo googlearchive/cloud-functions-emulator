@@ -213,6 +213,8 @@ class Supervisor {
 
       let execArgv = [];
 
+      console.log(this.config);
+
       if (this.config.inspect) {
         execArgv = [`--inspect=${this.config.inspectPort}`, '--debug-brk'];
       } else if (this.config.debug) {
@@ -222,6 +224,8 @@ class Supervisor {
       console.log(`Function execution started: ${event.eventId}`);
 
       // Spawn a child process in which to execute the user's function
+      // TODO: Warn when the Supervisor process ends but a child process is
+      // still running
       const worker = fork(path.join(__dirname, 'worker.js'), args, {
         // Execute the process in the context of the user's code
         cwd: cloudfunction.localPath,
@@ -248,12 +252,12 @@ class Supervisor {
         console.error(chunk);
 
         // Attempt to parse out the debug url for this execution
-        if (chunk.includes('Debugger listening on port')) {
-          const matches = chunk.match(/(chrome-devtools:\/\/devtools\S+)\s/);
-          if (matches) {
-            process.stdout.write(`${matches[1]}\n`);
-          }
-        }
+        // if (chunk.includes('Debugger listening on port')) {
+        //   const matches = chunk.match(/(chrome-devtools:\/\/devtools\S+)\s/);
+        //   if (matches) {
+        //     process.stdout.write(`${matches[1]}\n`);
+        //   }
+        // }
       });
 
       // Variables to hold the final result or error of the execution
@@ -271,9 +275,9 @@ class Supervisor {
       // Finally, wait for the child process to shutdown
       worker.on('close', (code) => {
         if (code) {
-          reject(error);
+          reject({ executionId: event.eventId, error });
         } else {
-          resolve(result);
+          resolve({ executionId: event.eventId, result });
         }
       });
     });
