@@ -71,42 +71,42 @@ function makeTests (service) {
       });
 
       it(`should deploy a background function ${suffix}`, () => {
-        const output = run(`${cmd} deploy ${name} --local-path test/test_module/ --trigger-bucket test ${args}`, cwd);
+        const output = run(`${cmd} deploy ${name} --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-resource=test ${args}`, cwd);
         assert(output.includes(`Function ${name} deployed.`));
       });
 
       it(`should deploy a function with JSON ${suffix}`, () => {
-        const output = run(`${cmd} deploy helloData --local-path test/test_module/ --trigger-bucket test ${args}`, cwd);
+        const output = run(`${cmd} deploy helloData --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-resource=test ${args}`, cwd);
         assert(output.includes(`Function helloData deployed.`));
       });
 
       it(`should deploy a synchronous function ${suffix}`, () => {
-        const output = run(`${cmd} deploy helloPromise --local-path test/test_module/ --trigger-bucket test ${args}`, cwd);
+        const output = run(`${cmd} deploy helloPromise --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-resource=test ${args}`, cwd);
         assert(output.includes(`Function helloPromise deployed.`));
       });
 
       it(`should deploy a function that throws and process does not crash ${suffix}`, () => {
-        const output = run(`${cmd} deploy helloThrow --local-path test/test_module/ --trigger-bucket test ${args}`, cwd);
+        const output = run(`${cmd} deploy helloThrow --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-resource=test ${args}`, cwd);
         assert(output.includes(`Function helloThrow deployed.`));
       });
 
       it(`should deploy a function returns JSON ${suffix}`, () => {
-        const output = run(`${cmd} deploy helloJSON --local-path test/test_module/ --trigger-bucket test ${args}`, cwd);
+        const output = run(`${cmd} deploy helloJSON --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-resource=test ${args}`, cwd);
         assert(output.includes(`Function helloJSON deployed.`));
       });
 
       it(`should deploy an HTTP function ${suffix}`, () => {
-        const output = run(`${cmd} deploy helloGET --local-path test/test_module/ --trigger-http ${args}`, cwd);
+        const output = run(`${cmd} deploy helloGET --local-path=test/test_module/ --trigger-http ${args}`, cwd);
         assert(output.includes(`Function helloGET deployed.`));
       });
 
       it(`should deploy an HTTP function and send it JSON ${suffix}`, () => {
-        const output = run(`${cmd} deploy helloPOST --local-path test/test_module/ --trigger-http ${args}`, cwd);
+        const output = run(`${cmd} deploy helloPOST --local-path=test/test_module/ --trigger-http ${args}`, cwd);
         assert(output.includes(`Function helloPOST deployed.`));
       });
 
       it.skip(`should fail when the module does not exist ${suffix}`, () => {
-        const output = run(`${cmd} deploy ${name} --local-path test/test_module/foo/bar --trigger-http ${args}`, cwd);
+        const output = run(`${cmd} deploy ${name} --local-path=test/test_module/foo/bar --trigger-http ${args}`, cwd);
         console.log(output);
         // TODO: Verify output once it gets fixed
       });
@@ -114,7 +114,7 @@ function makeTests (service) {
       // TODO: Fix this. It currently deploys the function when it shouldn`t
       it.skip(`should fail when the function does not exist ${suffix}`, () => {
         // TODO: Verify output once it gets fixed
-        const output = run(`${cmd} deploy doesNotExist --local-path test/test_module/ --trigger-http ${args}`, cwd);
+        const output = run(`${cmd} deploy doesNotExist --local-path=test/test_module/ --trigger-http ${args}`, cwd);
         console.log(output);
       });
     });
@@ -123,7 +123,7 @@ function makeTests (service) {
       it(`should describe a background function ${suffix}`, () => {
         const output = run(`${cmd} describe ${name} ${args}`, cwd);
         assert(output.includes(name));
-        assert(output.includes(`Bucket`));
+        assert(output.includes(`Resource`));
         assert(output.includes(`test`));
       });
 

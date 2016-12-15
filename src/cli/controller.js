@@ -242,16 +242,31 @@ class Controller {
       throw new Error('One of "local-path" or "source-path" must be set!');
     })
       .then((cloudfunction) => {
-        if (opts.triggerBucket) {
-          cloudfunction.gcsTrigger = opts.triggerBucket;
-          // throw new Error('"trigger-bucket" is not yet supported!');
-        } else if (opts.triggerTopic) {
-          cloudfunction.pubsubTrigger = opts.triggerTopic;
-          // throw new Error('"trigger-topic" is not yet supported!');
-        } else if (opts.triggerHttp) {
+        if (opts.triggerHttp) {
           cloudfunction.httpsTrigger = {};
+        } else if (opts.triggerProvider) {
+          if (opts.triggerProvider === 'cloud.pubsub') {
+            opts.triggerEvent || (opts.triggerEvent = 'topic.publish');
+          } else if (opts.triggerProvider === 'cloud.storage') {
+            opts.triggerEvent || (opts.triggerEvent = 'object.change');
+          } else if (opts.triggerProvider === 'firebase.database') {
+            opts.triggerEvent || (opts.triggerEvent = 'data.write');
+          } else if (opts.triggerProvider === 'firebase.auth') {
+            if (!opts.triggerEvent) {
+              throw new Error('Provider firebase.auth requires trigger event user.create or user.delete!');
+            }
+          }
+          cloudfunction.eventTrigger = {
+            eventType: `providers/${opts.triggerProvider}/eventTypes/${opts.triggerEvent}`
+          };
+          if (opts.triggerResource) {
+            cloudfunction.eventTrigger.resource = opts.triggerResource;
+          }
+          if (opts.triggerParams) {
+            cloudfunction.eventTrigger.resource = opts.triggerParams;
+          }
         } else {
-          throw new Error('You must specify a trigger type!');
+          throw new Error('You must specify a trigger provider!');
         }
 
         return this.client.createFunction(cloudfunction);

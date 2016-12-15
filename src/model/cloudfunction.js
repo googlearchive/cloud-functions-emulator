@@ -34,6 +34,21 @@ const CloudFunctionSchema = {
     gcsUrl: {
       type: 'string'
     },
+    eventTrigger: {
+      type: ['null', 'object'],
+      properties: {
+        eventType: {
+          type: 'string'
+        },
+        resource: {
+          type: 'string'
+        },
+        path: {
+          type: 'string'
+        }
+      },
+      required: ['eventType']
+    },
     httpsTrigger: {
       type: ['null', 'object'],
       properties: {

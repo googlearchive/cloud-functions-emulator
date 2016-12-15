@@ -55,43 +55,36 @@ exports.handler = (opts) => {
     .then(() => controller.list())
     .then((cloudfunctions) => {
       const table = new Table({
-        head: ['Name'.cyan, 'Trigger'.cyan, 'URL/Topic/Bucket'.cyan],
-        colWidths: [16, 16, 88] // 120 total
+        head: ['Name'.cyan, 'Trigger'.cyan, 'Resource'.cyan],
+        colWidths: [16, 64, 88] // 120 total
       });
 
       cloudfunctions.forEach((cloudfunction) => {
-        let trigger;
+        let trigger, resource;
         if (cloudfunction.httpsTrigger) {
           trigger = 'HTTP';
-        } else if (cloudfunction.pubsubTrigger) {
-          trigger = 'Topic';
-        } else if (cloudfunction.gcsTrigger) {
-          trigger = 'Bucket';
+          resource = cloudfunction.httpsTrigger.url;
+        } else if (cloudfunction.eventTrigger) {
+          trigger = cloudfunction.eventTrigger.eventType;
+          resource = cloudfunction.eventTrigger.resource;
         } else {
           trigger = 'Unknown';
         }
-        let triggerPath;
-        if (cloudfunction.httpsTrigger) {
-          triggerPath = cloudfunction.httpsTrigger.url || 'Unknown';
-        } else if (cloudfunction.pubsubTrigger) {
-          triggerPath = cloudfunction.pubsubTrigger || 'Unknown';
-        } else if (cloudfunction.gcsTrigger) {
-          triggerPath = cloudfunction.gcsTrigger || 'Unknown';
-        } else {
-          triggerPath = 'Unknown';
-        }
 
+        if (!resource) {
+          resource = 'None';
+        }
         if (pathExists(cloudfunction.gcsUrl)) {
           table.push([
             cloudfunction.shortName.white,
             trigger.white,
-            triggerPath.white
+            resource.white
           ]);
         } else {
           table.push([
             cloudfunction.shortName.white,
             trigger.white,
-            triggerPath.red
+            resource.red
           ]);
         }
       });

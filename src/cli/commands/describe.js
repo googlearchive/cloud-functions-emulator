@@ -47,31 +47,30 @@ exports.handler = (opts) => {
     .then((cloudfunction) => {
       const table = new Table({
         head: ['Property'.cyan, 'Value'.cyan],
-        colWidths: [16, 104] // 120 total
+        colWidths: [64, 104] // 120 total
       });
 
-      let trigger;
+      let trigger, resource, params;
       if (cloudfunction.httpsTrigger) {
         trigger = 'HTTP';
-      } else if (cloudfunction.pubsubTrigger) {
-        trigger = 'Topic';
-      } else if (cloudfunction.gcsTrigger) {
-        trigger = 'Bucket';
+      } else if (cloudfunction.eventTrigger) {
+        trigger = cloudfunction.eventTrigger.eventType;
+        resource = cloudfunction.eventTrigger.resource;
+        params = cloudfunction.eventTrigger.path;
       } else {
         trigger = 'Unknown';
       }
 
       table.push(['Name', cloudfunction.name.white]);
       table.push(['Trigger', trigger.white]);
-      if (cloudfunction.httpsTrigger && cloudfunction.httpsTrigger.url) {
-        table.push(['Url', cloudfunction.httpsTrigger.url.white]);
-      } else if (cloudfunction.pubsubTrigger) {
-        table.push(['Topic', cloudfunction.pubsubTrigger.white]);
-      } else if (cloudfunction.gcsTrigger) {
-        table.push(['Bucket', cloudfunction.gcsTrigger.white]);
+      if (resource) {
+        table.push(['Resource', resource.white]);
       }
-      if (cloudfunction.localPath) {
-        table.push(['Local path', cloudfunction.localPath.white]);
+      if (params) {
+        table.push(['Params', params.white]);
+      }
+      if (cloudfunction.serviceAccount) {
+        table.push(['Local path', cloudfunction.serviceAccount.white]);
       }
       table.push(['Archive', cloudfunction.gcsUrl.white]);
 
