@@ -204,24 +204,24 @@ describe(`unit/model/cloudfunction`, () => {
     });
   });
 
-  describe(`CloudFunction#setGcsUrl`, () => {
-    it(`should set gcsUrl`, () => {
+  describe(`CloudFunction#setSourceArchiveUrl`, () => {
+    it(`should set sourceArchiveUrl`, () => {
       const cloudfunction = new CloudFunction(TEST_NAME);
-      const gcsUrl = `gs://bucket/file.zip`;
+      const sourceArchiveUrl = `gs://bucket/file.zip`;
 
       assert.throws(
         () => {
-          cloudfunction.setGcsUrl();
+          cloudfunction.setSourceArchiveUrl();
         }
       );
       assert.throws(
         () => {
-          cloudfunction.setGcsUrl(1234);
+          cloudfunction.setSourceArchiveUrl(1234);
         }
       );
 
-      cloudfunction.setGcsUrl(gcsUrl);
-      assert(cloudfunction.gcsUrl === gcsUrl);
+      cloudfunction.setSourceArchiveUrl(sourceArchiveUrl);
+      assert(cloudfunction.sourceArchiveUrl === sourceArchiveUrl);
     });
   });
 
@@ -251,7 +251,7 @@ describe(`unit/model/cloudfunction`, () => {
       sinon.spy(CloudFunction, `decode`);
 
       const cloudfunction = new CloudFunction(TEST_NAME, {
-        gcsUrl: `gs://bucket/file.zip`,
+        sourceArchiveUrl: `gs://bucket/file.zip`,
         pubsubTrigger: `test`
       });
 

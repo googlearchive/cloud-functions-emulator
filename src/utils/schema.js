@@ -26,7 +26,6 @@ exports.validate = (obj, schema) => {
   const schemaValidator = ajv.compile(schema);
   const isValid = schemaValidator(obj);
   if (!isValid) {
-    console.error(JSON.stringify(schemaValidator.errors, null, 2));
     return schemaValidator.errors.map((error) => {
       return {
         field: error.dataPath.replace(/^\./, ''),

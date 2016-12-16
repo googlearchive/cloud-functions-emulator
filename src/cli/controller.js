@@ -91,7 +91,7 @@ class Controller {
    */
   _createArchive (name, opts) {
     return new Promise((resolve, reject) => {
-      let gcsUrl;
+      let sourceArchiveUrl;
 
       opts.localPath = path.resolve(opts.localPath);
       const tmpName = tmp.tmpNameSync({
@@ -106,7 +106,7 @@ class Controller {
         const storage = Storage({ projectId: this.config.projectId });
         const file = storage.bucket(opts.stageBucket).file(path.parse(tmpName).base);
         // The GCS Uri where the .zip will be saved
-        gcsUrl = `gs://${file.bucket.name}/${file.name}`;
+        sourceArchiveUrl = `gs://${file.bucket.name}/${file.name}`;
         // Stream the file up to Cloud Storage
         output = file.createWriteStream({
           metadata: {
@@ -116,7 +116,7 @@ class Controller {
       } else if (opts.stageDirectory) {
         // Technically, this needs to be a GCS Uri, but the emulator will know
         // how to interpret a path on the local file system
-        gcsUrl = tmpName;
+        sourceArchiveUrl = `file://${tmpName}`;
         // Copy the function code to a temp directory on the local file system
         output = fs.createWriteStream(tmpName);
       } else {
@@ -134,7 +134,7 @@ class Controller {
       archive
         .on('error', reject)
         .on('finish', () => {
-          resolve(gcsUrl);
+          resolve(sourceArchiveUrl);
         });
     });
   }
@@ -232,8 +232,8 @@ class Controller {
       } else if (opts.localPath) {
         cloudfunction.serviceAccount = path.resolve(opts.localPath);
         return this._createArchive(name, opts)
-          .then((gcsUrl) => {
-            cloudfunction.setGcsUrl(gcsUrl);
+          .then((sourceArchiveUrl) => {
+            cloudfunction.setSourceArchiveUrl(sourceArchiveUrl);
             return cloudfunction;
           })
           .then(resolve, reject);
@@ -343,6 +343,9 @@ class Controller {
   handleError (err) {
     if (Array.isArray(err.errors)) {
       err.errors.forEach((_err) => this.error(`${'ERROR'.red}: ${_err}`));
+    } else if (Array.isArray(err.details)) {
+      this.error(`${'ERROR'.red}: ${err.message}`);
+      this.error(`${'ERROR'.red}: ${JSON.stringify(err, null, 2)}`);
     } else {
       this.error(`${'ERROR'.red}: ${err.stack || err.message}`);
     }

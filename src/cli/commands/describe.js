@@ -53,6 +53,7 @@ exports.handler = (opts) => {
       let trigger, resource, params;
       if (cloudfunction.httpsTrigger) {
         trigger = 'HTTP';
+        resource = cloudfunction.httpsTrigger.url;
       } else if (cloudfunction.eventTrigger) {
         trigger = cloudfunction.eventTrigger.eventType;
         resource = cloudfunction.eventTrigger.resource;
@@ -72,7 +73,7 @@ exports.handler = (opts) => {
       if (cloudfunction.serviceAccount) {
         table.push(['Local path', cloudfunction.serviceAccount.white]);
       }
-      table.push(['Archive', cloudfunction.gcsUrl.white]);
+      table.push(['Archive', cloudfunction.sourceArchiveUrl.white]);
 
       controller.log(table.toString());
     })

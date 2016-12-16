@@ -122,16 +122,17 @@ class Supervisor {
         return this.invoke(cloudfunction, req.body || {}, context);
       })
       .then((response) => {
-        if (response.statusCode) {
-          res.status(response.statusCode);
+        const result = response.result;
+        if (result.statusCode) {
+          res.status(result.statusCode);
         }
-        if (response.body) {
-          res.send(response.body);
-        }
-        if (response.headers) {
-          for (let key in response.headers) {
-            res.set(key, response.headers[key]);
+        if (result.headers) {
+          for (let key in result.headers) {
+            res.set(key, result.headers[key]);
           }
+        }
+        if (result.body) {
+          res.send(result.body);
         }
         res.end();
       });
@@ -213,8 +214,6 @@ class Supervisor {
 
       let execArgv = [];
 
-      console.log(this.config);
-
       if (this.config.inspect) {
         execArgv = [`--inspect=${this.config.inspectPort}`, '--debug-brk'];
       } else if (this.config.debug) {
@@ -250,14 +249,6 @@ class Supervisor {
       worker.stderr.on('data', (chunk) => {
         chunk = chunk.toString('utf8');
         console.error(chunk);
-
-        // Attempt to parse out the debug url for this execution
-        // if (chunk.includes('Debugger listening on port')) {
-        //   const matches = chunk.match(/(chrome-devtools:\/\/devtools\S+)\s/);
-        //   if (matches) {
-        //     process.stdout.write(`${matches[1]}\n`);
-        //   }
-        // }
       });
 
       // Variables to hold the final result or error of the execution
@@ -277,6 +268,7 @@ class Supervisor {
         if (code) {
           reject({ executionId: event.eventId, error });
         } else {
+          console.log(JSON.stringify({ executionId: event.eventId, result }, null, 2));
           resolve({ executionId: event.eventId, result });
         }
       });

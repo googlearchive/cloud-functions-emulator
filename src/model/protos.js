@@ -24,6 +24,7 @@ const protoRootDir = googleProtoFiles('..');
 const functionsProtoPath = path.relative(protoRootDir, googleProtoFiles('cloud/functions/v1beta2/functions.proto'));
 const operationsProtoPath = path.relative(protoRootDir, googleProtoFiles('cloud/functions/v1beta2/operations.proto'));
 const errorsProtoPath = path.relative(protoRootDir, googleProtoFiles('rpc/error_details.proto'));
+const statusProtoPath = path.relative(protoRootDir, googleProtoFiles('rpc/status.proto'));
 
 const options = {
   binaryAsBase64: true,
@@ -40,7 +41,8 @@ function loadFile (path) {
 const protos = _.merge(
   loadFile(functionsProtoPath),
   loadFile(operationsProtoPath),
-  loadFile(errorsProtoPath)
+  loadFile(errorsProtoPath),
+  loadFile(statusProtoPath)
 );
 
 function getProto (key) {
@@ -161,6 +163,7 @@ function encodeAnyType (obj) {
 
 _.merge(exports, getProto('google.cloud.functions.v1beta2'));
 _.merge(exports, getProto('google.longrunning'));
+_.merge(exports, getProto('google.rpc'));
 
 exports.protos = protos;
 exports.get = getProto;

@@ -74,7 +74,7 @@ exports.handler = (opts) => {
         if (!resource) {
           resource = 'None';
         }
-        if (pathExists(cloudfunction.gcsUrl)) {
+        if (pathExists(cloudfunction.sourceArchiveUrl.replace('file://', ''))) {
           table.push([
             cloudfunction.shortName.white,
             trigger.white,
@@ -82,8 +82,8 @@ exports.handler = (opts) => {
           ]);
         } else {
           table.push([
-            cloudfunction.shortName.white,
-            trigger.white,
+            cloudfunction.shortName.red,
+            trigger.red,
             resource.red
           ]);
         }

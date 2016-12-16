@@ -103,8 +103,6 @@ exports.handler = (opts) => {
         controller.log('Result:', body.result);
       } else if (body.error) {
         controller.log('Error:', body.error);
-      } else {
-        throw new Error('Unknown response!');
       }
     })
     .catch((err) => controller.handleError(err));

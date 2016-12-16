@@ -72,8 +72,22 @@ class RpcService extends Service {
    */
   callFunction (call, cb) {
     return this.functions.getFunction(call.request.name)
-      .then((cloudfunction) => this.supervisor.invoke(cloudfunction, call.request.data, {}, this.config))
+      .then((cloudfunction) => {
+        if (typeof call.request.data === 'string') {
+          try {
+            call.request.data = JSON.parse(call.request.data);
+          } catch (err) {
+            call.request.data = {};
+          }
+        }
+        return this.supervisor.invoke(cloudfunction, call.request.data, {}, this.config);
+      })
       .then((response) => {
+        try {
+          response.result = JSON.stringify(response.result);
+        } catch (err) {
+
+        }
         cb(null, response);
       });
   }
@@ -132,28 +146,27 @@ class RpcService extends Service {
   }
 
   handleError (err, cb) {
-    if (Array.isArray(err.details)) {
-      err.details.forEach((detail) => {
-        protos.encodeAnyType(detail);
-      });
-    }
+    console.error('GrpcService', err);
+
+    err = err.toProtobuf();
+
     const error = {
       code: err.code || status.INTERNAL,
-      details: err.stack || err.message || http.STATUS_CODES['500']
+      details: err.message || http.STATUS_CODES['500']
     };
-    if (err.details) {
+
+    if (Array.isArray(err.details)) {
       const metadata = new Metadata();
       err.details.forEach((detail, i) => {
         if (i) {
-          metadata.add('detail-bin', detail);
+          metadata.add('detail-bin', Buffer.from(JSON.stringify(detail)));
         } else {
-          metadata.set('detail-bin', detail);
+          metadata.set('detail-bin', Buffer.from(JSON.stringify(detail)));
         }
       });
       error.metadata = metadata;
     }
 
-    console.error('GrpcService', JSON.stringify(error, null, 2));
     cb(error);
   }
 

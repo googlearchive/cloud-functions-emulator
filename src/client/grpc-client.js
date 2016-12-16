@@ -38,6 +38,24 @@ class GrpcClient extends Client {
     );
   }
 
+  _processError (err) {
+    if (err.metadata) {
+      const details = err.metadata.get('detail-bin');
+      if (Array.isArray(details)) {
+        err.details = details.map((detail) => {
+          detail = JSON.parse(detail.toString());
+          protos.decodeAnyType(detail);
+          return detail;
+        });
+      }
+      err.metadata.remove('detail-bin');
+      if (!Object.keys(err.metadata.getMap()).length) {
+        delete err.metadata;
+      }
+    }
+    return err;
+  }
+
   callFunction (name, data) {
     return new Promise((resolve, reject) => {
       const start = Date.now();
@@ -46,9 +64,16 @@ class GrpcClient extends Client {
         data: JSON.stringify(data)
       }, (err, body) => {
         if (err) {
-          reject(err);
+          reject(this._processError(err));
         } else {
           const end = Date.now();
+          if (body.result && typeof body.result === 'string') {
+            try {
+              body.result = JSON.parse(body.result);
+            } catch (err) {
+
+            }
+          }
           const response = {
             headers: {
               'x-response-time': `${end - start}ms`
@@ -68,7 +93,7 @@ class GrpcClient extends Client {
         function: cloudfunction.toProtobuf()
       }, (err, operation) => {
         if (err) {
-          reject(err);
+          reject(this._processError(err));
         } else {
           resolve(operation);
         }
@@ -82,7 +107,7 @@ class GrpcClient extends Client {
         name: CloudFunction.formatName(this.config.projectId, this.config.region, name)
       }, (err, operation) => {
         if (err) {
-          reject(err);
+          reject(this._processError(err));
         } else {
           operation.metadata = JSON.parse(Buffer.from(operation.metadata.value, 'base64').toString());
           operation.metadata.request = operation.metadata.request.value.toString('utf8');
@@ -98,7 +123,7 @@ class GrpcClient extends Client {
         name: CloudFunction.formatName(this.config.projectId, this.config.region, name)
       }, (err, cloudfunction) => {
         if (err) {
-          reject(err);
+          reject(this._processError(err));
         } else {
           resolve([new CloudFunction(cloudfunction.name, cloudfunction)]);
         }
@@ -113,7 +138,7 @@ class GrpcClient extends Client {
         location: CloudFunction.formatLocation(this.config.projectId, this.config.region)
       }, (err, response) => {
         if (err) {
-          reject(err);
+          reject(this._processError(err));
         } else {
           resolve([
             response.functions.map((cloudfunction) => new CloudFunction(cloudfunction.name, cloudfunction))
@@ -128,7 +153,7 @@ class GrpcClient extends Client {
       // There's got to be a better way to get a "heartbeat" from the gRPC server
       this.functionsClient.listFunctions({ location: 'heartbeat' }, (err, response) => {
         if (err) {
-          reject(err);
+          reject(this._processError(err));
         } else {
           resolve();
         }

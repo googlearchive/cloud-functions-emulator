@@ -18,11 +18,18 @@
 const grpc = require('grpc');
 const http = require('http');
 
+const protos = require('../model/protos');
+
 class ExtendableError extends Error {
   constructor (message, details = []) {
     super(message);
     this.name = this.constructor.name;
-    this.message = message;
+    Object.defineProperty(this, 'message', {
+      configurable: true,
+      writable: true,
+      enumerable: true,
+      value: message
+    });
     this.details = details;
     if (typeof Error.captureStackTrace === 'function') {
       Error.captureStackTrace(this, this.constructor);
@@ -30,6 +37,24 @@ class ExtendableError extends Error {
       this.stack = (new Error(message)).stack;
     }
     this.details.push(new DebugInfo(this));
+  }
+
+  static decode (err) {
+    // Decode the top-level Status message fields.
+    err = protos.decode(err, protos.Status);
+
+    if (Array.isArray(err.details)) {
+      err.details.forEach((detail) => {
+        protos.encodeAnyType(detail);
+      });
+    }
+
+    return err;
+  }
+
+  toProtobuf () {
+    // Get a sanitized copy of this ExtendableError instance.
+    return ExtendableError.decode(this);
   }
 }
 

@@ -62,6 +62,9 @@ const CloudFunctionSchema = {
     },
     pubsubTrigger: {
       type: 'string'
+    },
+    sourceArchiveUrl: {
+      type: 'string'
     }
   },
   required: ['name']
@@ -233,11 +236,11 @@ class CloudFunction {
     };
   }
 
-  setGcsUrl (gcsUrl) {
-    if (!gcsUrl || typeof gcsUrl !== 'string') {
-      throw new Error('"gcsUrl" must be a non-empty string!');
+  setSourceArchiveUrl (sourceArchiveUrl) {
+    if (!sourceArchiveUrl || typeof sourceArchiveUrl !== 'string') {
+      throw new Error('"sourceArchiveUrl" must be a non-empty string!');
     }
-    this.gcsUrl = gcsUrl;
+    this.sourceArchiveUrl = sourceArchiveUrl;
   }
 
   setTimeout (timeout) {
@@ -263,6 +266,9 @@ class CloudFunction {
     }
     if (!cloudfunction.gcsTrigger) {
       delete cloudfunction.gcsTrigger;
+    }
+    if (!cloudfunction.gcsUrl) {
+      delete cloudfunction.gcsUrl;
     }
 
     return cloudfunction;
