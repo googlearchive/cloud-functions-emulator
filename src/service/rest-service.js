@@ -106,41 +106,44 @@ class RestService extends Service {
       }
 
       // TODO: Extract most of this error handling/formatting into a utility
-      if (err instanceof Error) {
-        res.status(500).send(err.stack).end();
-      } else if (typeof err === 'object') {
-        if (err.code) {
-          if (err.code === errors.status.FAILED_PRECONDITION) {
-            res.status(400).json({
-              error: {
-                code: 400,
-                status: 'FAILED_PRECONDITION',
-                message: err.message || http.STATUS_CODES['400'],
-                errors: [err.message || http.STATUS_CODES['400']]
-              }
-            }).end();
-          } else if (err.code === errors.status.NOT_FOUND) {
-            res.status(404).json({
-              error: {
-                code: 404,
-                status: 'NOT_FOUND',
-                message: err.message || http.STATUS_CODES['404'],
-                errors: [err.message || http.STATUS_CODES['404']]
-              }
-            }).end();
-          } else {
-            res.status(500).json({
-              error: {
-                code: 500,
-                status: 'INTERNAL',
-                message: err.message || http.STATUS_CODES['500'],
-                errors: [err.message || http.STATUS_CODES['500']]
-              }
-            }).end();
+      if (err instanceof errors.InvalidArgumentError) {
+        res.status(400).json({
+          error: {
+            code: 400,
+            status: 'INVALID_ARGUMENT',
+            message: err.message || http.STATUS_CODES['400'],
+            errors: [err.message || http.STATUS_CODES['400']]
           }
-        } else {
-          res.status(500).end();
-        }
+        }).end();
+      } else if (err instanceof errors.ConflictError) {
+        res.status(409).json({
+          error: {
+            code: 409,
+            status: 'ALREADY_EXISTS',
+            message: err.message || http.STATUS_CODES['409'],
+            errors: [err.message || http.STATUS_CODES['409']]
+          }
+        }).end();
+      } else if (err instanceof errors.NotFoundError) {
+        res.status(404).json({
+          error: {
+            code: 404,
+            status: 'NOT_FOUND',
+            message: err.message || http.STATUS_CODES['404'],
+            errors: [err.message || http.STATUS_CODES['404']]
+          }
+        }).end();
+      } else if (err instanceof errors.InternalError) {
+        res.status(500).json({
+          error: {
+            code: 500,
+            status: 'INTERNAL',
+            message: err.message || http.STATUS_CODES['500'],
+            errors: [err.message || http.STATUS_CODES['500']]
+          }
+        }).end();
+      } else if (err instanceof Error) {
+        res.status(500).send(err.stack).end();
       } else if (err) {
         res.status(500).end();
       } else {
