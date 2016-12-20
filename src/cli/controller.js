@@ -311,13 +311,13 @@ class Controller {
 
           // Ignore any error
           if (!err) {
-            // Attempt to find the Chrome debugging URL in the last 500 characters that were logged
-            matches = content.substring(content.length - 500).match(/(chrome-devtools:\/\/devtools\S+)\s/);
+            // Attempt to find the Chrome debugging URL in the last 300 characters that were logged
+            matches = content.substring(content.length - 300).match(/(chrome-devtools:\/\/devtools\S+)\s/);
           }
 
           resolve(matches ? matches[1] : undefined);
         });
-      }, 300);
+      }, 500);
     });
   }
 
