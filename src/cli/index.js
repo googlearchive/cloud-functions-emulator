@@ -62,6 +62,7 @@ cli
 
 exports.main = (args) => {
   cli
+    .epilogue('Read more at https://github.com/GoogleCloudPlatform/cloud-functions-emulator')
     .help()
     .version()
     .strict()

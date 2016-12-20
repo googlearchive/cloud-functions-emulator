@@ -28,12 +28,16 @@ version number and breaking changes will bump the minor version number.**
   * [Debugging](#debugging)
     * [Debugging with Visual Studio Code](#debugging-with-visual-studio-code)
     * [Debugging with Chrome Developer Tools](#debugging-with-chrome-developer-tools)
+    * [Debugging with WebStorm](#debugging-with-webstorm)
   * [Using Mocks](#using-mocks)
   * [Known issues and FAQ](#known-issues-and-faq)
 
 ## Installation
 
     npm install -g @google-cloud/functions-emulator
+
+Installing `@google-cloud/functions-emulator` globally with the `-g` flag adds
+the `functions` executable to your `PATH` so you can run the CLI from anywhere.
 
 ## Authentication
 
@@ -102,37 +106,42 @@ Print the available commands:
 ### Usage
 
     Commands:
-      call <functionName>                 Invokes a function. You must specify either the "data" or the "file" option.
-      clear                               Resets the emulator to its default state and clears and deployed functions.
-      config <command>                    Manages emulator configuration.
-      delete <functionName>               Undeploys a previously deployed function (does NOT delete the function source
-                                          code).
-      deploy <functionName> <modulePath>  Deploys a function with the given module path and function name (entry point).
-      describe <functionName>             Describes the details of a single deployed function.
-      kill                                Force kills the emulator process if it stops responding.
-      list                                Lists deployed functions.
-      logs <command>                      Manages emulator logs access.
-      prune                               Removes any functions known to the emulator but which no longer exist in their
-                                          corresponding module.
-      restart                             Restarts the emulator.
-      start                               Starts the emulator.
-      status                              Reports the current status of the emulator.
-      stop                                Stops the emulator gracefully.
+      call <functionName>      Invokes a function. You must specify either the "data" or the "file" option.
+      clear                    Resets the emulator to its default state and clears and deployed functions.
+      config <command>         Manages emulator configuration.
+      delete <functionName>    Undeploys a previously deployed function (does NOT delete the function source code).
+      deploy <functionName>    Deploys a function with the given module path and function name (entry point).
+      describe <functionName>  Describes the details of a single deployed function.
+      kill                     Force kills the emulator process if it stops responding.
+      list                     Lists deployed functions.
+      logs <command>           Manages emulator logs access.
+      prune                    Removes any functions known to the emulator but which no longer exist in their corresponding
+                               module.
+      restart                  Restarts the emulator.
+      start                    Starts the emulator.
+      status                   Reports the current status of the emulator.
+      stop                     Stops the emulator gracefully.
 
     Options:
-      --host, -h  The emulator's host.                                                                              [string]
-      --port, -p  The emulator's port.                                                                              [number]
+      --grpcHost  The host the gRPC Service should run on.                                                          [string]
+      --grpcPort  The port the gRPC Service should run on.                                                          [number]
+      --restHost  The host the REST Service should run on.                                                          [string]
+      --restPort  The port the REST Service should run on.                                                          [number]
       --help      Show help                                                                                        [boolean]
       --version   Show version number                                                                              [boolean]
 
     Examples:
-      functions deploy ~/myModule helloWorld --trigger-http    Deploy helloWorld as an HTTP function from the module
-                                                                   located in ~/myModule
-      functions call helloWorld                                Invoke the helloWorld function with no data argument
-      functions call helloWorld --data '{"foo": "bar"}'        Invoke the helloWorld function with a JSON document
-                                                                   argument
-      functions call helloWorld --file ~/myData/datafile.json  Invoke the helloWorld function with a file argument
-      functions logs read --limit 10                           Display the most recent 10 lines from the logs
+      cd /path/to/module/dir; functions deploy helloWorld       Deploy helloWorld as an HTTP function from the module
+      --trigger-http                                                located in /path/to/module/dir.
+      functions deploy helloWorld                               Deploy helloWorld as an HTTP function from the module
+      --local-path=/path/to/module/dir --trigger-http               located in /path/to/module/dir.
+      functions call helloWorld                                 Invoke the helloWorld function with no data argument
+      functions call helloWorld --data='{"foo": "bar"}'         Invoke the helloWorld function with a JSON document
+                                                                    argument
+      functions call helloWorld --file=~/myData/datafile.json   Invoke the helloWorld function with a file argument
+      functions logs read --limit=10                            Display the most recent 10 lines from the logs
+
+    Read more at https://github.com/GoogleCloudPlatform/cloud-functions-emulator
 
 Get help on a specific command passing `--help` to the command, for example:
 
@@ -156,17 +165,23 @@ The emulator can host both BACKGROUND and HTTP (foreground) Cloud Functions. By
 default the emulator will consider functions deployed to be BACKGROUND
 functions. To deploy an HTTP function, use the `--trigger-http` argument:
 
-    functions deploy <functionName> <modulePath> --trigger-http
+    functions deploy <functionName> --local-path=<modulePath> --trigger-http
+
+*Note: The `modulePath` should be a directory containing the Node.js module you
+want to deploy.*
 
 For example:
 
-    functions deploy helloWorld ~/myModule --trigger-http
+    functions deploy helloWorld --local-path=~/myModule --trigger-http
 
 This would deploy the `helloWorld` function in the Node.js module contained in
 the `~/myModule` path.
 
-*Note: The module path should be a directory containing the Node.js module you
-want to deploy.*
+If you run the command in your function's module directory then you can drop the
+`--local-path` flag:
+
+    cd /path/to/module/dir
+    functions deploy helloWorld --trigger-http
 
 ### Invoking a Function
 
@@ -177,7 +192,7 @@ Start the Emulator:
 Deploy a BACKGROUND function *(the first argument is the path to your module,
 the second argument is the name of the function)*:
 
-    functions deploy helloWorld ../myModule
+    functions deploy helloWorld --local-path=../myModule
 
 Invoke the function:
 
@@ -191,7 +206,7 @@ For HTTP functions, just use the `--trigger-http` argument.
 
 Deploy an HTTP function:
 
-    functions deploy helloHttp ../myModule --trigger-http
+    functions deploy helloHttp --local-path=../myModule --trigger-http
 
 Invoke the function (default port is 8008):
 
@@ -203,7 +218,7 @@ When using the `call` command, you can optionally provide a `--data` argument to
 send data to your function. This should be expressed as a JSON document, for
 example:
 
-    functions call helloWorld --data '{"foo":"bar"}'
+    functions call helloWorld --data='{"foo":"bar"}'
 
 When calling HTTP functions in this way, your function will receive an HTTP POST
 with the JSON document as the request body.
@@ -211,7 +226,7 @@ with the JSON document as the request body.
 Crafting lengthy JSON documents at the command line can be cumbersome, so you
 can specify a path to a JSON file with the `--file` option:
 
-    functions call helloWorld --file /usr/local/somedata.json
+    functions call helloWorld --file=/usr/local/somedata.json
 
 This example will load `/usr/local/somedata.json` and pass its contents as the
 argument to the function.
@@ -221,19 +236,18 @@ argument to the function.
 ### Config
 
 A `config.json` file in your home directory allows you to customize default
-settings for the emulator:
+settings for the emulator. Here are some of the options:
 
 | Property | Type | Description |
 |-------|---|----------|
-| host | string | Host the emulator should listen on. Default: `localhost`. |
 | logFile | string | Path to the logs file. Default: `logs/cloud-functions-emulator.log`. |
-| port | integer | The TCP port on which the emulator will listen. Default: `8008`. |
 | projectId | string | Your Cloud Platform project ID. Default: `process.env.GCLOUD_PROJECT`. |
 | timeout | integer | Timeout (ms) to wait for the emulator to start. Default: `3000`. |
 | useMocks | boolean | Whether `mocks.js` should be loaded when the emulator starts. Default: `false`. |
 | verbose | boolean | Whether the emulator should write additional logs during operation. Default: `false`. |
 
-View table of current configuration:
+View the configuration saved to the Emulator `config.json` in your user's home
+directory:
 
     functions config list
 
@@ -244,6 +258,14 @@ or as JSON:
 Update a particular setting:
 
     functions config set verbose true
+
+Restart the Emulator for changes to take effect:
+
+    function restart
+
+View the configuration of the currently running Emulator:
+
+    functions status
 
 ### Logs
 
@@ -258,7 +280,7 @@ You can view the logs from your functions using the `logs read` command:
 By default this will return the most recent 20 log lines. You can alter this
 with the `--limit` flag.
 
-    functions logs read --limit 100
+    functions logs read --limit=100
 
 Alternatively, you can simply *tail* the log file itself.
 
@@ -270,18 +292,23 @@ Mac/Linux:
 
 ### Debugging
 
-To start the emulator in *debug* mode, use the `--inspect` flag:
+To start the emulator in *debug* mode, use the `--debug` (to use the current
+Node.js Debugger) or `--inspect` (to use the new experimental Debugger) flags:
+
+    functions start --debug
+
+or
 
     functions start --inspect
 
-While running in debug mode a separate debug server will be started on port 9229
-(the default `--inspect` debugger port for Node.js v6.9.1). You can then attach
-to the debugger process with your favorite IDE.
+While running in debug mode a separate debug server will be started on port 5858
+or 9229 (for `--debug` and `--inspect` respectively). You can then attach to the
+debugger process with the tool of your choice.
 
 #### Debugging with Visual Studio Code
 
-If you started the emulator with the `--inspect` flag, you can simply "Attach"
-to the emulator from withing Visual Studio Code.
+If you started the emulator with the `--inspect` flag, you can "Attach" to a
+running function from within Visual Studio Code.
 
 Refer to the documentation for [debugging in Visual Studio Code](https://code.visualstudio.com/Docs/editor/debugging) for more information. Basically, you just need a `launch.json` file that looks
 like this:
@@ -321,6 +348,12 @@ file. Just invoke your function once to have its source file appear in the
 debugger window. You can then set breakpoints and debug like normal.
 
 ![Debugging with Chrome Developer Tools](img/debugging.png "Debugging with Chrome Developer Tools")
+
+#### Debugging with WebStorm
+
+Create a Node.js Remote Debugger configuration. In the Emulator, set `debug` to
+`true`. When your function is invoked and then paused, attach to the debugger in
+WebStorm by running the debug configuration you created.
 
 #### Using the old debugger
 

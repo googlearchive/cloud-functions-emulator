@@ -268,7 +268,6 @@ class Supervisor {
         if (code) {
           reject({ executionId: event.eventId, error });
         } else {
-          console.log(JSON.stringify({ executionId: event.eventId, result }, null, 2));
           resolve({ executionId: event.eventId, result });
         }
       });
