@@ -25,6 +25,7 @@ const Storage = require('@google-cloud/storage');
 const tmp = require('tmp');
 
 const Client = require('../client');
+const getProjectId = require('../utils/project');
 const Model = require('../model');
 const defaults = require('../defaults.json');
 const logs = require('../emulator/logs');
@@ -55,10 +56,7 @@ class Controller {
     this.config = _.merge({}, defaults, this._config.all, opts);
 
     // Ensure we've got a project ID
-    this.config.projectId || (this.config.projectId = process.env.GCLOUD_PROJECT);
-    if (!this.config.projectId) {
-      throw new Error('Please provide a project ID: "functions config set projectId YOUR_PROJECT_ID" or "functions start --projectId YOUR_PROJECT_ID" or "export GCLOUD_PROJECT=YOUR_PROJECT_ID"');
-    }
+    this.config.projectId = getProjectId(this.config.projectId);
 
     // We will pipe stdout from the child process to the emulator log file
     this.config.logFile = logs.assertLogsPath(this.config.logFile);

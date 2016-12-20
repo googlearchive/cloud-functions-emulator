@@ -21,6 +21,7 @@ const winston = require('winston');
 
 const cli = require('../config');
 const defaults = require('../defaults.json');
+const getProjectId = require('../utils/project');
 const loadHandler = require('./loadhandler');
 const logs = require('./logs');
 const Model = require('../model');
@@ -46,7 +47,7 @@ function main (opts) {
   }
   opts = _.merge(defaults, opts);
 
-  opts.projectId = opts.projectId || process.env.GCLOUD_PROJECT;
+  opts.projectId = getProjectId(opts.projectId);
   opts.logFile = opts.logFile ? logs.assertLogsPath(opts.logFile) : opts.logFile;
 
   // Add a global error handler to catch all unexpected exceptions in the process
