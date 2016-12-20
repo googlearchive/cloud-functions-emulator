@@ -15,8 +15,14 @@
 
 'use strict';
 
+const _ = require(`lodash`);
 const execSync = require(`child_process`).execSync;
+const path = require(`path`);
+
+const env = _.cloneDeep(process.env);
+
+env.XDG_CONFIG_HOME = path.join(__dirname, `../`);
 
 exports.run = (cmd, cwd) => {
-  return execSync(cmd, { cwd }).toString().trim();
+  return execSync(cmd, { cwd, env }).toString().trim();
 };

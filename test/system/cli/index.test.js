@@ -15,20 +15,24 @@
 
 'use strict';
 
-const Configstore = require(`configstore`);
 const path = require(`path`);
+
+process.env.XDG_CONFIG_HOME = path.join(__dirname, `../`);
+
+const Configstore = require(`configstore`);
 
 const pkg = require(`../../../package.json`);
 const run = require(`./utils`).run;
 
 const cmd = `node bin/functions`;
 const cwd = path.join(__dirname, `../../..`);
+const logFile = path.join(__dirname, `../test.log`);
 const name = `hello`;
 const operations = new Configstore(path.join(pkg.name, `.operations`));
 const prefix = `Google Cloud Functions Emulator`;
 
 function makeTests (service) {
-  const args = `--serviceMode ${service} --grpcHost localhost --grpcPort 8009 --debug false --inspect false --restHost localhost --restPort 8008 --runSupervisor true --supervisorHost localhost --supervisorPort 8010`;
+  const args = `--logFile=${logFile} --serviceMode=${service} --grpcHost=localhost --grpcPort=8009 --debug=false --inspect=false --restHost=localhost --restPort=8008 --runSupervisor=true --supervisorHost=localhost --supervisorPort=8010`;
   const suffix = `(${service} service)`;
 
   describe(`system/cli/${service}`, () => {

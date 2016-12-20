@@ -16,3 +16,5 @@ doc/
 *.log
 config.json
 app.yaml
+test/system/configstore
+test/system/*.log
