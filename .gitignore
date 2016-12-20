@@ -10,7 +10,6 @@ local.txt
 keyfile.json
 translate_apikey.json
 sheets
-logs/
 doc/
 .nyc_output
 *.log
