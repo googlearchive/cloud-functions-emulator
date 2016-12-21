@@ -20,11 +20,10 @@
  */
 exports.command = 'logs <command>';
 exports.describe = 'Manages emulator logs access.';
-
 exports.builder = (yargs) => {
   return yargs
     .command(require('./read'));
-}
+};
 
 /**
  * Handler for the "logs" command.
