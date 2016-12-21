@@ -20,6 +20,7 @@ const path = require(`path`);
 process.env.XDG_CONFIG_HOME = path.join(__dirname, `../`);
 
 const Configstore = require(`configstore`);
+const fs = require(`fs`);
 
 const pkg = require(`../../../package.json`);
 const run = require(`./utils`).run;
@@ -28,17 +29,34 @@ const cmd = `node bin/functions`;
 const cwd = path.join(__dirname, `../../..`);
 const logFile = path.join(__dirname, `../test.log`);
 const name = `hello`;
+const config = new Configstore(path.join(pkg.name, `config`));
+const server = new Configstore(path.join(pkg.name, `.active-server`));
 const operations = new Configstore(path.join(pkg.name, `.operations`));
 const prefix = `Google Cloud Functions Emulator`;
 
+const REST_PORT = 8088;
+const GRPC_PORT = 8089;
+const SUPERVISOR_PORT = 8090;
+
 function makeTests (service) {
-  const args = `--logFile=${logFile} --serviceMode=${service} --grpcHost=localhost --grpcPort=8009 --debug=false --inspect=false --restHost=localhost --restPort=8008 --runSupervisor=true --supervisorHost=localhost --supervisorPort=8010`;
+  const args = `--logFile=${logFile} --serviceMode=${service} --grpcHost=localhost --grpcPort=${GRPC_PORT} --debug=false --inspect=false --restHost=localhost --restPort=${REST_PORT} --runSupervisor=true --supervisorHost=localhost --supervisorPort=${SUPERVISOR_PORT} --verbose`;
   const suffix = `(${service} service)`;
 
   describe(`system/cli/${service}`, () => {
     before(() => {
+      fs.unlinkSync(logFile);
+
       // Clear all Operations data
       operations.clear();
+
+      config.set('restPort', REST_PORT);
+      server.set('restPort', REST_PORT);
+      config.set('grpcPort', GRPC_PORT);
+      server.set('grpcPort', GRPC_PORT);
+      config.set('supervisorPort', SUPERVISOR_PORT);
+      server.set('supervisorPort', SUPERVISOR_PORT);
+      config.set('logFile', logFile);
+      server.set('logFile', logFile);
 
       let output = run(`${cmd} restart ${args}`, cwd);
       assert(output.includes(`${prefix} STARTED`));
@@ -240,8 +258,8 @@ function makeTests (service) {
         let output = run(`${cmd} status ${args}`, cwd);
         assert(output.includes(`${prefix}`));
         assert(output.includes(`RUNNING`));
-        assert(output.includes(`http://localhost:8008/`));
-        assert(output.includes(`http://localhost:8009/`));
+        assert(output.includes(`http://localhost:${REST_PORT}/`));
+        assert(output.includes(`http://localhost:${GRPC_PORT}/`));
 
         output = run(`${cmd} stop ${args}`, cwd);
         assert(output.includes(`STOPPED`));
