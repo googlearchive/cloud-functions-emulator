@@ -192,6 +192,34 @@ class Functions {
   }
 
   /**
+   * Formats an error used when there is a general error creating a
+   * CloudFunction.
+   *
+   * @method Functions#_createFunctionError
+   * @private
+   * @param {string} name The name of the CloudFunction to create.
+   * @param {object} err The error.
+   * @param {Operation} operation The in-flight Operation, if any.
+   * @returns {Promise}
+   */
+  _createFunctionError (name, err, operation) {
+    err = new Errors.InternalError(err.message);
+    err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
+
+    if (operation) {
+      operation.done = true;
+      operation.error = _.cloneDeep(err);
+
+      // Fire off the request to update the Operation
+      this.adapter.updateOperation(operation.name, operation)
+        .catch((err) => this._createFunctionError(name, err));
+    }
+
+    console.error(err);
+    return Promise.reject(err);
+  }
+
+  /**
    * Creates a CloudFunction.
    *
    * @method Functions#createFunction

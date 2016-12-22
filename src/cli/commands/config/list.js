@@ -24,13 +24,15 @@ const Controller = require('../../controller');
  */
 exports.command = 'list';
 exports.describe = 'Print all options in the config.json file.';
-exports.builder = {
-  json: {
-    alias: 'j',
-    description: 'Print the config as JSON.',
-    requiresArg: false,
-    type: 'boolean'
-  }
+exports.builder = (yargs) => {
+  return yargs.options({
+    json: {
+      alias: 'j',
+      description: 'Print the config as JSON.',
+      requiresArg: false,
+      type: 'boolean'
+    }
+  });
 };
 
 /**
@@ -44,11 +46,11 @@ exports.handler = (opts) => {
   if (opts.json) {
     controller.log(JSON.stringify(config, null, 2));
   } else {
+    controller.log(`Run "functions config --help" for description of the available configuration options.`);
     controller.log(`Config file: ${path.green}`);
 
     const table = new Table({
-      head: ['Key'.cyan, 'Value'.cyan],
-      colWidths: [16, 64]
+      head: ['Key'.cyan, 'Value'.cyan]
     });
 
     let value;

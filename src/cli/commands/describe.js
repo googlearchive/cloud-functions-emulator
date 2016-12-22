@@ -46,8 +46,7 @@ exports.handler = (opts) => {
     .then(() => controller.describe(opts.functionName))
     .then((cloudfunction) => {
       const table = new Table({
-        head: ['Property'.cyan, 'Value'.cyan],
-        colWidths: [64, 104] // 120 total
+        head: ['Property'.cyan, 'Value'.cyan]
       });
 
       let trigger, resource, params;
@@ -62,7 +61,7 @@ exports.handler = (opts) => {
         trigger = 'Unknown';
       }
 
-      table.push(['Name', cloudfunction.name.white]);
+      table.push(['Name', cloudfunction.shortName.white]);
       table.push(['Trigger', trigger.white]);
       if (resource) {
         table.push(['Resource', resource.white]);

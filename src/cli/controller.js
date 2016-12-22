@@ -289,7 +289,7 @@ class Controller {
     return this.status()
       .then((status) => {
         if (status.state !== this.STATE.RUNNING) {
-          throw new Error(`${this.name} is not running. Run "functions start" to start it.`);
+          throw new Error(`${this.name} is not running. Run "functions start --help" for how to start it.`);
         }
       });
   }
@@ -345,7 +345,7 @@ class Controller {
       this.error(`${'ERROR'.red}: ${err.message}`);
       this.error(`${'ERROR'.red}: ${JSON.stringify(err, null, 2)}`);
     } else {
-      this.error(`${'ERROR'.red}: ${err.stack || err.message}`);
+      this.error(`${'ERROR'.red}: ${err.message}`);
     }
   }
 
@@ -398,10 +398,10 @@ class Controller {
       .then((cloudfunctions) => {
         tasks = cloudfunctions.map((cloudfunction) => {
           try {
-            fs.statSync(cloudfunction.path);
+            fs.statSync(cloudfunction.serviceAccount);
             // Don't return anything
           } catch (err) {
-            return this.undeploy(cloudfunction.name);
+            return this.undeploy(cloudfunction.shortName);
           }
         }).filter((task) => task);
 

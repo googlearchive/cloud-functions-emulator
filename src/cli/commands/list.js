@@ -54,49 +54,45 @@ exports.handler = (opts) => {
   return controller.doIfRunning()
     .then(() => controller.list())
     .then((cloudfunctions) => {
-      const table = new Table({
-        head: ['Name'.cyan, 'Trigger'.cyan, 'Resource'.cyan],
-        colWidths: [16, 64, 88] // 120 total
-      });
-
-      cloudfunctions.forEach((cloudfunction) => {
-        let trigger, resource;
-        if (cloudfunction.httpsTrigger) {
-          trigger = 'HTTP';
-          resource = cloudfunction.httpsTrigger.url;
-        } else if (cloudfunction.eventTrigger) {
-          trigger = cloudfunction.eventTrigger.eventType;
-          resource = cloudfunction.eventTrigger.resource;
-        } else {
-          trigger = 'Unknown';
-        }
-
-        if (!resource) {
-          resource = 'None';
-        }
-        if (pathExists(cloudfunction.sourceArchiveUrl.replace('file://', ''))) {
-          table.push([
-            cloudfunction.shortName.white,
-            trigger.white,
-            resource.white
-          ]);
-        } else {
-          table.push([
-            cloudfunction.shortName.red,
-            trigger.red,
-            resource.red
-          ]);
-        }
-      });
-
       if (cloudfunctions.length === 0) {
-        table.push([{
-          colSpan: 3,
-          content: 'No functions deployed ¯\\_(ツ)_/¯.  Run "functions deploy" to deploy a function.'.white
-        }]);
-      }
+        controller.log('No functions deployed ¯\\_(ツ)_/¯. Run "functions deploy --help" for how to deploy a function.');
+      } else {
+        const table = new Table({
+          head: ['Name'.cyan, 'Trigger'.cyan, 'Resource'.cyan]
+        });
 
-      controller.log(table.toString());
+        cloudfunctions.forEach((cloudfunction) => {
+          let trigger, resource;
+          if (cloudfunction.httpsTrigger) {
+            trigger = 'HTTP';
+            resource = cloudfunction.httpsTrigger.url;
+          } else if (cloudfunction.eventTrigger) {
+            trigger = cloudfunction.eventTrigger.eventType;
+            resource = cloudfunction.eventTrigger.resource;
+          } else {
+            trigger = 'Unknown';
+          }
+
+          if (!resource) {
+            resource = 'None';
+          }
+          if (pathExists(cloudfunction.sourceArchiveUrl.replace('file://', ''))) {
+            table.push([
+              cloudfunction.shortName.white,
+              trigger.white,
+              resource.white
+            ]);
+          } else {
+            table.push([
+              cloudfunction.shortName.red,
+              trigger.red,
+              resource.red
+            ]);
+          }
+        });
+
+        controller.log(table.toString());
+      }
     })
     .catch((err) => controller.handleError(err));
 };

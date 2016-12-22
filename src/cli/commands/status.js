@@ -37,8 +37,7 @@ exports.handler = (opts) => {
   return controller.status()
     .then((status) => {
       const table = new Table({
-        head: [{ colSpan: 2, content: controller.name.cyan }],
-        colWidths: [16]
+        head: [{ colSpan: 2, content: controller.name.cyan }]
       });
       const config = status.metadata;
 
@@ -103,7 +102,7 @@ exports.handler = (opts) => {
 
         table.push(['Status'.white, 'STOPPED'.yellow]);
         if (time) {
-          table.push(['Last up'.white, `${time.yellow} ago`]);
+          table.push(['Last up'.white, `${time.yellow} ${'ago'.white}`]);
         }
         if (config.logFile) {
           table.push(['Last log file'.white, config.logFile]);

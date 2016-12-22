@@ -44,7 +44,12 @@ function makeTests (service) {
 
   describe(`system/cli/${service}`, () => {
     before(() => {
-      fs.unlinkSync(logFile);
+      try {
+        // Try to remove the existing file if it's there
+        fs.unlinkSync(logFile);
+      } catch (err) {
+
+      }
 
       // Clear all Operations data
       operations.clear();
