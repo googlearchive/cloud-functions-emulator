@@ -17,52 +17,61 @@
 
 const Table = require('cli-table2');
 
+const config = require('../../../config');
+const configCommand = require('./');
 const Controller = require('../../controller');
-const utils = require('../../utils');
+const EXAMPLES = require('../../examples');
+
+const COMMAND = `functions config list ${'[options]'.yellow}`;
+const DESCRIPTION = `Prints the values stored in ${config.path.bold}.`;
+const USAGE = `Usage:
+  ${COMMAND.bold}
+
+Description:
+  ${DESCRIPTION}`;
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
 exports.command = 'list';
-exports.describe = 'Print all options in the config.json file.';
-exports.builder = {
-  json: {
-    alias: 'j',
-    description: 'Print the config as JSON.',
-    requiresArg: false,
-    type: 'boolean'
-  }
-};
+exports.description = DESCRIPTION;
+exports.builder = (yargs) => {
+  yargs
+    .usage(USAGE)
+    .options({
+      json: {
+        alias: 'j',
+        description: 'Formats the output as prettified JSON.',
+        requiresArg: false,
+        type: 'boolean'
+      }
+    })
+    .epilogue(configCommand.helpMessage);
 
-/**
- * Handler for the "list" command.
- */
+  EXAMPLES['config.list'].forEach((e) => yargs.example(e[0], e[1]));
+};
 exports.handler = (opts) => {
   const controller = new Controller(opts);
-  const config = controller._config.all;
-  const path = controller._config.path;
+  const values = config.all;
 
   if (opts.json) {
-    utils.writer.log(JSON.stringify(config, null, 2));
+    controller.log(JSON.stringify(values, null, 2));
   } else {
-    utils.writer.log('Config file: ' + path.green);
+    controller.log(`${configCommand.helpMessage}\n`);
+    controller.log(`Config file: ${config.path.green}`);
 
     const table = new Table({
-      head: ['Key'.cyan, 'Value'.cyan],
-      colWidths: [16, 64]
+      head: ['Key'.cyan, 'Value'.cyan]
     });
 
     let value;
 
-    for (let key in config) {
-      value = config[key];
+    for (let key in values) {
+      value = values[key];
 
-      table.push([
-        key.white,
-        `${value}`.white
-      ]);
+      table.push([key.white, `${value}`.white]);
     }
 
-    utils.writer.log(table.toString());
+    controller.log(table.toString());
   }
 };

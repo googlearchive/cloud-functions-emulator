@@ -10,9 +10,11 @@ local.txt
 keyfile.json
 translate_apikey.json
 sheets
-logs/
 doc/
 .nyc_output
 *.log
 config.json
 app.yaml
+test/system/configstore
+test/system/*.log
+.idea/

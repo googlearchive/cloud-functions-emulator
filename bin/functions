@@ -14,8 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-if (process.version !== 'v6.9.1') {
-  console.error('Node.js v6.9.1 is required to run the emulator!');
+
+const semver = require('semver');
+
+if (!semver.satisfies(process.version, '>= 6.9.1')) {
+  console.error('Node.js v6.9.x or greater is required to run the Emulator!');
   process.exit(1);
 }
 

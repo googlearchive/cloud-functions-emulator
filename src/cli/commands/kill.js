@@ -15,29 +15,40 @@
 
 'use strict';
 
+const _ = require('lodash');
+
 const Controller = require('../controller');
-const utils = require('../utils');
+const EXAMPLES = require('../examples');
+const OPTIONS = require('../../options');
+
+const COMMAND = `functions kill ${'[options]'.yellow}`;
+const DESCRIPTION = `Force kills the Emulator process.`;
+const USAGE = `Usage:
+  ${COMMAND.bold}
+
+Description:
+  ${DESCRIPTION}`;
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
 exports.command = 'kill';
-exports.describe = 'Force kills the emulator process if it stops responding.';
-exports.builder = {};
+exports.description = DESCRIPTION;
+exports.builder = (yargs) => {
+  yargs
+    .usage(USAGE)
+    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort']));
 
-/**
- * Handler for the "kill" command.
- *
- * @param {object} opts Configuration options.
- */
+  EXAMPLES['kill'].forEach((e) => yargs.example(e[0], e[1]));
+};
 exports.handler = (opts) => {
   const controller = new Controller(opts);
 
   return controller.doIfRunning()
     .then(() => controller.kill())
     .then(() => {
-      utils.writer.write(controller.name);
-      utils.writer.write(' KILLED\n'.red);
+      controller.write(controller.name);
+      controller.write(' KILLED\n'.red);
     })
-    .catch(utils.handleError);
+    .catch((err) => controller.handleError(err));
 };

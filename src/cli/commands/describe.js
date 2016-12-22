@@ -15,27 +15,81 @@
 
 'use strict';
 
+const _ = require('lodash');
+const Table = require('cli-table2');
+
 const Controller = require('../controller');
-const utils = require('../utils');
+const EXAMPLES = require('../examples');
+const OPTIONS = require('../../options');
+
+const COMMAND = `functions describe ${'<functionName>'.yellow} ${'[options]'.yellow}`;
+const DESCRIPTION = `Describes the details of a single deployed function.`;
+const USAGE = `Usage:
+  ${COMMAND.bold}
+
+Description:
+  ${DESCRIPTION}
+
+Positional arguments:
+  ${'functionName'.bold}
+    The name of the function to describe.`;
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
 exports.command = 'describe <functionName>';
-exports.describe = 'Describes the details of a single deployed function.';
-exports.builder = {};
+exports.description = DESCRIPTION;
+exports.builder = (yargs) => {
+  yargs
+    .usage(USAGE)
+    .demand(1)
+    .options(_.merge({
+      region: {
+        default: 'us-central1',
+        description: 'The compute region (e.g. us-central1) to use.',
+        requiresArg: true,
+        type: 'string'
+      }
+    }, _.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort'])));
 
-/**
- * Handler for the "describe" command.
- *
- * @param {object} opts Configuration options.
- * @param {string} opts.functionName The name of the function to describe.
- */
+  EXAMPLES['describe'].forEach((e) => yargs.example(e[0], e[1]));
+};
 exports.handler = (opts) => {
   const controller = new Controller(opts);
 
   return controller.doIfRunning()
     .then(() => controller.describe(opts.functionName))
-    .then(utils.printDescribe)
-    .catch(utils.handleError);
+    .then((cloudfunction) => {
+      const table = new Table({
+        head: ['Property'.cyan, 'Value'.cyan]
+      });
+
+      let trigger, resource, params;
+      if (cloudfunction.httpsTrigger) {
+        trigger = 'HTTP';
+        resource = cloudfunction.httpsTrigger.url;
+      } else if (cloudfunction.eventTrigger) {
+        trigger = cloudfunction.eventTrigger.eventType;
+        resource = cloudfunction.eventTrigger.resource;
+        params = cloudfunction.eventTrigger.path;
+      } else {
+        trigger = 'Unknown';
+      }
+
+      table.push(['Name', cloudfunction.shortName.white]);
+      table.push(['Trigger', trigger.white]);
+      if (resource) {
+        table.push(['Resource', resource.white]);
+      }
+      if (params) {
+        table.push(['Params', params.white]);
+      }
+      if (cloudfunction.serviceAccount) {
+        table.push(['Local path', cloudfunction.serviceAccount.white]);
+      }
+      table.push(['Archive', cloudfunction.sourceArchiveUrl.white]);
+
+      controller.log(table.toString());
+    })
+    .catch((err) => controller.handleError(err));
 };

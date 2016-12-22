@@ -15,25 +15,10 @@
 
 'use strict';
 
-const cli = require('yargs');
+const Configstore = require('configstore');
+const path = require('path');
 
-cli
-  .options({
-    host: {
-      alias: 'h',
-      description: 'The emulator\'s host.',
-      global: true,
-      requiresArg: true,
-      type: 'string'
-    },
-    port: {
-      alias: 'p',
-      description: 'The emulator\'s port.',
-      global: true,
-      requiresArg: true,
-      type: 'number'
-    }
-  });
+const defaults = require('./defaults.json');
+const pkg = require('../package.json');
 
-module.exports = cli;
-
+module.exports = new Configstore(path.join(pkg.name, '/config'), defaults);

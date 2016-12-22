@@ -15,8 +15,8 @@
 
 'use strict';
 
-const execSync = require('child_process').execSync;
-
-exports.run = (cmd, cwd) => {
-  return execSync(cmd, { cwd }).toString().trim();
-};
+exports.Client = require('./client');
+exports.GrpcClient = require('./grpc-client');
+exports.RestClient = require('./rest-client');
+exports.grpcClient = (...args) => new exports.GrpcClient(...args);
+exports.restClient = (...args) => new exports.RestClient(...args);

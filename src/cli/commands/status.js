@@ -15,45 +15,112 @@
 
 'use strict';
 
+const _ = require('lodash');
+const Table = require('cli-table2');
+
 const Controller = require('../controller');
-const utils = require('../utils');
+const EXAMPLES = require('../examples');
+const OPTIONS = require('../../options');
+
+const COMMAND = `functions status ${'[options]'.yellow}`;
+const DESCRIPTION = `Reports the current status of the Emulator.`;
+const USAGE = `Usage:
+  ${COMMAND.bold}
+
+Description:
+  ${DESCRIPTION}`;
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
 exports.command = 'status';
-exports.describe = 'Reports the current status of the emulator.';
-exports.builder = {};
+exports.description = DESCRIPTION;
+exports.builder = (yargs) => {
+  yargs
+    .usage(USAGE)
+    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort']));
 
-/**
- * Handler for the "status" command.
- *
- * @param {object} opts Configuration options.
- */
+  EXAMPLES['status'].forEach((e) => yargs.example(e[0], e[1]));
+};
 exports.handler = (opts) => {
   const controller = new Controller(opts);
 
   return controller.status()
     .then((status) => {
-      utils.writer.write(`${controller.name}`);
+      const table = new Table({
+        head: [{ colSpan: 2, content: controller.name.cyan }]
+      });
+      const config = status.metadata;
 
       if (status.state === controller.STATE.RUNNING) {
-        utils.writer.write(' is ');
-        utils.writer.write('RUNNING'.green);
-        utils.writer.write(` on port ${status.metadata.port}`);
+        let time = Math.floor((Date.now() - config.started) / (1000));
+        if (time > (60 * 60)) {
+          time = `${Math.floor(time / (60 * 60))} hour(s)`;
+        } else if (time > 60) {
+          time = `${Math.floor(time / 60)} minute(s)`;
+        } else {
+          time = `${Math.floor(time)} seconds`;
+        }
 
-        if (status.metadata) {
-          if (status.metadata.inspect && (status.metadata.inspect === 'true' || status.metadata.inspect === true)) {
-            utils.writer.write(', with ' + 'INSPECT'.yellow + ' enabled on port ' + (opts.debugPort || 9229));
-          } else if (status.metadata.debug && (status.metadata.debug === 'true' || status.metadata.debug === true)) {
-            utils.writer.write(', with ' + 'DEBUG'.yellow + ' enabled on port ' + (opts.debugPort || 5858));
+        table.push(['Status'.white, 'RUNNING'.green]);
+        table.push(['Uptime'.white, time]);
+        table.push(['Process ID'.white, config.pid]);
+        table.push(['Rest Service'.white, `http://${config.restHost}:${config.restPort}/`]);
+        table.push(['gRPC Service'.white, `http://${config.grpcHost}:${config.grpcPort}/`]);
+        if (config.inspect || config.debug) {
+          table.push(['Debugger'.white, 'ACTIVE'.green]);
+          if (config.inspect) {
+            table.push(['Debugger Port'.white, `${config.inspectPort}`.white]);
+          } else {
+            table.push(['Debugger Port'.white, `${config.debugPort}`.white]);
+          }
+        } else if (config.debug) {
+          table.push(['Debugger'.white, 'INACTIVE'.yellow]);
+        }
+        table.push(['Log file'.white, config.logFile]);
+        table.push(['Project ID'.white, config.projectId]);
+        table.push(['Region'.white, config.region]);
+        table.push(['Storage Mode'.white, config.storage]);
+
+        if (config.mocks) {
+          table.push(['Mocks'.white, 'LOADED'.green]);
+        } else {
+          table.push(['Mocks'.white, 'NOT LOADED'.yellow]);
+        }
+
+        table.push([{ colSpan: 2, content: 'Supervisor'.cyan }]);
+
+        if (config.runSupervisor) {
+          table.push(['Status'.white, 'RUNNING'.green]);
+          table.push(['Isolation Mode'.white, config.isolation]);
+        } else {
+          table.push(['Status'.white, 'DETACHED'.yellow]);
+        }
+
+        table.push(['Trigger URL'.white, `http://${config.supervisorHost}:${config.supervisorPort}/${config.projectId}/${config.region}/FUNCTION_NAME`]);
+      } else {
+        let time;
+        if (config.stopped) {
+          time = Math.floor((Date.now() - config.stopped) / (1000));
+          if (time > (60 * 60)) {
+            time = `${Math.floor(time / (60 * 60))} hour(s)`;
+          } else if (time > 60) {
+            time = `${Math.floor(time / 60)} minute(s)`;
+          } else {
+            time = `${Math.floor(time)} second(s)`;
           }
         }
 
-        utils.writer.write('\n');
-      } else {
-        utils.writer.write(' STOPPED\n'.yellow);
+        table.push(['Status'.white, 'STOPPED'.yellow]);
+        if (time) {
+          table.push(['Last up'.white, `${time.yellow} ${'ago'.white}`]);
+        }
+        if (config.logFile) {
+          table.push(['Last log file'.white, config.logFile]);
+        }
       }
+
+      controller.log(table.toString());
     })
-    .catch(utils.handleError);
+    .catch((err) => controller.handleError(err));
 };

@@ -15,31 +15,46 @@
 
 'use strict';
 
+const _ = require('lodash');
+
 const Controller = require('../controller');
+const EXAMPLES = require('../examples');
 const list = require('./list').handler;
-const utils = require('../utils');
+const OPTIONS = require('../../options');
+
+const COMMAND = `functions delete ${'<functionName>'.yellow} ${'[options]'.yellow}`;
+const DESCRIPTION = `Undeploys a deployed function (does NOT delete the function source code).`;
+const USAGE = `Usage:
+  ${COMMAND.bold}
+
+Description:
+  ${DESCRIPTION}
+
+Positional arguments:
+  ${'functionName'.bold}
+    The name of the function to undeploy.`;
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
 exports.command = 'delete <functionName>';
-exports.describe = 'Undeploys a previously deployed function (does NOT delete the function source code).';
-exports.builder = {};
+exports.description = DESCRIPTION;
+exports.builder = (yargs) => {
+  yargs
+    .usage(USAGE)
+    .demand(1)
+    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort']));
 
-/**
- * Handler for the "delete" command.
- *
- * @param {object} opts Configuration options.
- * @param {string} opts.functionName The name of the function to delete.
- */
+  EXAMPLES['delete'].forEach((e) => yargs.example(e[0], e[1]));
+};
 exports.handler = (opts) => {
   const controller = new Controller(opts);
 
   return controller.doIfRunning()
     .then(() => controller.undeploy(opts.functionName))
     .then(() => {
-      utils.writer.log(`Function ${opts.functionName} deleted.`.green);
+      controller.log(`Function ${opts.functionName} deleted.`.green);
       list(opts);
     })
-    .catch(utils.handleError);
+    .catch((err) => controller.handleError(err));
 };

@@ -7,25 +7,17 @@
   "engines": {
     "node": "6.9.1"
   },
-  "main": "src/emulator/index.js",
+  "main": "./bin/emulator",
   "bin": {
-    "functions": "./bin/functions"
+    "functions": "./bin/functions",
+    "functions-emulator": "./bin/functions"
   },
-  "contributors": [
-    {
-      "name": "Jason Dobry",
-      "email": "jason.dobry@gmail.com"
-    },
-    {
-      "name": "Jason Polites",
-      "email": "jason.polites@gmail.com"
-    }
-  ],
   "files": [
     "AUTHORS",
     "bin/",
     "config.js",
     "CONTRIBUTORS",
+    "mocks.js",
     "src/"
   ],
   "semistandard": {
@@ -47,32 +39,49 @@
   },
   "scripts": {
     "lint": "semistandard \"**/*.js\"",
-    "mocha": "mocha test/_setup test/ --recursive -t 5000 -R dot",
-    "mocha-debug": "mocha debug test/_setup test/ --recursive -t 5000 -R dot",
-    "cover": "nyc --cache mocha test/_setup test/ --recursive -t 5000 -R dot && nyc report --reporter=html",
+    "mocha": "mocha test/_setup test/ --recursive -t 10000 -S -R spec --require intelli-espower-loader",
+    "unit-test": "npm run mocha -- --grep \"unit/\"",
+    "system-test": "npm run mocha -- --grep \"system/\"",
+    "mocha-debug": "mocha debug test/_setup test/ --recursive -t 10000 -S -R spec --require intelli-espower-loader",
+    "cover": "nyc --cache mocha test/_setup test/ --recursive -t 10000 -S -R spec --require intelli-espower-loader && nyc report --reporter=html",
+    "unit-cover": "nyc --cache mocha test/_setup test/ --grep \"unit/\" --recursive -t 10000 -S -R spec --require intelli-espower-loader && nyc report --reporter=html",
+    "system-cover": "nyc --cache mocha test/_setup test/ --grep \"system/\" --recursive -t 10000 -S -R spec --require intelli-espower-loader && nyc report --reporter=html",
     "test": "npm run lint && npm run cover",
     "format": "semistandard-format -w",
-    "start": "node ."
+    "start": "node .",
+    "supervisor": "node ./src/supervisor"
   },
   "dependencies": {
+    "@google-cloud/storage": "0.6.0",
+    "ajv": "4.10.0",
+    "archiver": "1.3.0",
     "body-parser": "1.15.2",
     "cli-table2": "0.2.0",
     "colors": "1.1.2",
-    "configstore": "^2.1.0",
+    "configstore": "2.1.0",
     "express": "4.14.0",
-    "got": "^6.6.3",
-    "lodash.merge": "^4.6.0",
+    "google-proto-files": "0.8.6",
+    "googleapis": "15.0.0",
+    "got": "6.6.3",
+    "grpc": "1.0.1",
+    "lodash": "4.17.2",
     "response-time": "2.3.2",
+    "semver": "5.3.0",
+    "serializerr": "1.0.3",
+    "supertest": "2.0.1",
+    "tmp": "0.0.31",
+    "uuid": "3.0.1",
     "winston": "2.3.0",
-    "yargs": "6.4.0"
+    "yargs": "6.5.0"
   },
   "devDependencies": {
+    "intelli-espower-loader": "1.0.1",
     "istanbul": "0.4.5",
     "mocha": "3.2.0",
     "nyc": "10.0.0",
     "power-assert": "1.4.2",
     "proxyquire": "1.7.10",
-    "semistandard": "9.1.0",
+    "semistandard": "9.2.1",
     "semistandard-format": "3.0.0",
     "sinon": "1.17.6"
   },

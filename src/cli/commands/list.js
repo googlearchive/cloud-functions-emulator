@@ -15,11 +15,21 @@
 
 'use strict';
 
+const _ = require('lodash');
 const fs = require('fs');
 const Table = require('cli-table2');
 
 const Controller = require('../controller');
-const utils = require('../utils');
+const EXAMPLES = require('../examples');
+const OPTIONS = require('../../options');
+
+const COMMAND = `functions list ${'[options]'.yellow}`;
+const DESCRIPTION = `Lists deployed functions.`;
+const USAGE = `Usage:
+  ${COMMAND.bold}
+
+Description:
+  ${DESCRIPTION}`;
 
 function pathExists (p) {
   try {
@@ -34,57 +44,59 @@ function pathExists (p) {
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
 exports.command = 'list';
-exports.describe = 'Lists deployed functions.';
-exports.builder = {};
+exports.description = DESCRIPTION;
+exports.builder = (yargs) => {
+  yargs
+    .usage(USAGE)
+    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort']));
 
-/**
- * Handler for the "list" command.
- *
- * @param {object} opts Configuration options.
- */
+  EXAMPLES['list'].forEach((e) => yargs.example(e[0], e[1]));
+};
 exports.handler = (opts) => {
   const controller = new Controller(opts);
 
   return controller.doIfRunning()
     .then(() => controller.list())
-    .then((functions) => {
-      const table = new Table({
-        head: ['Name'.cyan, 'Type'.cyan, 'Path'.cyan],
-        colWidths: [15, 12, 52]
-      });
+    .then((cloudfunctions) => {
+      if (cloudfunctions.length === 0) {
+        controller.log(`No functions deployed ¯\\_(ツ)_/¯. Run ${'functions deploy --help'.bold} for how to deploy a function.`);
+      } else {
+        const table = new Table({
+          head: ['Name'.cyan, 'Trigger'.cyan, 'Resource'.cyan]
+        });
 
-      let type, path;
-      let count = 0;
+        cloudfunctions.forEach((cloudfunction) => {
+          let trigger, resource;
+          if (cloudfunction.httpsTrigger) {
+            trigger = 'HTTP';
+            resource = cloudfunction.httpsTrigger.url;
+          } else if (cloudfunction.eventTrigger) {
+            trigger = cloudfunction.eventTrigger.eventType;
+            resource = cloudfunction.eventTrigger.resource;
+          } else {
+            trigger = 'Unknown';
+          }
 
-      for (let func in functions) {
-        type = functions[func].type;
-        path = functions[func].path;
+          if (!resource) {
+            resource = 'None';
+          }
+          if (pathExists(cloudfunction.sourceArchiveUrl.replace('file://', ''))) {
+            table.push([
+              cloudfunction.shortName.white,
+              trigger.white,
+              resource.white
+            ]);
+          } else {
+            table.push([
+              cloudfunction.shortName.red,
+              trigger.red,
+              resource.red
+            ]);
+          }
+        });
 
-        if (pathExists(path)) {
-          table.push([
-            func.white,
-            type.white,
-            path.white
-          ]);
-        } else {
-          table.push([
-            func.white,
-            type.white,
-            path.red
-          ]);
-        }
-
-        count++;
+        controller.log(table.toString());
       }
-
-      if (count === 0) {
-        table.push([{
-          colSpan: 3,
-          content: 'No functions deployed ¯\\_(ツ)_/¯.  Run "functions deploy" to deploy a function'.gray
-        }]);
-      }
-
-      utils.writer.log(table.toString());
     })
-    .catch(utils.handleError);
+    .catch((err) => controller.handleError(err));
 };
