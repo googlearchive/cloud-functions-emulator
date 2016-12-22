@@ -30,8 +30,8 @@ module.exports = (projectId) => {
     // Print some error message?
   }
 
-  if (projectId) {
-    return projectId.trim();
+  if (projectId && typeof projectId.toString === 'function') {
+    return projectId.toString().trim();
   }
 
   throw new Error('Please provide a project ID: "functions config set projectId YOUR_PROJECT_ID" or "functions start --projectId YOUR_PROJECT_ID" or "export GCLOUD_PROJECT=YOUR_PROJECT_ID"');
