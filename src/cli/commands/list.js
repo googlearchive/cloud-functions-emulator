@@ -55,7 +55,7 @@ exports.handler = (opts) => {
     .then(() => controller.list())
     .then((cloudfunctions) => {
       if (cloudfunctions.length === 0) {
-        controller.log('No functions deployed ¯\\_(ツ)_/¯. Run "functions deploy --help" for how to deploy a function.');
+        controller.log(`No functions deployed ¯\\_(ツ)_/¯. Run ${'functions deploy --help'.bold} for how to deploy a function.`);
       } else {
         const table = new Table({
           head: ['Name'.cyan, 'Trigger'.cyan, 'Resource'.cyan]

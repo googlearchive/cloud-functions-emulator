@@ -352,14 +352,15 @@ debugger window. You can then set breakpoints and debug like normal.
 #### Debugging with WebStorm
 
 Create a Node.js Remote Debugger configuration. In the Emulator, set `debug` to
-`true`. When your function is invoked and then paused, attach to the debugger in
-WebStorm by running the debug configuration you created.
+`true` (`functions start --debug` or
+`functions config set debug true; functions restart`). When your function is
+invoked and then paused, attach to the debugger in WebStorm by running the debug
+configuration you created.
 
 #### Using the old debugger
 
-If you can't or won't use the `--inspect` flag, you can use the older
-`--debug` flag and debug your Cloud Functions in the emulator using
-[node-inspector][].
+You can also use the older `--debug` flag and debug your Cloud Functions in the
+emulator using [node-inspector][].
 
 First, install node-inspector:
 

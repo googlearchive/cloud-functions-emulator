@@ -289,7 +289,7 @@ class Controller {
     return this.status()
       .then((status) => {
         if (status.state !== this.STATE.RUNNING) {
-          throw new Error(`${this.name} is not running. Run "functions start --help" for how to start it.`);
+          throw new Error(`${this.name} is not running. Run ${'functions start --help'.bold} for how to start it.`);
         }
       });
   }

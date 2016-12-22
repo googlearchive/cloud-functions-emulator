@@ -46,7 +46,7 @@ exports.handler = (opts) => {
   if (opts.json) {
     controller.log(JSON.stringify(config, null, 2));
   } else {
-    controller.log(`Run "functions config --help" for description of the available configuration options.`);
+    controller.log(`Run ${'functions config --help'.bold} for a description of the available configuration options.\n`);
     controller.log(`Config file: ${path.green}`);
 
     const table = new Table({
