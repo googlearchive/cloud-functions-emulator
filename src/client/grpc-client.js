@@ -73,6 +73,12 @@ class GrpcClient extends Client {
             } catch (err) {
 
             }
+          } else if (body.error && typeof body.error === 'string') {
+            try {
+              body.error = JSON.parse(body.error);
+            } catch (err) {
+
+            }
           }
           const response = {
             headers: {

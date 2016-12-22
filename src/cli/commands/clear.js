@@ -15,21 +15,33 @@
 
 'use strict';
 
+const _ = require('lodash');
+
 const Controller = require('../controller');
+const EXAMPLES = require('../examples');
 const list = require('./list').handler;
+const OPTIONS = require('../../options');
+
+const COMMAND = `functions clear`;
+const DESCRIPTION = `Undeploys all deployed functions.`;
+const USAGE = `Usage:
+  ${COMMAND.bold}
+
+Description:
+  ${DESCRIPTION}`;
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
 exports.command = 'clear';
-exports.describe = 'Resets the emulator to its default state and clears and deployed functions.';
-exports.builder = {};
+exports.description = DESCRIPTION;
+exports.builder = (yargs) => {
+  yargs
+    .usage(USAGE)
+    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort']));
 
-/**
- * Handler for the "clear" command.
- *
- * @param {object} opts Configuration options.
- */
+  EXAMPLES['clear'].forEach((e) => yargs.example(e[0], e[1]));
+};
 exports.handler = (opts) => {
   const controller = new Controller(opts);
 

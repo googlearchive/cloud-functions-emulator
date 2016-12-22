@@ -15,33 +15,56 @@
 
 'use strict';
 
+require('colors');
+
 const _ = require('lodash');
+const cli = require('yargs');
 const path = require('path');
 const winston = require('winston');
 
-const cli = require('../config');
 const defaults = require('../defaults.json');
 const getProjectId = require('../utils/project');
 const loadHandler = require('./loadhandler');
 const logs = require('./logs');
 const Model = require('../model');
+const OPTIONS = require('../options');
 const Service = require('../service');
 const Supervisor = require('../supervisor');
 
-cli
-  .options(_.merge(require('../cli/commands/start').options, {
-    config: {
-      alias: 'c',
-      description: 'Path to a config .json file.'
-    }
-  }))
-  .usage('In the cloud-functions-emulator/ directory:\n\n    npm start -- [options]\n\n        OR\n\n    node . [options]')
-  .wrap(120)
-  .help()
-  .version()
-  .strict();
+const COMMAND = `./bin/emulator ${'[options]'.yellow}`;
+const DESCRIPTION = `The Google Cloud Functions Emulator service. The service implements both the REST and gRPC versions of the Google
+  Cloud Functions API.
 
-function main (opts) {
+  You can use the CLI to manage the service, or deploy the service manually.`;
+const USAGE = `Usage:
+  In the cloud-functions-emulator directory run the following:
+
+    ${COMMAND.bold}
+
+  Or from any directory run the following:
+
+    ${('/path/to/cloud-functions-emulator/bin/emulator ' + '[options]'.yellow).bold}
+
+Description:
+  ${DESCRIPTION}`;
+
+exports.main = (args) => {
+  let opts = cli
+    .usage(USAGE)
+    .options(_.merge(_.pick(OPTIONS, require('../cli/commands/start').options), {
+      config: {
+        alias: 'c',
+        description: 'Path to a config .json file.',
+        type: 'string'
+      }
+    }))
+    .example('bin/emulator --verbose', 'Start the Emulator in verbose mode.')
+    .wrap(120)
+    .help()
+    .version()
+    .strict()
+    .argv;
+
   if (opts.config) {
     _.merge(opts, require(path.resolve(opts.config)));
   }
@@ -154,10 +177,4 @@ function main (opts) {
     restService.stop();
     grpcService.stop();
   });
-}
-
-module.exports = main;
-
-if (module === require.main) {
-  main(cli.argv);
-}
+};

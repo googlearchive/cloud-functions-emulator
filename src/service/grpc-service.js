@@ -83,10 +83,18 @@ class RpcService extends Service {
         return this.supervisor.invoke(cloudfunction, call.request.data, {}, this.config);
       })
       .then((response) => {
-        try {
-          response.result = JSON.stringify(response.result);
-        } catch (err) {
+        if (response.result) {
+          try {
+            response.result = JSON.stringify(response.result);
+          } catch (err) {
 
+          }
+        } else if (response.error) {
+          try {
+            response.error = JSON.stringify(response.error);
+          } catch (err) {
+
+          }
         }
         cb(null, response);
       });

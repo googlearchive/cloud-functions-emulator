@@ -15,43 +15,36 @@
 
 'use strict';
 
-const Controller = require('../../controller');
+const execSync = require('child_process').execSync;
+
 const EXAMPLES = require('../../examples');
 
-const COMMAND = `functions logs read ${'[options]'.yellow}`;
-const DESCRIPTION = 'Show logs produced by functions.';
+const COMMAND = `functions event-types list ${'[options]'.yellow}`;
+const DESCRIPTION = `Describes the allowed values and meanings of ${'--trigger-'.bold} flags.`;
 const USAGE = `Usage:
   ${COMMAND.bold}
 
 Description:
-  ${DESCRIPTION}`;
+  ${DESCRIPTION}
+
+  When using gcloud functions deploy Event Providers are specified as
+  --trigger-provider and Event Types are specified as --trigger-event. The table
+  includes the type of resource expected in --trigger-resource and which
+  parameters --trigger-params takes and whether they are optional, required, or
+  not-allowed. For EVENT_TYPE and RESOURCE_TYPE look at the column at right side
+  to see if flag can be omitted.`;
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
-exports.command = 'read';
+exports.command = 'list';
 exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
-    .usage(USAGE)
-    .options({
-      limit: {
-        alias: 'l',
-        default: 20,
-        description: 'Number of log entries to be fetched.',
-        type: 'number',
-        requiresArg: true
-      }
-    });
+    .usage(USAGE);
 
-  EXAMPLES['logs.read'].forEach((e) => yargs.example(e[0], e[1]));
+  EXAMPLES['event-types.list'].forEach((e) => yargs.example(e[0], e[1]));
 };
 exports.handler = (opts) => {
-  const controller = new Controller(opts);
-
-  let limit = 20;
-  if (opts && opts.limit) {
-    limit = parseInt(opts.limit, 10);
-  }
-  controller.getLogs(limit);
+  console.log(execSync('gcloud alpha functions event-types list').toString());
 };

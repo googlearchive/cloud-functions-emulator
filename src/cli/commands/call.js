@@ -15,45 +15,51 @@
 
 'use strict';
 
+const _ = require('lodash');
 const fs = require('fs');
 
 const Controller = require('../controller');
+const EXAMPLES = require('../examples');
+const OPTIONS = require('../../options');
+
+const COMMAND = `functions call ${'<functionName>'.yellow} ${'[options]'.yellow}`;
+const DESCRIPTION = `Invokes a function. You must specify either the ${'data'.bold} or the ${'file'.bold} option.`;
+const USAGE = `Usage:
+  ${COMMAND.bold}
+
+Description:
+  ${DESCRIPTION}
+
+Positional arguments:
+  ${'functionName'.bold}
+    The name of the function to invoke.`;
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
 exports.command = 'call <functionName>';
-exports.describe = 'Invokes a function. You must specify either the "data" or the "file" option.';
-exports.builder = {
-  data: {
-    default: '{}',
-    description: 'Specify inline the JSON data to send to the function.',
-    requiresArg: true,
-    type: 'string'
-  },
-  file: {
-    alias: 'f',
-    description: 'A path to a JSON file to send to the function.',
-    normalize: true,
-    requiresArg: true,
-    type: 'string'
-  },
-  region: {
-    default: 'us-central1',
-    description: 'The compute region (e.g. us-central1) to use.',
-    requiresArg: true,
-    type: 'string'
-  }
-};
+exports.desecription = DESCRIPTION;
+exports.builder = (yargs) => {
+  yargs
+    .usage(USAGE)
+    .demand(1)
+    .options(_.merge({
+      data: {
+        description: `Specify inline the JSON data to send to the function. ${'Default:'.bold} ${'{}'.green}`,
+        requiresArg: true,
+        type: 'string'
+      },
+      file: {
+        alias: 'f',
+        description: 'A path to a JSON file to send to the function.',
+        normalize: true,
+        requiresArg: true,
+        type: 'string'
+      }
+    }, _.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort'])));
 
-/**
- * Handler for the "call" command.
- *
- * @param {object} opts Configuration options.
- * @param {string} opts.functionName The name of the function to call.
- * @param {string} [opts.data] TODO.
- * @param {string} [opts.file] TODO.
- */
+  EXAMPLES['call'].forEach((e) => yargs.example(e[0], e[1]));
+};
 exports.handler = (opts) => {
   if (opts.file) {
     try {
@@ -68,7 +74,7 @@ exports.handler = (opts) => {
       throw new Error('"data" must be a valid JSON string!');
     }
   } else {
-    throw new Error('You must specify a "data" or "file" option!');
+    opts.data = {};
   }
 
   const controller = new Controller(opts);
@@ -100,7 +106,11 @@ exports.handler = (opts) => {
       if (body.result) {
         controller.log('Result:', body.result);
       } else if (body.error) {
-        controller.log('Error:', body.error);
+        if (body.error.stack) {
+          controller.log('Error:', body.error.stack);
+        } else {
+          controller.log('Error:', body.error);
+        }
       }
     })
     .catch((err) => controller.handleError(err));

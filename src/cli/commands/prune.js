@@ -15,21 +15,33 @@
 
 'use strict';
 
+const _ = require('lodash');
+
 const Controller = require('../controller');
+const EXAMPLES = require('../examples');
 const list = require('./list').handler;
+const OPTIONS = require('../../options');
+
+const COMMAND = `functions prune ${'[options]'.yellow}`;
+const DESCRIPTION = 'Removes any functions known to the emulator but which no longer exist in their corresponding module.';
+const USAGE = `Usage:
+  ${COMMAND.bold}
+
+Description:
+  ${DESCRIPTION}`;
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
 exports.command = 'prune';
-exports.describe = 'Removes any functions known to the emulator but which no longer exist in their corresponding module.';
-exports.builder = {};
+exports.description = DESCRIPTION;
+exports.builder = (yargs) => {
+  yargs
+    .usage(USAGE)
+    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort']));
 
-/**
- * Handler for the "prune" command.
- *
- * @param {object} opts Configuration options.
- */
+  EXAMPLES['prune'].forEach((e) => yargs.example(e[0], e[1]));
+};
 exports.handler = (opts) => {
   const controller = new Controller(opts);
 

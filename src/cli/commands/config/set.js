@@ -15,21 +15,41 @@
 
 'use strict';
 
+const config = require('../../../config');
+const configCommand = require('./');
 const Controller = require('../../controller');
+const EXAMPLES = require('../../examples');
+
+const COMMAND = `functions config set ${'<key>'.yellow} ${'<value>'.yellow}`;
+const DESCRIPTION = `Sets the value for a setting.`;
+const USAGE = `Usage:
+  ${COMMAND.bold}
+
+Description:
+  ${DESCRIPTION}
+
+Positional arguments:
+  ${'key'.bold}
+    The name of the key to update.
+
+  ${'value'.bold}
+    The new value for the key. Must be a valid JSON value.`;
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
 exports.command = 'set <key> <value>';
-exports.describe = 'Set the value for a specific configuration property.';
-exports.builder = {};
+exports.description = DESCRIPTION;
+exports.builder = (yargs) => {
+  yargs
+    .usage(USAGE)
+    .demand(2)
+    .epilogue(configCommand.helpMessage);
 
-/**
- * Handler for the "config set" command.
- */
+  EXAMPLES['config.set'].forEach((e) => yargs.example(e[0], e[1]));
+};
 exports.handler = (opts) => {
   const controller = new Controller(opts);
-  const config = controller._config;
 
   try {
     config.set(opts.key, JSON.parse(opts.value));

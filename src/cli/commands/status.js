@@ -15,22 +15,33 @@
 
 'use strict';
 
+const _ = require('lodash');
 const Table = require('cli-table2');
 
 const Controller = require('../controller');
+const EXAMPLES = require('../examples');
+const OPTIONS = require('../../options');
+
+const COMMAND = `functions status ${'[options]'.yellow}`;
+const DESCRIPTION = `Reports the current status of the Emulator.`;
+const USAGE = `Usage:
+  ${COMMAND.bold}
+
+Description:
+  ${DESCRIPTION}`;
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
 exports.command = 'status';
-exports.describe = 'Reports the current status of the emulator.';
-exports.builder = {};
+exports.description = DESCRIPTION;
+exports.builder = (yargs) => {
+  yargs
+    .usage(USAGE)
+    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort']));
 
-/**
- * Handler for the "status" command.
- *
- * @param {object} opts Configuration options.
- */
+  EXAMPLES['status'].forEach((e) => yargs.example(e[0], e[1]));
+};
 exports.handler = (opts) => {
   const controller = new Controller(opts);
 

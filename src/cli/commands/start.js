@@ -15,86 +15,47 @@
 
 'use strict';
 
-const Controller = require('../controller');
-const list = require('./list').handler;
+const _ = require('lodash');
 
-const options = exports.options = {
-  debug: {
-    alias: 'd',
-    description: 'Start the emulator in debug mode.',
-    type: 'boolean',
-    requiresArg: false
-  },
-  debugPort: {
-    alias: 'D',
-    description: 'Override to change the default debug port.',
-    requiresArg: true,
-    type: 'number'
-  },
-  inspect: {
-    alias: 'i',
-    description: 'Experimental! (Node 6.3.0+ only). This will pass the --inspect flag to Node.',
-    type: 'boolean',
-    requiresArg: false
-  },
-  inspectPort: {
-    alias: 'I',
-    description: 'Override to change the default inspect port.',
-    requiresArg: true,
-    type: 'number'
-  },
-  logFile: {
-    alias: 'L',
-    description: 'The path to the logs file to which function logs will be written.',
-    requiresArg: true,
-    type: 'string'
-  },
-  service: {
-    alias: 's',
-    description: 'Which wire protocol to use when communicating with the Emulator. Choices are "rest" or "grpc".',
-    requiresArg: true,
-    type: 'string'
-  },
-  projectId: {
-    alias: 'P',
-    description: 'Your Google Cloud Platform project ID.',
-    requiresArg: true,
-    type: 'string'
-  },
-  runSupervisor: {
-    description: 'Whether to run the Supervisor as part of the Emulator.',
-    requiresArg: false,
-    type: 'boolean'
-  },
-  supervisorHost: {
-    description: 'The host the Supervisor should run on.',
-    requiresArg: true,
-    type: 'string'
-  },
-  supervisorPort: {
-    description: 'The port the Supervisor should run on.',
-    requiresArg: true,
-    type: 'number'
-  },
-  timeout: {
-    alias: 't',
-    description: 'The timeout in milliseconds to wait for the emulator to start.',
-    requiresArg: true,
-    type: 'number'
-  },
-  useMocks: {
-    alias: 'm',
-    description: 'If true, mocks.js will be loaded at startup.',
-    requiresArg: false,
-    type: 'boolean'
-  },
-  verbose: {
-    alias: 'v',
-    description: 'Set to true to see debug logs for the emulator itself.',
-    requiresArg: false,
-    type: 'boolean'
-  }
-};
+const Controller = require('../controller');
+const EXAMPLES = require('../examples');
+const list = require('./list').handler;
+const OPTIONS = require('../../options');
+
+const COMMAND = `functions start ${'[options]'.yellow}`;
+const DESCRIPTION = `Starts the Emulator.`;
+const USAGE = `Usage:
+  ${COMMAND.bold}
+
+Description:
+  ${DESCRIPTION}
+
+  While you can pass command-line options to the Emulator with this command, you should save settings to the Emulator's
+  config file if you want settings preserved across restarts. Run ${'functions config --help'.bold} for help on managing
+  saved configuration settings.`;
+
+exports.options = [
+  'debug',
+  'debugPort',
+  'grpcHost',
+  'grpcPort',
+  'inspect',
+  'inspectPort',
+  'isolation',
+  'logFile',
+  'projectId',
+  'region',
+  'restHost',
+  'restPort',
+  'runSupervisor',
+  'service',
+  'storage',
+  'supervisorHost',
+  'supervisorPort',
+  'timeout',
+  'useMocks',
+  'verbose'
+];
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
@@ -102,23 +63,18 @@ const options = exports.options = {
 exports.command = 'start';
 exports.describe = 'Starts the emulator.';
 exports.builder = (yargs) => {
-  yargs.options(options);
+  yargs
+    .usage(USAGE)
+    .options(_.pick(OPTIONS, exports.options));
 
-  for (let key in options) {
-    if (options[key].type === 'boolean') {
+  exports.options.forEach((key) => {
+    if (OPTIONS[key].type === 'boolean') {
       yargs.default(key, undefined);
     }
-  }
-};
+  });
 
-/**
- * Handler for the "start" command.
- *
- * @param {object} opts Configuration options.
- * @param {boolean} [opts.debug] Configuration options.
- * @param {boolean} [opts.inspect] Configuration options.
- * @param {boolean} opts.port The port the server should listen on.
- */
+  EXAMPLES['start'].forEach((e) => yargs.example(e[0], e[1]));
+};
 exports.handler = (opts) => {
   const controller = new Controller(opts);
 
@@ -153,16 +109,16 @@ exports.handler = (opts) => {
                 } else {
                   debugStr += `\n\nError: Could not find Chrome debugging URL in log file. Look for it yourself in ${config.logFile}.`;
                 }
-                console.log(debugStr);
+                console.log(`${debugStr}\n`);
               });
             } else if (config.debug) {
-              console.log(`Connect to the debugger on port ${config.debugPort} (e.g. using the "node" launch type in VSCode).`);
+              console.log(`Connect to the debugger on port ${config.debugPort} (e.g. using the "node" launch type in VSCode).\n`);
             }
           } else {
             if (config.inspect) {
-              console.log(`Inspect mode is enabled for the Supervisor. During function execution the debugger will listen on port ${config.inspectPort} and the Chrome debugging URL will be printed to the console.`);
+              console.log(`Inspect mode is enabled for the Supervisor. During function execution the debugger will listen on port ${config.inspectPort} and the Chrome debugging URL will be printed to the console.\n`);
             } else if (config.debug) {
-              console.log(`Debug mode is enabled for the Supervisor. During function execution the debugger will listen on port ${config.debugPort}.`);
+              console.log(`Debug mode is enabled for the Supervisor. During function execution the debugger will listen on port ${config.debugPort}.\n`);
             }
           }
 

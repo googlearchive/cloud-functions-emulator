@@ -18,8 +18,8 @@
 const semver = require('semver');
 
 if (!semver.satisfies(process.version, '>= 6.9.1')) {
-  console.error('Node.js v6.9.x or greater is required to run the Emulator!');
+  console.error('Node.js v6.9.x or greater is required to run the Supervisor!');
   process.exit(1);
 }
 
-require('../src/cli').main(process.argv.slice(2));
+require('../src/supervisor').main(process.argv.slice(2));

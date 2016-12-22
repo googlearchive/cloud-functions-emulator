@@ -15,6 +15,8 @@
 
 'use strict';
 
+require('colors');
+
 const _ = require('lodash');
 const bodyParser = require('body-parser');
 const express = require('express');
@@ -25,6 +27,7 @@ const uuid = require('uuid');
 
 const errors = require('../utils/errors');
 const Model = require('../model');
+const OPTIONS = require('../options');
 const worker = require('./worker');
 
 const { CloudFunction } = Model;
@@ -266,7 +269,7 @@ class Supervisor {
       // Finally, wait for the child process to shutdown
       worker.on('close', (code) => {
         if (code) {
-          reject({ executionId: event.eventId, error });
+          resolve({ executionId: event.eventId, error });
         } else {
           resolve({ executionId: event.eventId, result });
         }
@@ -292,21 +295,38 @@ class Supervisor {
 exports.Supervisor = Supervisor;
 exports.supervisor = (...args) => new Supervisor(...args);
 
-function main (opts) {
-  const supervisor = new Supervisor(opts);
+const COMMAND = `./bin/supervisor ${'[options]'.yellow}`;
+const DESCRIPTION = `The Google Cloud Functions Emulator Supervisor service. The service is responsible for invoking functions.
 
-  supervisor.start();
-}
+  You can let run Emulator run the Supervisor process, or you can start the Supervisor service separately.`;
+const USAGE = `Usage:
+  In the cloud-functions-emulator directory run the following:
 
-if (module === require.main) {
-  const cli = require('../config');
+    ${COMMAND.bold}
 
-  cli
-    .usage('In the cloud-functions-emulator/ directory:\n\n    npm run supervisor -- [options]')
+  Or from any directory run the following:
+
+    ${('/path/to/cloud-functions-emulator/bin/supervisor ' + '[options]'.yellow).bold}
+
+Description:
+  ${DESCRIPTION}`;
+
+exports.main = (args) => {
+  const cli = require('yargs');
+
+  const opts = cli
+    .usage(USAGE)
+    .options(_.merge(_.pick(OPTIONS, ['debug', 'debugPort', 'inspect', 'inspectPort', 'isolation', 'logFile', 'projectId', 'region', 'storage', 'useMocks']), {
+      host: _.cloneDeep(OPTIONS.supervisorHost),
+      port: _.cloneDeep(OPTIONS.supervisorPort)
+    }))
     .wrap(120)
     .help()
     .version()
-    .strict();
+    .strict()
+    .argv;
 
-  main(cli.argv);
-}
+  const supervisor = new Supervisor(opts);
+
+  supervisor.start();
+};

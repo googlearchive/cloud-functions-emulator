@@ -15,30 +15,45 @@
 
 'use strict';
 
+const _ = require('lodash');
 const Table = require('cli-table2');
 
 const Controller = require('../controller');
+const EXAMPLES = require('../examples');
+const OPTIONS = require('../../options');
+
+const COMMAND = `functions describe ${'<functionName>'.yellow} ${'[options]'.yellow}`;
+const DESCRIPTION = `Describes the details of a single deployed function.`;
+const USAGE = `Usage:
+  ${COMMAND.bold}
+
+Description:
+  ${DESCRIPTION}
+
+Positional arguments:
+  ${'functionName'.bold}
+    The name of the function to describe.`;
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
 exports.command = 'describe <functionName>';
-exports.describe = 'Describes the details of a single deployed function.';
-exports.builder = {
-  region: {
-    default: 'us-central1',
-    description: 'The compute region (e.g. us-central1) to use.',
-    requiresArg: true,
-    type: 'string'
-  }
-};
+exports.description = DESCRIPTION;
+exports.builder = (yargs) => {
+  yargs
+    .usage(USAGE)
+    .demand(1)
+    .options(_.merge({
+      region: {
+        default: 'us-central1',
+        description: 'The compute region (e.g. us-central1) to use.',
+        requiresArg: true,
+        type: 'string'
+      }
+    }, _.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort'])));
 
-/**
- * Handler for the "describe" command.
- *
- * @param {object} opts Configuration options.
- * @param {string} opts.functionName The name of the function to describe.
- */
+  EXAMPLES['describe'].forEach((e) => yargs.example(e[0], e[1]));
+};
 exports.handler = (opts) => {
   const controller = new Controller(opts);
 

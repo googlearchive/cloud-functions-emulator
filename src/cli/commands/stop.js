@@ -15,27 +15,32 @@
 
 'use strict';
 
+const _ = require('lodash');
+
 const Controller = require('../controller');
+const EXAMPLES = require('../examples');
+const OPTIONS = require('../../options');
+
+const COMMAND = `functions stop ${'[options]'.yellow}`;
+const DESCRIPTION = `Stops the Emulator gracefully.`;
+const USAGE = `Usage:
+  ${COMMAND.bold}
+
+Description:
+  ${DESCRIPTION}`;
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
 exports.command = 'stop';
-exports.describe = 'Stops the emulator gracefully.';
-exports.builder = {
-  timeout: {
-    alias: 't',
-    description: 'The timeout in milliseconds to wait for the emulator to stop.',
-    requiresArg: true,
-    type: 'number'
-  }
-};
+exports.description = DESCRIPTION;
+exports.builder = (yargs) => {
+  yargs
+    .usage(USAGE)
+    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort', 'timeout']));
 
-/**
- * Handler for the "stop" command.
- *
- * @param {object} opts Configuration options.
- */
+  EXAMPLES['status'].forEach((e) => yargs.example(e[0], e[1]));
+};
 exports.handler = (opts) => {
   const controller = new Controller(opts);
 

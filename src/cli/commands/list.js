@@ -15,10 +15,21 @@
 
 'use strict';
 
+const _ = require('lodash');
 const fs = require('fs');
 const Table = require('cli-table2');
 
 const Controller = require('../controller');
+const EXAMPLES = require('../examples');
+const OPTIONS = require('../../options');
+
+const COMMAND = `functions list ${'[options]'.yellow}`;
+const DESCRIPTION = `Lists deployed functions.`;
+const USAGE = `Usage:
+  ${COMMAND.bold}
+
+Description:
+  ${DESCRIPTION}`;
 
 function pathExists (p) {
   try {
@@ -33,21 +44,14 @@ function pathExists (p) {
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
 exports.command = 'list';
-exports.describe = 'Lists deployed functions.';
-exports.builder = {
-  region: {
-    default: 'us-central1',
-    description: 'The compute region (e.g. us-central1) to use.',
-    requiresArg: true,
-    type: 'string'
-  }
-};
+exports.description = DESCRIPTION;
+exports.builder = (yargs) => {
+  yargs
+    .usage(USAGE)
+    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort']));
 
-/**
- * Handler for the "list" command.
- *
- * @param {object} opts Configuration options.
- */
+  EXAMPLES['list'].forEach((e) => yargs.example(e[0], e[1]));
+};
 exports.handler = (opts) => {
   const controller = new Controller(opts);
 

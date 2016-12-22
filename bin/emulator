@@ -22,4 +22,4 @@ if (!semver.satisfies(process.version, '>= 6.9.1')) {
   process.exit(1);
 }
 
-require('../src/cli').main(process.argv.slice(2));
+require('../src/emulator').main(process.argv.slice(2));

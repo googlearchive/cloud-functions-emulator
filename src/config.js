@@ -15,35 +15,10 @@
 
 'use strict';
 
-const cli = require('yargs');
+const Configstore = require('configstore');
+const path = require('path');
 
-cli
-  .options({
-    grpcHost: {
-      description: 'The host the gRPC Service should run on.',
-      global: true,
-      requiresArg: true,
-      type: 'string'
-    },
-    grpcPort: {
-      description: 'The port the gRPC Service should run on.',
-      global: true,
-      requiresArg: true,
-      type: 'number'
-    },
-    restHost: {
-      description: 'The host the REST Service should run on.',
-      global: true,
-      requiresArg: true,
-      type: 'string'
-    },
-    restPort: {
-      description: 'The port the REST Service should run on.',
-      global: true,
-      requiresArg: true,
-      type: 'number'
-    }
-  });
+const defaults = require('./defaults.json');
+const pkg = require('../package.json');
 
-module.exports = cli;
-
+module.exports = new Configstore(path.join(pkg.name, '/config'), defaults);

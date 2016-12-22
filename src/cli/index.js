@@ -39,30 +39,51 @@
 
 require('colors');
 
-const cli = require('../config');
+const cli = require('yargs');
 const fs = require('fs');
 const path = require('path');
 
-// Load the commands
-fs
-  .readdirSync(path.join(__dirname, './commands'))
-  .forEach((commandFile) => {
-    cli.command(require(`./commands/${commandFile}`));
-  });
+const EXAMPLES = require('./examples');
+const USAGE = `Usage:
+  ${('functions ' + '[options]'.yellow).bold}
+  ${('functions ' + '<command>'.yellow + ' ' + '[args]'.yellow + ' ' + '[options]'.yellow).bold}
+  ${('functions ' + '<commandGroup>'.yellow + ' ' + '<command>'.yellow + ' ' + '[args]'.yellow + ' ' + '[options]'.yellow).bold}
 
-cli
-  .demand(1)
-  .example('cd /path/to/module/dir; $0 deploy helloWorld --trigger-http', 'Deploy helloWorld as an HTTP function from the module located in /path/to/module/dir.')
-  .example('$0 deploy helloWorld --local-path=/path/to/module/dir --trigger-http', 'Deploy helloWorld as an HTTP function from the module located in /path/to/module/dir.')
-  .example('$0 call helloWorld', 'Invoke the helloWorld function with no data argument')
-  .example(`$0 call helloWorld --data='{"foo": "bar"}'`, 'Invoke the helloWorld function with a JSON document argument')
-  .example('$0 call helloWorld --file=~/myData/datafile.json', 'Invoke the helloWorld function with a file argument')
-  .example('$0 logs read --limit=10', 'Display the most recent 10 lines from the logs')
-  .wrap(120);
+Description:
+  A command-line interface for interacting with a Google Cloud Functions Emulator instance.
+
+  Run ${('functions ' + '<command>'.yellow + ' --help').bold} to print additional help for a command.`;
+const EPILOGUE = `------------------------------------------------------------------------------------------------------------------------
+More How-To documentation can be found at:
+  ${'https://github.com/GoogleCloudPlatform/cloud-functions-emulator'.bold.underline}.
+
+Something not working? Have a feature request? Open an issue at:
+  ${'https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues'.bold.underline}.
+
+${'Contributions welcome!'.cyan}`;
 
 exports.main = (args) => {
+  // Load the commands
+  fs
+    .readdirSync(path.join(__dirname, './commands'))
+    .forEach((commandFile) => {
+      cli.command(require(`./commands/${commandFile}`));
+    });
+
   cli
-    .epilogue('Read more at https://github.com/GoogleCloudPlatform/cloud-functions-emulator')
+    .usage(USAGE)
+    .demand(1)
+    .wrap(120);
+
+  for (let key in EXAMPLES) {
+    if (key === 'config' || key === 'logs' || key === 'event-types') {
+      continue;
+    }
+    EXAMPLES[key].forEach((e) => cli.example(e[0], e[1]));
+  }
+
+  cli
+    .epilogue(EPILOGUE)
     .help()
     .version()
     .strict()

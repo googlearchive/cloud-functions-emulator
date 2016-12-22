@@ -15,43 +15,31 @@
 
 'use strict';
 
-const Controller = require('../../controller');
 const EXAMPLES = require('../../examples');
 
-const COMMAND = `functions logs read ${'[options]'.yellow}`;
-const DESCRIPTION = 'Show logs produced by functions.';
+const COMMAND = `functions event-types ${'<command>'.yellow} ${'[options]'.yellow}`;
+const DESCRIPTION = 'Provides information about Google Cloud Functions Event Types.';
 const USAGE = `Usage:
   ${COMMAND.bold}
 
 Description:
-  ${DESCRIPTION}`;
+  ${DESCRIPTION} Run ${('functions event-types ' + '<command>'.yellow + ' --help').bold} to print additional help for a command.
+
+Positional arguments:
+  ${'command'.bold}
+    The ${'event-types'.bold} command to execute.`;
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
-exports.command = 'read';
+exports.command = 'event-types <command>';
 exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .options({
-      limit: {
-        alias: 'l',
-        default: 20,
-        description: 'Number of log entries to be fetched.',
-        type: 'number',
-        requiresArg: true
-      }
-    });
+    .demand(1)
+    .command(require('./list'));
 
-  EXAMPLES['logs.read'].forEach((e) => yargs.example(e[0], e[1]));
+  EXAMPLES['event-types'].forEach((e) => yargs.example(e[0], e[1]));
 };
-exports.handler = (opts) => {
-  const controller = new Controller(opts);
-
-  let limit = 20;
-  if (opts && opts.limit) {
-    limit = parseInt(opts.limit, 10);
-  }
-  controller.getLogs(limit);
-};
+exports.handler = () => {};

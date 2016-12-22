@@ -39,7 +39,7 @@ const GRPC_PORT = 8089;
 const SUPERVISOR_PORT = 8090;
 
 function makeTests (service) {
-  const args = `--logFile=${logFile} --serviceMode=${service} --grpcHost=localhost --grpcPort=${GRPC_PORT} --debug=false --inspect=false --restHost=localhost --restPort=${REST_PORT} --runSupervisor=true --supervisorHost=localhost --supervisorPort=${SUPERVISOR_PORT} --verbose`;
+  const args = `--logFile=${logFile} --service=${service} --grpcHost=localhost --grpcPort=${GRPC_PORT} --debug=false --inspect=false --restHost=localhost --restPort=${REST_PORT} --runSupervisor=true --supervisorHost=localhost --supervisorPort=${SUPERVISOR_PORT} --verbose`;
   const suffix = `(${service} service)`;
 
   describe(`system/cli/${service}`, () => {

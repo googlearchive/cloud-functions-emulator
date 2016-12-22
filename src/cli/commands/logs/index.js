@@ -15,17 +15,31 @@
 
 'use strict';
 
+const EXAMPLES = require('../../examples');
+
+const COMMAND = `functions logs ${'<command>'.yellow} ${'[options]'.yellow}`;
+const DESCRIPTION = 'Manages Emulator logs access.';
+const USAGE = `Usage:
+  ${COMMAND.bold}
+
+Description:
+  ${DESCRIPTION} Run ${('functions logs ' + '<command>'.yellow + ' --help').bold} to print additional help for a command.
+
+Positional arguments:
+  ${'command'.bold}
+    The ${'logs'.bold} command to execute.`;
+
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
 exports.command = 'logs <command>';
-exports.describe = 'Manages emulator logs access.';
+exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
-  return yargs
+  yargs
+    .usage(USAGE)
+    .demand(1)
     .command(require('./read'));
-};
 
-/**
- * Handler for the "logs" command.
- */
+  EXAMPLES['logs'].forEach((e) => yargs.example(e[0], e[1]));
+};
 exports.handler = () => {};
