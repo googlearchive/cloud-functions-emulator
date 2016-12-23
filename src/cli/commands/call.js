@@ -104,7 +104,20 @@ exports.handler = (opts) => {
         controller.log(`Function completed in: ${response.headers['x-response-time'].green}`);
       }
       if (body.result) {
-        controller.log('Result:', body.result);
+        if (body.result.body && body.result.statusCode && body.result.headers) {
+          try {
+            body.result.body = JSON.parse(body.result.body);
+          } catch (err) {
+
+          }
+          if (body.result.statusCode >= 200 && body.result.statusCode < 400) {
+            controller.log('Result:', body.result.body);
+          } else {
+            controller.log(`Error: ${body.result.statusCode}`, body.result.body);
+          }
+        } else {
+          controller.log('Result:', body.result);
+        }
       } else if (body.error) {
         if (body.error.stack) {
           controller.log('Error:', body.error.stack);

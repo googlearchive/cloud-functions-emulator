@@ -24,6 +24,11 @@ exports.call = [
 
 exports.clear = [];
 
+exports['config.defaults'] = [
+  ['functions config defaults', 'Prints the default settings.'],
+  ['functions config defaults --json', 'Prints the default settings as JSON.']
+];
+
 exports['config.list'] = [
   ['functions config list', 'Prints the current settings.'],
   ['functions config list --json', 'Prints the current settings as JSON.']

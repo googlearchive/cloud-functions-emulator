@@ -98,7 +98,7 @@ function main (name, cloudfunction, context, event, callback) {
             return;
           }
           errback(null, {
-            body: response.body,
+            body: response.text,
             statusCode: response.statusCode,
             headers: response.headers
           });

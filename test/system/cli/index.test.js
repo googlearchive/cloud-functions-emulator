@@ -203,7 +203,7 @@ function makeTests (service) {
 
       it(`should call an HTTP function ${suffix}`, () => {
         const output = run(`${cmd} call helloGET --data '{}' ${args}`, cwd);
-        assert(output.includes(`statusCode: 200`));
+        assert(output.includes(`method: 'POST'`));
       });
 
       it(`should call an HTTP function and send it JSON ${suffix}`, () => {
