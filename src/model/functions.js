@@ -166,8 +166,8 @@ class Functions {
   _unpackArchive (cloudfunction) {
     return Promise.resolve()
       .then(() => {
-        if (!cloudfunction.localPath) {
-          throw new Error('Local deploymend "--source-url" functions not supported yet!');
+        if (!cloudfunction.serviceAccount) {
+          throw new Error('Local deployment using "--source-url" is not supported yet!');
         }
         // Function was deployed from the local file system, so we're not going
         // to do anything else here.

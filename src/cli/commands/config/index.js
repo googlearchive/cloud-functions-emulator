@@ -105,6 +105,7 @@ exports.builder = (yargs) => {
     .demand(1)
     .command(require('./list'))
     .command(require('./set'))
+    .command(require('./defaults'))
     .epilogue(EPILOGUE);
 
   EXAMPLES['config'].forEach((e) => yargs.example(e[0], e[1]));
