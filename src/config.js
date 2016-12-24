@@ -15,10 +15,13 @@
 
 'use strict';
 
+const _ = require('lodash');
 const Configstore = require('configstore');
+const os = require('os');
 const path = require('path');
 
 const defaults = require('./defaults.json');
+defaults.location = _.kebabCase(os.userInfo().username);
 const pkg = require('../package.json');
 
 module.exports = new Configstore(path.join(pkg.name, '/config'), defaults);

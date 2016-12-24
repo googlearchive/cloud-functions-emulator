@@ -43,7 +43,7 @@ exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
     .demand(1)
-    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort']));
+    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'location', 'service', 'restHost', 'restPort']));
 
   EXAMPLES['delete'].forEach((e) => yargs.example(e[0], e[1]));
 };

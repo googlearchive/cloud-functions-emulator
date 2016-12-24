@@ -38,7 +38,7 @@ exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort']));
+    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'location', 'service', 'restHost', 'restPort']));
 
   EXAMPLES['prune'].forEach((e) => yargs.example(e[0], e[1]));
 };
@@ -49,7 +49,7 @@ exports.handler = (opts) => {
     .then(() => controller.prune())
     .then((count) => {
       controller.write(controller.name);
-      controller.write((` PRUNED ${count} functions\n`).green);
+      controller.write((` PRUNED ${count} function(s)\n`).green);
       list(opts);
     })
     .catch((err) => controller.handleError(err));

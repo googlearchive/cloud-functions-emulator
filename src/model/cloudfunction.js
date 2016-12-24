@@ -98,7 +98,7 @@ class CloudFunction {
       if (!shortName) {
         shortName = name;
       }
-      const err = new Errors.InvalidArgumentError(`Invalid value '${shortName}': Function name must contain only lower case Latin letters, digits and a hyphen (-). It must start with letter, must not end with a hyphen, and must be at most 63 characters long.`);
+      const err = new Errors.InvalidArgumentError(`Invalid value '${shortName}': Function name must contain only Latin letters, digits and a hyphen (-). It must start with letter, must not end with a hyphen, and must be at most 63 characters long.`);
       err.details.push(new Errors.BadRequest(err, 'name'));
       err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
       throw err;

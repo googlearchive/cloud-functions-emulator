@@ -46,7 +46,7 @@ class RestClient extends Client {
     return this._action(
       'projects.locations.functions.call',
       {
-        name: CloudFunction.formatName(this.config.projectId, this.config.region, name),
+        name: CloudFunction.formatName(this.config.projectId, this.config.location, name),
         resource: { data }
       }
     );
@@ -56,7 +56,7 @@ class RestClient extends Client {
     return this._action(
       'projects.locations.functions.create',
       {
-        location: CloudFunction.formatLocation(this.config.projectId, this.config.region),
+        location: CloudFunction.formatLocation(this.config.projectId, this.config.location),
         resource: cloudfunction
       }
     );
@@ -66,7 +66,7 @@ class RestClient extends Client {
     return this._action(
       'projects.locations.functions.delete',
       {
-        name: CloudFunction.formatName(this.config.projectId, this.config.region, name)
+        name: CloudFunction.formatName(this.config.projectId, this.config.location, name)
       }
     );
   }
@@ -103,7 +103,7 @@ class RestClient extends Client {
     return this._action(
       'projects.locations.functions.get',
       {
-        name: CloudFunction.formatName(this.config.projectId, this.config.region, name)
+        name: CloudFunction.formatName(this.config.projectId, this.config.location, name)
       }
     ).then(([body, response]) => [new CloudFunction(body.name, body), response]);
   }
@@ -113,7 +113,7 @@ class RestClient extends Client {
       'projects.locations.functions.list',
       {
         pageSize: 100,
-        location: CloudFunction.formatLocation(this.config.projectId, this.config.region)
+        location: CloudFunction.formatLocation(this.config.projectId, this.config.location)
       }
     ).then(([body, response]) => [body.functions.map((cloudfunction) => new CloudFunction(cloudfunction.name, cloudfunction)), response]);
   }

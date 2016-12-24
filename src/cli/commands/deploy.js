@@ -16,6 +16,7 @@
 'use strict';
 
 const _ = require('lodash');
+const os = require('os');
 
 const Controller = require('../controller');
 const describe = require('./describe').handler;
@@ -66,7 +67,7 @@ exports.builder = (yargs) => {
         type: 'string'
       },
       'stage-directory': {
-        description: `The emulator supports storing function code on the local filesystem. ${'Default:'.bold} ${'/tmp'.green}`,
+        description: `The emulator supports storing function code on the local filesystem. ${'Default:'.bold} ${os.tmpdir().green}`,
         requiresArg: true,
         type: 'string'
       },
@@ -100,7 +101,7 @@ exports.builder = (yargs) => {
         requiresArg: true,
         type: 'string'
       }
-    }, _.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort'])))
+    }, _.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'location', 'service', 'restHost', 'restPort'])))
     .implies('stage-bucket', 'local-path')
     .implies('source-path', 'source-url');
 
@@ -108,12 +109,25 @@ exports.builder = (yargs) => {
 };
 exports.handler = (opts) => {
   opts.localPath || (opts.localPath = process.cwd());
-  opts.stageDirectory || (opts.stageDirectory = '/tmp');
+
+  if (opts.triggerBucket) {
+    opts.triggerProvider = 'cloud.storage';
+    opts.triggerEvent = 'object.change';
+    opts.triggerResource = opts.triggerBucket;
+  } else if (opts.triggerTopic) {
+    opts.triggerProvider = 'cloud.pubsub';
+    opts.triggerEvent = 'topic.publish';
+    opts.triggerResource = opts.triggerTopic;
+  }
 
   const controller = new Controller(opts);
 
+  opts.location || (opts.location = controller.config.location);
+
   return controller.doIfRunning()
-    .then(() => controller.deploy(opts.functionName, opts))
+    .then(() => {
+      return controller.deploy(opts.functionName, opts);
+    })
     .then(() => {
       controller.log(`Function ${opts.functionName} deployed.`.green);
       describe(opts);

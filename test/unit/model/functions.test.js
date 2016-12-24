@@ -16,9 +16,11 @@
 'use strict';
 
 const _ = require(`lodash`);
+const os = require('os');
 const proxyquire = require(`proxyquire`);
 
 const defaults = require(`../../../src/defaults.json`);
+defaults.location = _.kebabCase(os.userInfo().username);
 
 describe(`unit/model/functions`, () => {
   let Functions, mocks;

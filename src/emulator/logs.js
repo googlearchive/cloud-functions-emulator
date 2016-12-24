@@ -21,7 +21,10 @@ const EOL = require('os').EOL;
 
 module.exports = {
   assertLogsPath (logFile) {
-    logFile = path.resolve(logFile);
+    if (!path.isAbsolute(logFile)) {
+      logFile = path.join(__dirname, '../..', logFile);
+    }
+
     const parts = path.parse(logFile);
 
     if (!_pathExists(parts.dir)) {
