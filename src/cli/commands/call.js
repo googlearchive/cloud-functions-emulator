@@ -56,7 +56,7 @@ exports.builder = (yargs) => {
         requiresArg: true,
         type: 'string'
       }
-    }, _.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort'])));
+    }, _.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'location', 'service', 'restHost', 'restPort'])));
 
   EXAMPLES['call'].forEach((e) => yargs.example(e[0], e[1]));
 };
@@ -100,9 +100,6 @@ exports.handler = (opts) => {
     })
     .then(([body, response]) => {
       controller.log(`ExecutionId: ${body.executionId}`);
-      if (!controller.server.get('inspect') && !controller.server.get('debug')) {
-        controller.log(`Function completed in: ${response.headers['x-response-time'].green}`);
-      }
       if (body.result) {
         if (body.result.body && body.result.statusCode && body.result.headers) {
           try {

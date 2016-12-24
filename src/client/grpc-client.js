@@ -58,15 +58,13 @@ class GrpcClient extends Client {
 
   callFunction (name, data) {
     return new Promise((resolve, reject) => {
-      const start = Date.now();
       this.functionsClient.callFunction({
-        name: CloudFunction.formatName(this.config.projectId, this.config.region, name),
+        name: CloudFunction.formatName(this.config.projectId, this.config.location, name),
         data: JSON.stringify(data)
       }, (err, body) => {
         if (err) {
           reject(this._processError(err));
         } else {
-          const end = Date.now();
           if (body.result && typeof body.result === 'string') {
             try {
               body.result = JSON.parse(body.result);
@@ -80,12 +78,7 @@ class GrpcClient extends Client {
 
             }
           }
-          const response = {
-            headers: {
-              'x-response-time': `${end - start}ms`
-            },
-            body
-          };
+          const response = { body };
           resolve([body, response]);
         }
       });
@@ -95,7 +88,7 @@ class GrpcClient extends Client {
   createFunction (cloudfunction) {
     return new Promise((resolve, reject) => {
       this.functionsClient.createFunction({
-        location: CloudFunction.formatLocation(this.config.projectId, this.config.region),
+        location: CloudFunction.formatLocation(this.config.projectId, this.config.location),
         function: cloudfunction.toProtobuf()
       }, (err, operation) => {
         if (err) {
@@ -110,7 +103,7 @@ class GrpcClient extends Client {
   deleteFunction (name) {
     return new Promise((resolve, reject) => {
       this.functionsClient.deleteFunction({
-        name: CloudFunction.formatName(this.config.projectId, this.config.region, name)
+        name: CloudFunction.formatName(this.config.projectId, this.config.location, name)
       }, (err, operation) => {
         if (err) {
           reject(this._processError(err));
@@ -126,7 +119,7 @@ class GrpcClient extends Client {
   getFunction (name) {
     return new Promise((resolve, reject) => {
       this.functionsClient.getFunction({
-        name: CloudFunction.formatName(this.config.projectId, this.config.region, name)
+        name: CloudFunction.formatName(this.config.projectId, this.config.location, name)
       }, (err, cloudfunction) => {
         if (err) {
           reject(this._processError(err));
@@ -141,7 +134,7 @@ class GrpcClient extends Client {
     return new Promise((resolve, reject) => {
       this.functionsClient.listFunctions({
         pageSize: 100,
-        location: CloudFunction.formatLocation(this.config.projectId, this.config.region)
+        location: CloudFunction.formatLocation(this.config.projectId, this.config.location)
       }, (err, response) => {
         if (err) {
           reject(this._processError(err));

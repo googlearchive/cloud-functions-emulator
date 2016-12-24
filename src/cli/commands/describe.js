@@ -43,14 +43,7 @@ exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
     .demand(1)
-    .options(_.merge({
-      region: {
-        default: 'us-central1',
-        description: 'The compute region (e.g. us-central1) to use.',
-        requiresArg: true,
-        type: 'string'
-      }
-    }, _.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort'])));
+    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'location', 'service', 'restHost', 'restPort']));
 
   EXAMPLES['describe'].forEach((e) => yargs.example(e[0], e[1]));
 };
@@ -77,6 +70,9 @@ exports.handler = (opts) => {
       }
 
       table.push(['Name', cloudfunction.shortName.white]);
+      if (cloudfunction.entryPoint) {
+        table.push(['Entry Point', cloudfunction.entryPoint.white]);
+      }
       table.push(['Trigger', trigger.white]);
       if (resource) {
         table.push(['Resource', resource.white]);

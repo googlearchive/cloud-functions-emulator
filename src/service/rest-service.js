@@ -21,7 +21,6 @@ const express = require('express');
 const got = require('got');
 const http = require('http');
 const path = require('path');
-const responseTime = require('response-time');
 const url = require('url');
 
 const errors = require('../utils/errors');
@@ -59,9 +58,6 @@ class RestService extends Service {
       res.set('Expires', 0);
       next();
     });
-
-    // responseTime will allow us to track the execution time of a function
-    this.server.use(responseTime());
 
     this.server
       .get(

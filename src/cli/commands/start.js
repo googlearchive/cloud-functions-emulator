@@ -44,7 +44,7 @@ exports.options = [
   'isolation',
   'logFile',
   'projectId',
-  'region',
+  'location',
   'restHost',
   'restPort',
   'runSupervisor',
@@ -95,7 +95,7 @@ exports.handler = (opts) => {
 
           controller.write(controller.name);
           controller.write(' STARTED\n'.green);
-          controller.log(`HTTP functions receiving requests at http://${config.supervisorHost}:${config.supervisorPort}/${config.projectId}/${config.region}/FUNCTION_NAME\n`);
+          controller.log(`HTTP functions receiving requests at http://${config.supervisorHost}:${config.supervisorPort}/${config.projectId}/${config.location}/FUNCTION_NAME\n`);
 
           // Only start the Emulator itself in debug or inspect mode if the
           // isolation model is "inprocess"

@@ -19,6 +19,7 @@ const _ = require('lodash');
 const archiver = require('archiver');
 const Configstore = require('configstore');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const spawn = require('child_process').spawn;
 const Storage = require('@google-cloud/storage');
@@ -28,6 +29,7 @@ const Client = require('../client');
 const getProjectId = require('../utils/project');
 const Model = require('../model');
 const defaults = require('../defaults.json');
+defaults.location = _.kebabCase(os.userInfo().username);
 const logs = require('../emulator/logs');
 const pkg = require('../../package.json');
 
@@ -93,7 +95,7 @@ class Controller {
 
       opts.localPath = path.resolve(opts.localPath);
       const tmpName = tmp.tmpNameSync({
-        prefix: `${opts.region}-${name}-`,
+        prefix: `${opts.location}-${name}-`,
         postfix: '.zip'
       });
       const archive = archiver.create('zip');
@@ -111,14 +113,12 @@ class Controller {
             contentType: 'application/zip'
           }
         });
-      } else if (opts.stageDirectory) {
+      } else {
         // Technically, this needs to be a GCS Uri, but the emulator will know
         // how to interpret a path on the local file system
         sourceArchiveUrl = `file://${tmpName}`;
         // Copy the function code to a temp directory on the local file system
         output = fs.createWriteStream(tmpName);
-      } else {
-        throw new Error('One of "stage-directory" or "stage-bucket" must be set!');
       }
 
       archive.pipe(output);
@@ -219,10 +219,14 @@ class Controller {
    */
   deploy (name, opts) {
     return new Promise((resolve, reject) => {
-      const cloudfunction = new CloudFunction(CloudFunction.formatName(this.config.projectId, this.config.region, name));
+      const cloudfunction = new CloudFunction(CloudFunction.formatName(this.config.projectId, this.config.location, name));
 
       if (opts.timeout) {
         cloudfunction.setTimeout(opts.timeout);
+      }
+
+      if (opts.entryPoint) {
+        cloudfunction.entryPoint = opts.entryPoint;
       }
 
       if (opts.sourcePath) {
@@ -477,7 +481,7 @@ class Controller {
           isolation: this.config.isolation,
           logFile: this.config.logFile,
           projectId: this.config.projectId,
-          region: this.config.region,
+          location: this.config.location,
           restHost: this.config.restHost,
           restPort: this.config.restPort,
           runSupervisor: this.config.runSupervisor,

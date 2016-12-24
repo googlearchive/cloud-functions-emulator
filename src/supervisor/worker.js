@@ -27,8 +27,12 @@ const inspect = Debug.getInspect();
 const debug = Debug.getDebug();
 
 function main (name, cloudfunction, context, event, callback) {
+  let start;
+
   if (!callback) {
     callback = (err, result) => {
+      const duration = Date.now() - start;
+      console.log(`Execution took ${duration} ms, user function completed successfully`);
       if (err) {
         process.send({
           error: err
@@ -66,6 +70,8 @@ function main (name, cloudfunction, context, event, callback) {
   if (cloudfunction.httpsTrigger) {
     if (context.req && context.res) {
       try {
+        console.log(`User function triggered, starting execution`);
+        start = Date.now();
         // The following line invokes the function
         handler(context.req, context.res);
       } catch (err) {
@@ -83,6 +89,8 @@ function main (name, cloudfunction, context, event, callback) {
       app.all('*', handler);
 
       try {
+        console.log(`User function triggered, starting execution`);
+        start = Date.now();
         let agent = request(app)
           .post(context.originalUrl)
           .set(context.headers)
@@ -115,6 +123,8 @@ function main (name, cloudfunction, context, event, callback) {
         if (inspect.enabled || debug.enabled) {
           debugger; // eslint-disable-line
         }
+        console.log(`User function triggered, starting execution`);
+        start = Date.now();
         // The following line invokes the function
         handler(event, errback);
       } catch (err) {
@@ -128,6 +138,8 @@ function main (name, cloudfunction, context, event, callback) {
           if (inspect.enabled || debug.enabled) {
             debugger; // eslint-disable-line
           }
+          console.log(`User function triggered, starting execution`);
+          start = Date.now();
           // The following line invokes the function
           return handler(event);
         })

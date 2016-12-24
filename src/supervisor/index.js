@@ -186,7 +186,7 @@ class Supervisor {
    */
   invokeSecure (cloudfunction, data, context = {}, opts = {}) {
     return new Promise((resolve, reject) => {
-      context.originalUrl = `/${this.config.projectId}/${this.config.region}/${cloudfunction.shortName}`;
+      context.originalUrl = `/${this.config.projectId}/${this.config.location}/${cloudfunction.shortName}`;
       context.headers = {};
 
       // Prepare an execution event
@@ -223,8 +223,6 @@ class Supervisor {
         execArgv = [`--debug=${this.config.debugPort}`, '--debug-brk'];
       }
 
-      console.log(`Function execution started: ${event.eventId}`);
-
       // Spawn a child process in which to execute the user's function
       // TODO: Warn when the Supervisor process ends but a child process is
       // still running
@@ -250,8 +248,7 @@ class Supervisor {
 
       // Any errors logged by the user will be logged at the Error level
       worker.stderr.on('data', (chunk) => {
-        chunk = chunk.toString('utf8');
-        console.error(chunk);
+        console.error(chunk.toString('utf8'));
       });
 
       // Variables to hold the final result or error of the execution
@@ -316,7 +313,7 @@ exports.main = (args) => {
 
   const opts = cli
     .usage(USAGE)
-    .options(_.merge(_.pick(OPTIONS, ['debug', 'debugPort', 'inspect', 'inspectPort', 'isolation', 'logFile', 'projectId', 'region', 'storage', 'useMocks']), {
+    .options(_.merge(_.pick(OPTIONS, ['debug', 'debugPort', 'inspect', 'inspectPort', 'isolation', 'logFile', 'projectId', 'location', 'storage', 'useMocks']), {
       host: _.cloneDeep(OPTIONS.supervisorHost),
       port: _.cloneDeep(OPTIONS.supervisorPort)
     }))

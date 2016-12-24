@@ -94,7 +94,7 @@ const FunctionsConfigSchema = {
     projectId: {
       type: 'string'
     },
-    region: {
+    location: {
       type: 'string'
     },
     storage: {
@@ -108,7 +108,7 @@ const FunctionsConfigSchema = {
       type: 'number'
     }
   },
-  required: ['projectId', 'region', 'storage', 'supervisorHost', 'supervisorPort']
+  required: ['projectId', 'location', 'storage', 'supervisorHost', 'supervisorPort']
 };
 
 /**
@@ -155,7 +155,7 @@ class Functions {
       .then((cloudfunction) => {
         if (cloudfunction) {
           const parts = CloudFunction.parseName(name);
-          const err = new Errors.ConflictError(`Function ${parts.name} in region ${parts.location} in project ${parts.project} already exists`);
+          const err = new Errors.ConflictError(`Function ${parts.name} in location ${parts.location} in project ${parts.project} already exists`);
           err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
           console.error(err);
           return Promise.reject(err);
@@ -240,7 +240,7 @@ class Functions {
         cloudfunction = this.cloudfunction(cloudfunction.name, cloudfunction);
 
         if (cloudfunction.httpsTrigger) {
-          cloudfunction.httpsTrigger.url = `http://${this.config.supervisorHost}:${this.config.supervisorPort}/${this.config.projectId}/${this.config.region}/${cloudfunction.shortName}`;
+          cloudfunction.httpsTrigger.url = `http://${this.config.supervisorHost}:${this.config.supervisorPort}/${this.config.projectId}/${this.config.location}/${cloudfunction.shortName}`;
         }
 
         _.merge(cloudfunction, {
@@ -388,7 +388,7 @@ class Functions {
    */
   _getFunctionNotFoundError (name) {
     const parts = CloudFunction.parseName(name);
-    const err = new Errors.NotFoundError(`Function ${parts.name} in region ${parts.location} in project ${parts.project} does not exist`);
+    const err = new Errors.NotFoundError(`Function ${parts.name} in location ${parts.location} in project ${parts.project} does not exist`);
     err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
     console.error(err);
     return Promise.reject(err);

@@ -64,7 +64,7 @@ describe(`unit/model/cloudfunction`, () => {
           new CloudFunction(name); // eslint-disable-line
         },
         (err) => {
-          const message = `Invalid value '': Function name must contain only lower case Latin letters, digits and a hyphen (-). It must start with letter, must not end with a hyphen, and must be at most 63 characters long.`;
+          const message = `Invalid value '': Function name must contain only Latin letters, digits and a hyphen (-). It must start with letter, must not end with a hyphen, and must be at most 63 characters long.`;
           assert(err instanceof Error);
           assert(err.message === message);
           assert.errorType(
@@ -89,7 +89,7 @@ describe(`unit/model/cloudfunction`, () => {
         },
         (err) => {
           assert(err instanceof Error);
-          assert(err.message === `Invalid value '${name}': Function name must contain only lower case Latin letters, digits and a hyphen (-). It must start with letter, must not end with a hyphen, and must be at most 63 characters long.`);
+          assert(err.message === `Invalid value '${name}': Function name must contain only Latin letters, digits and a hyphen (-). It must start with letter, must not end with a hyphen, and must be at most 63 characters long.`);
           return true;
         },
         `should verify that "name" is a string`
@@ -102,7 +102,7 @@ describe(`unit/model/cloudfunction`, () => {
         },
         (err) => {
           assert(err instanceof Error);
-          assert(err.message === `Invalid value '1': Function name must contain only lower case Latin letters, digits and a hyphen (-). It must start with letter, must not end with a hyphen, and must be at most 63 characters long.`);
+          assert(err.message === `Invalid value '1': Function name must contain only Latin letters, digits and a hyphen (-). It must start with letter, must not end with a hyphen, and must be at most 63 characters long.`);
           return true;
         },
         `should validate the format of "name"`

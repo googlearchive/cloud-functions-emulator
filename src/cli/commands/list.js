@@ -48,7 +48,7 @@ exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort']));
+    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'location', 'service', 'restHost', 'restPort']));
 
   EXAMPLES['list'].forEach((e) => yargs.example(e[0], e[1]));
 };
@@ -80,7 +80,7 @@ exports.handler = (opts) => {
           if (!resource) {
             resource = 'None';
           }
-          if (pathExists(cloudfunction.sourceArchiveUrl.replace('file://', ''))) {
+          if (pathExists(cloudfunction.serviceAccount)) {
             table.push([
               cloudfunction.shortName.white,
               trigger.white,

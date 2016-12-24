@@ -15,7 +15,11 @@
 
 'use strict';
 
+const _ = require('lodash');
+const os = require('os');
+
 const defaults = require('./defaults.json');
+defaults.location = _.kebabCase(os.userInfo().username);
 const detectProjectId = require('./utils/project');
 
 const PROJECT_ID = detectProjectId();
@@ -29,8 +33,8 @@ module.exports = {
     requiresArg: true,
     type: 'string'
   },
-  region: {
-    description: `The region to use. ${'Default:'.bold} ${defaults.region.toString().green}`,
+  location: {
+    description: `A location identifier for functions, maps to "regions" in the production service. ${'Default:'.bold} ${defaults.location.toString().green}`,
     requiresArg: true,
     type: 'string'
   },
