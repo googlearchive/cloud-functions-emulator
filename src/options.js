@@ -20,9 +20,9 @@ const os = require('os');
 
 const defaults = require('./defaults.json');
 defaults.location = _.kebabCase(os.userInfo().username);
-const detectProjectId = require('./utils/project');
+const getProjectId = require('./utils/project');
 
-const PROJECT_ID = detectProjectId();
+const PROJECT_ID = getProjectId();
 
 module.exports = {
   /**

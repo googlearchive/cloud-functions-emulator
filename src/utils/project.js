@@ -17,6 +17,15 @@
 
 const execSync = require('child_process').execSync;
 
+let cloudSDKProjectId = '';
+
+function trim (str) {
+  if (str && typeof str.toString === 'function') {
+    return str.toString().trim();
+  }
+  return str;
+}
+
 module.exports = (projectId) => {
   if (projectId) {
     return projectId;
@@ -24,14 +33,18 @@ module.exports = (projectId) => {
   if (process.env.GCLOUD_PROJECT) {
     return process.env.GCLOUD_PROJECT;
   }
+  if (cloudSDKProjectId) {
+    return cloudSDKProjectId;
+  }
   try {
-    projectId = execSync(`gcloud info --format='value(config.project)'`);
+    console.log(`Inferring project ID from Cloud SDK config. Speed up CLI commands by setting a project ID: ${'functions config set projectId YOUR_PROJECT_ID'.bold} or ${'export GCLOUD_PROJECT=YOUR_PROJECT_ID'.bold}`);
+    cloudSDKProjectId = projectId = trim(execSync(`gcloud info --format='value(config.project)'`));
   } catch (err) {
     // Print some error message?
   }
 
-  if (projectId && typeof projectId.toString === 'function') {
-    return projectId.toString().trim();
+  if (projectId) {
+    return projectId;
   }
 
   throw new Error('Please provide a project ID: "functions config set projectId YOUR_PROJECT_ID" or "functions start --projectId YOUR_PROJECT_ID" or "export GCLOUD_PROJECT=YOUR_PROJECT_ID"');
