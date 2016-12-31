@@ -186,7 +186,7 @@ class Supervisor {
    */
   invokeSecure (cloudfunction, data, context = {}, opts = {}) {
     return new Promise((resolve, reject) => {
-      context.originalUrl = `/${this.config.projectId}/${this.config.location}/${cloudfunction.shortName}`;
+      context.originalUrl = `/${this.config.projectId}/${this.config.region}/${cloudfunction.shortName}`;
       context.headers = {};
 
       // Prepare an execution event
@@ -313,7 +313,7 @@ exports.main = (args) => {
 
   const opts = cli
     .usage(USAGE)
-    .options(_.merge(_.pick(OPTIONS, ['debug', 'debugPort', 'inspect', 'inspectPort', 'isolation', 'logFile', 'projectId', 'location', 'storage', 'useMocks']), {
+    .options(_.merge(_.pick(OPTIONS, ['debug', 'debugPort', 'inspect', 'inspectPort', 'isolation', 'logFile', 'projectId', 'region', 'storage', 'useMocks']), {
       host: _.cloneDeep(OPTIONS.supervisorHost),
       port: _.cloneDeep(OPTIONS.supervisorPort)
     }))

@@ -20,30 +20,44 @@ const path = require(`path`);
 process.env.XDG_CONFIG_HOME = path.join(__dirname, `../`);
 
 const Configstore = require(`configstore`);
+const spawnSync = require(`child_process`).spawnSync;
 const fs = require(`fs`);
+const storage = require(`@google-cloud/storage`)();
+const uuid = require(`uuid`);
 
 const pkg = require(`../../../package.json`);
 const run = require(`./utils`).run;
 
+const bucketName = `cloud-functions-emulator-${uuid.v4()}`;
 const cmd = `node bin/functions`;
 const cwd = path.join(__dirname, `../../..`);
 const logFile = path.join(__dirname, `../test.log`);
 const name = `hello`;
 const config = new Configstore(path.join(pkg.name, `config`));
 const server = new Configstore(path.join(pkg.name, `.active-server`));
+const functions = new Configstore(path.join(pkg.name, `.functions`));
 const operations = new Configstore(path.join(pkg.name, `.operations`));
 const prefix = `Google Cloud Functions Emulator`;
 
+const GCLOUD = process.env.GCLOUD_CMD_OVERRIDE || `gcloud`;
 const REST_PORT = 8088;
 const GRPC_PORT = 8089;
 const SUPERVISOR_PORT = 8090;
 
-function makeTests (service) {
+function makeTests (service, override) {
   const args = `--logFile=${logFile} --service=${service} --grpcHost=localhost --grpcPort=${GRPC_PORT} --debug=false --inspect=false --restHost=localhost --restPort=${REST_PORT} --runSupervisor=true --supervisorHost=localhost --supervisorPort=${SUPERVISOR_PORT} --verbose`;
-  const suffix = `(${service} service)`;
+  let overrideArgs = ``;
+  let currentEndpoint;
 
-  describe(`system/cli/${service}`, () => {
+  describe(`${service}${override ? '-sdk' : ''}`, () => {
     before(() => {
+      if (override) {
+        overrideArgs = `--region=us-central1`;
+        const output = spawnSync(`${GCLOUD} info --format='value(config.properties.api_endpoint_overrides.cloudfunctions)'`, { shell: true });
+        currentEndpoint = output.stdout.toString().trim() + output.stderr.toString().trim();
+        spawnSync(`${GCLOUD} config set api_endpoint_overrides/cloudfunctions http://localhost:${REST_PORT}/`, { shell: true, stdio: ['ignore', 'ignore', 'ignore'] });
+      }
+
       try {
         // Try to remove the existing file if it's there
         fs.unlinkSync(logFile);
@@ -51,6 +65,8 @@ function makeTests (service) {
 
       }
 
+      // Clear all Functions data
+      functions.clear();
       // Clear all Operations data
       operations.clear();
 
@@ -71,6 +87,12 @@ function makeTests (service) {
     });
 
     after(() => {
+      if (override) {
+        if (currentEndpoint) {
+          spawnSync(`${GCLOUD} config set api_endpoint_overrides/cloudfunctions ${currentEndpoint}`, { shell: true, stdio: ['ignore', 'ignore', 'ignore'] });
+        }
+      }
+
       let output = run(`${cmd} restart ${args}`, cwd);
       assert(output.includes(`STARTED`));
 
@@ -82,7 +104,7 @@ function makeTests (service) {
     });
 
     describe(`config`, () => {
-      it(`should list configuration ${suffix}`, () => {
+      it(`should list configuration`, () => {
         let output = run(`${cmd} config list ${args}`, cwd);
         assert(output.includes(`grpcHost`));
         assert(output.includes(`grpcPort`));
@@ -91,80 +113,126 @@ function makeTests (service) {
       });
     });
 
-    describe(`deploy ${suffix}`, () => {
+    describe(`deploy`, () => {
+      let deployArgs = args;
+
       before(() => {
-        const output = run(`${cmd} list ${args}`, cwd);
-        assert(output.includes(`No functions deployed`));
+        if (override) {
+          deployArgs = `${overrideArgs} --stage-bucket=${bucketName}`;
+          const output = run(`${override} list`, cwd);
+          assert(output.includes(`Listed 0 items.`));
+        } else {
+          const output = run(`${cmd} list ${args}`, cwd);
+          assert(output.includes(`No functions deployed`));
+        }
       });
 
-      it(`should deploy a background function ${suffix}`, () => {
-        const output = run(`${cmd} deploy ${name} --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-resource=test ${args}`, cwd);
-        assert(output.includes(`Function ${name} deployed.`));
+      it(`should deploy a background function`, () => {
+        const output = run(`${override || cmd} deploy ${name} --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-event=object.change --trigger-resource=test ${deployArgs}`, cwd);
+        if (override) {
+          assert(output.includes(`/functions/${name}`));
+        } else {
+          assert(output.includes(`Function ${name} deployed.`));
+        }
       });
 
-      it(`should deploy a function with JSON ${suffix}`, () => {
-        const output = run(`${cmd} deploy helloData --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-resource=test ${args}`, cwd);
-        assert(output.includes(`Function helloData deployed.`));
+      it(`should deploy a function with JSON`, () => {
+        const output = run(`${override || cmd} deploy helloData --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-event=object.change --trigger-resource=test ${deployArgs}`, cwd);
+        if (override) {
+          assert(output.includes(`/functions/helloData`));
+        } else {
+          assert(output.includes(`Function helloData deployed.`));
+        }
       });
 
-      it(`should deploy a synchronous function ${suffix}`, () => {
-        const output = run(`${cmd} deploy helloPromise --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-resource=test ${args}`, cwd);
-        assert(output.includes(`Function helloPromise deployed.`));
+      it(`should deploy a synchronous function`, () => {
+        const output = run(`${override || cmd} deploy helloPromise --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-event=object.change --trigger-resource=test ${deployArgs}`, cwd);
+        if (override) {
+          assert(output.includes(`/functions/helloPromise`));
+        } else {
+          assert(output.includes(`Function helloPromise deployed.`));
+        }
       });
 
-      it(`should deploy a function that throws and process does not crash ${suffix}`, () => {
-        const output = run(`${cmd} deploy helloThrow --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-resource=test ${args}`, cwd);
-        assert(output.includes(`Function helloThrow deployed.`));
+      it(`should deploy a function that throws and process does not crash`, () => {
+        const output = run(`${override || cmd} deploy helloThrow --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-event=object.change --trigger-resource=test ${deployArgs}`, cwd);
+        if (override) {
+          assert(output.includes(`/functions/helloThrow`));
+        } else {
+          assert(output.includes(`Function helloThrow deployed.`));
+        }
       });
 
-      it(`should deploy a function returns JSON ${suffix}`, () => {
-        const output = run(`${cmd} deploy helloJSON --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-resource=test ${args}`, cwd);
-        assert(output.includes(`Function helloJSON deployed.`));
+      it(`should deploy a function returns JSON`, () => {
+        const output = run(`${override || cmd} deploy helloJSON --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-event=object.change --trigger-resource=test ${deployArgs}`, cwd);
+        if (override) {
+          assert(output.includes(`/functions/helloJSON`));
+        } else {
+          assert(output.includes(`Function helloJSON deployed.`));
+        }
       });
 
-      it(`should deploy an HTTP function ${suffix}`, () => {
-        const output = run(`${cmd} deploy helloGET --local-path=test/test_module/ --trigger-http ${args}`, cwd);
-        assert(output.includes(`Function helloGET deployed.`));
+      it(`should deploy an HTTP function`, () => {
+        const output = run(`${override || cmd} deploy helloGET --local-path=test/test_module/ --trigger-http ${deployArgs}`, cwd);
+        if (override) {
+          assert(output.includes(`/functions/helloGET`));
+        } else {
+          assert(output.includes(`Function helloGET deployed.`));
+        }
       });
 
-      it(`should deploy an HTTP function and send it JSON ${suffix}`, () => {
-        const output = run(`${cmd} deploy helloPOST --local-path=test/test_module/ --trigger-http ${args}`, cwd);
-        assert(output.includes(`Function helloPOST deployed.`));
+      it(`should deploy an HTTP function and send it JSON`, () => {
+        const output = run(`${override || cmd} deploy helloPOST --local-path=test/test_module/ --trigger-http ${deployArgs}`, cwd);
+        if (override) {
+          assert(output.includes(`/functions/helloPOST`));
+        } else {
+          assert(output.includes(`Function helloPOST deployed.`));
+        }
       });
 
-      it.skip(`should fail when the module does not exist ${suffix}`, () => {
-        const output = run(`${cmd} deploy ${name} --local-path=test/test_module/foo/bar --trigger-http ${args}`, cwd);
+      it.skip(`should fail when the module does not exist`, () => {
+        const output = run(`${override || cmd} deploy ${name} --local-path=test/test_module/foo/bar --trigger-http ${deployArgs}`, cwd);
         console.log(output);
         // TODO: Verify output once it gets fixed
       });
 
       // TODO: Fix this. It currently deploys the function when it shouldn`t
-      it.skip(`should fail when the function does not exist ${suffix}`, () => {
+      it.skip(`should fail when the function does not exist`, () => {
         // TODO: Verify output once it gets fixed
-        const output = run(`${cmd} deploy doesNotExist --local-path=test/test_module/ --trigger-http ${args}`, cwd);
+        const output = run(`${override || cmd} deploy doesNotExist --local-path=test/test_module/ --trigger-http ${deployArgs}`, cwd);
         console.log(output);
       });
+
+      it(`should deploy a function using a stage bucket`);
     });
 
-    describe(`describe ${suffix}`, () => {
-      it(`should describe a background function ${suffix}`, () => {
-        const output = run(`${cmd} describe ${name} ${args}`, cwd);
+    describe(`describe`, () => {
+      it(`should describe a background function`, () => {
+        const output = run(`${override || cmd} describe ${name} ${overrideArgs || args}`, cwd);
         assert(output.includes(name));
-        assert(output.includes(`Resource`));
+        if (override) {
+          assert(output.includes(`eventTrigger`));
+        } else {
+          assert(output.includes(`Resource`));
+        }
         assert(output.includes(`test`));
       });
 
-      it(`should describe an HTTP function ${suffix}`, () => {
-        const output = run(`${cmd} describe helloGET ${args}`, cwd);
+      it(`should describe an HTTP function`, () => {
+        const output = run(`${override || cmd} describe helloGET ${overrideArgs || args}`, cwd);
         assert(output.includes(`helloGET`));
-        assert(output.includes(`HTTP`));
+        if (override) {
+          assert(output.includes(`httpsTrigger`));
+        } else {
+          assert(output.includes(`HTTP`));
+        }
         assert(output.includes(`/helloGET`));
       });
     });
 
-    describe(`list ${suffix}`, () => {
-      it(`should list no functions ${suffix}`, () => {
-        const output = run(`${cmd} list ${args}`, cwd);
+    describe(`list`, () => {
+      it(`should list functions`, () => {
+        const output = run(`${override || cmd} list ${override ? '' : args}`, cwd);
         assert(output.includes(name));
         assert(output.includes(`helloData`));
         assert(output.includes(`helloGET`));
@@ -172,60 +240,71 @@ function makeTests (service) {
       });
     });
 
-    describe(`call ${suffix}`, () => {
-      it(`should call a function ${suffix}`, () => {
-        const output = run(`${cmd} call hello --data '{}' ${args}`, cwd);
+    describe(`call`, () => {
+      it(`should call a function`, () => {
+        const output = run(`${override || cmd} call hello --data '{}' ${overrideArgs || args}`, cwd);
         assert(output.includes(`Hello World`));
       });
 
-      it(`should call a function with JSON ${suffix}`, () => {
-        const output = run(`${cmd} call helloData --data '{"foo":"bar"}' ${args}`, cwd);
-        assert(output.includes(`bar`));
-      });
-
-      it(`should call a synchronous function ${suffix}`, () => {
-        const output = run(`${cmd} call helloPromise --data '{"foo":"bar"}' ${args}`, cwd);
-        assert(output.includes(`bar`));
-      });
-
-      it(`should call a function that throws and process does not crash ${suffix}`, () => {
+      it(`should call a function that throws and process does not crash`, () => {
         // TODO: Verify output when it gets fixed
-        let output = run(`${cmd} call helloThrow --data '{}' ${args}`, cwd);
+        let output = run(`${override || cmd} call helloThrow --data '{}' ${overrideArgs || args}`, cwd);
 
         output = run(`${cmd} status ${args}`, cwd);
         assert(output.includes(`RUNNING`));
       });
 
-      it(`should call a function returns JSON ${suffix}`, () => {
-        const output = run(`${cmd} call helloJSON --data '{}' ${args}`, cwd);
+      if (override) {
+        // TODO: Figure out why the output of the following calls is empty when
+        // done through the Cloud SDK
+        return;
+      }
+
+      it(`should call a function with JSON`, () => {
+        const output = run(`${override || cmd} call helloData --data '{"foo":"bar"}' ${overrideArgs || args}`, cwd);
+        assert(output.includes(`bar`));
+      });
+
+      it(`should call a synchronous function`, () => {
+        const output = run(`${override || cmd} call helloPromise --data '{"foo":"bar"}' ${overrideArgs || args}`, cwd);
+        assert(output.includes(`bar`));
+      });
+
+      it(`should call a function returns JSON`, () => {
+        const output = run(`${override || cmd} call helloJSON --data '{}' ${overrideArgs || args}`, cwd);
         assert(output.includes(`{ message: 'Hello World' }`));
       });
 
-      it(`should call an HTTP function ${suffix}`, () => {
-        const output = run(`${cmd} call helloGET --data '{}' ${args}`, cwd);
+      it(`should call an HTTP function`, () => {
+        const output = run(`${override || cmd} call helloGET --data '{}' ${overrideArgs || args}`, cwd);
         assert(output.includes(`method: 'POST'`));
       });
 
-      it(`should call an HTTP function and send it JSON ${suffix}`, () => {
-        const output = run(`${cmd} call helloPOST --data '{"foo":"bar"}' ${args}`, cwd);
+      it(`should call an HTTP function and send it JSON`, () => {
+        const output = run(`${override || cmd} call helloPOST --data '{"foo":"bar"}' ${overrideArgs || args}`, cwd);
         assert(output.includes(`body: { foo: 'bar' } }`));
       });
     });
 
-    describe(`delete ${suffix}`, () => {
-      it(`should delete a function ${suffix}`, () => {
-        let output = run(`${cmd} delete helloData ${args}`, cwd);
-        assert(output.includes(`Function helloData deleted.`));
+    describe(`delete`, () => {
+      it(`should delete a function`, () => {
+        let output = run(`${override || cmd} delete helloData ${overrideArgs || args}`, cwd);
+        if (override) {
+          assert(output.includes(`/functions/helloData`));
+          assert(output.includes(`will be deleted`));
+        } else {
+          assert(output.includes(`Function helloData deleted.`));
+        }
 
-        output = run(`${cmd} list ${args}`, cwd);
+        output = run(`${override || cmd} list ${overrideArgs || args}`, cwd);
         assert.equal(output.includes(`No functions deployed`), false);
         assert.equal(output.includes(`helloData`), false);
         assert(output.includes(`hello`));
       });
     });
 
-    describe(`clear ${suffix}`, () => {
-      it(`should clear existing functions ${suffix}`, () => {
+    describe(`clear`, () => {
+      it(`should clear existing functions`, () => {
         let output = run(`${cmd} list ${args}`, cwd);
 
         assert.equal(output.includes(`No functions deployed`), false);
@@ -239,27 +318,27 @@ function makeTests (service) {
       });
     });
 
-    describe(`kill ${suffix}`, () => {
+    describe(`kill`, () => {
       it(`should kill the server`);
     });
 
-    describe(`logs ${suffix}`, () => {
-      describe(`read ${suffix}`, () => {
+    describe(`logs`, () => {
+      describe(`read`, () => {
         it(`should list logs`);
         it(`should list and limit logs`);
       });
     });
 
-    describe(`prune ${suffix}`, () => {
+    describe(`prune`, () => {
       it(`should prune functions`);
     });
 
-    describe(`restart ${suffix}`, () => {
+    describe(`restart`, () => {
       it(`should restart the server`);
     });
 
-    describe(`status ${suffix}`, () => {
-      it(`should show the server status ${suffix}`, () => {
+    describe(`status`, () => {
+      it(`should show the server status`, () => {
         let output = run(`${cmd} status ${args}`, cwd);
         assert(output.includes(`${prefix}`));
         assert(output.includes(`RUNNING`));
@@ -276,5 +355,16 @@ function makeTests (service) {
   });
 }
 
-makeTests(`rest`);
-makeTests(`grpc`);
+describe(`system/cli`, () => {
+  before(() => storage.createBucket(bucketName));
+
+  after(() => {
+    return storage.bucket(bucketName).deleteFiles({ force: true })
+      .then(() => storage.bucket(bucketName).deleteFiles({ force: true }))
+      .then(() => storage.bucket(bucketName).delete());
+  });
+
+  makeTests(`rest`);
+  makeTests(`rest`, `${GCLOUD} alpha functions`);
+  makeTests(`grpc`);
+});

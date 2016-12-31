@@ -56,7 +56,7 @@ exports.builder = (yargs) => {
         requiresArg: true,
         type: 'string'
       }
-    }, _.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'location', 'service', 'restHost', 'restPort'])));
+    }, _.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort'])));
 
   EXAMPLES['call'].forEach((e) => yargs.example(e[0], e[1]));
 };

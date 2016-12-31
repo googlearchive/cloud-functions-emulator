@@ -16,10 +16,9 @@
 'use strict';
 
 const _ = require('lodash');
-const archiver = require('archiver');
+const AdmZip = require('adm-zip');
 const Configstore = require('configstore');
 const fs = require('fs');
-const os = require('os');
 const path = require('path');
 const spawn = require('child_process').spawn;
 const Storage = require('@google-cloud/storage');
@@ -29,7 +28,6 @@ const Client = require('../client');
 const getProjectId = require('../utils/project');
 const Model = require('../model');
 const defaults = require('../defaults.json');
-defaults.location = _.kebabCase(os.userInfo().username);
 const logs = require('../emulator/logs');
 const pkg = require('../../package.json');
 
@@ -95,45 +93,45 @@ class Controller {
 
       opts.localPath = path.resolve(opts.localPath);
       const tmpName = tmp.tmpNameSync({
-        prefix: `${opts.location}-${name}-`,
+        prefix: `${opts.region}-${name}-`,
         postfix: '.zip'
       });
-      const archive = archiver.create('zip');
-      let output;
+      const zip = new AdmZip();
+      // TODO: Find a way to ignore node_modules, and make it configurable
+      zip.addLocalFolder(opts.localPath);
+      // Copy the function code to a temp directory on the local file system
+      zip.writeZip(tmpName);
 
       if (opts.stageBucket) {
         // Upload the function code to a Google Cloud Storage bucket
         const storage = Storage({ projectId: this.config.projectId });
+
         const file = storage.bucket(opts.stageBucket).file(path.parse(tmpName).base);
         // The GCS Uri where the .zip will be saved
         sourceArchiveUrl = `gs://${file.bucket.name}/${file.name}`;
         // Stream the file up to Cloud Storage
-        output = file.createWriteStream({
+        const remoteStream = file.createWriteStream({
           metadata: {
             contentType: 'application/zip'
           }
         });
+        const localStream = fs.createReadStream(tmpName);
+        localStream.pipe(remoteStream);
+
+        remoteStream
+          .on('error', reject);
+
+        localStream
+          .on('error', reject)
+          .on('finish', () => {
+            resolve(sourceArchiveUrl);
+          });
       } else {
         // Technically, this needs to be a GCS Uri, but the emulator will know
         // how to interpret a path on the local file system
         sourceArchiveUrl = `file://${tmpName}`;
-        // Copy the function code to a temp directory on the local file system
-        output = fs.createWriteStream(tmpName);
+        resolve(sourceArchiveUrl);
       }
-
-      archive.pipe(output);
-
-      // Find a way to ignore node_modules, and make it configurable
-      archive.directory(opts.localPath, false).finalize();
-
-      output
-        .on('error', reject);
-
-      archive
-        .on('error', reject)
-        .on('finish', () => {
-          resolve(sourceArchiveUrl);
-        });
     });
   }
 
@@ -219,7 +217,7 @@ class Controller {
    */
   deploy (name, opts) {
     return new Promise((resolve, reject) => {
-      const cloudfunction = new CloudFunction(CloudFunction.formatName(this.config.projectId, this.config.location, name));
+      const cloudfunction = new CloudFunction(CloudFunction.formatName(this.config.projectId, this.config.region, name));
 
       if (opts.timeout) {
         cloudfunction.setTimeout(opts.timeout);
@@ -481,7 +479,7 @@ class Controller {
           isolation: this.config.isolation,
           logFile: this.config.logFile,
           projectId: this.config.projectId,
-          location: this.config.location,
+          region: this.config.region,
           restHost: this.config.restHost,
           restPort: this.config.restPort,
           runSupervisor: this.config.runSupervisor,

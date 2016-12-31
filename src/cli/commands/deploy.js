@@ -101,7 +101,7 @@ exports.builder = (yargs) => {
         requiresArg: true,
         type: 'string'
       }
-    }, _.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'location', 'service', 'restHost', 'restPort'])))
+    }, _.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort'])))
     .implies('stage-bucket', 'local-path')
     .implies('source-path', 'source-url');
 
@@ -122,7 +122,7 @@ exports.handler = (opts) => {
 
   const controller = new Controller(opts);
 
-  opts.location || (opts.location = controller.config.location);
+  opts.region || (opts.region = controller.config.region);
 
   return controller.doIfRunning()
     .then(() => {

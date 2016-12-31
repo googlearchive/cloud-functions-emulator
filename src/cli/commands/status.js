@@ -38,7 +38,7 @@ exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'location', 'service', 'restHost', 'restPort']));
+    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort']));
 
   EXAMPLES['status'].forEach((e) => yargs.example(e[0], e[1]));
 };
@@ -79,7 +79,7 @@ exports.handler = (opts) => {
         }
         table.push(['Log file'.white, config.logFile]);
         table.push(['Project ID'.white, config.projectId]);
-        table.push(['Location'.white, config.location]);
+        table.push(['Region'.white, config.region]);
         table.push(['Storage Mode'.white, config.storage]);
 
         if (config.mocks) {
@@ -97,7 +97,7 @@ exports.handler = (opts) => {
           table.push(['Status'.white, 'DETACHED'.yellow]);
         }
 
-        table.push(['Trigger URL'.white, `http://${config.supervisorHost}:${config.supervisorPort}/${config.projectId}/${config.location}/FUNCTION_NAME`]);
+        table.push(['Trigger URL'.white, `http://${config.supervisorHost}:${config.supervisorPort}/${config.projectId}/${config.region}/FUNCTION_NAME`]);
       } else {
         let time;
         if (config.stopped) {
