@@ -16,8 +16,12 @@
 'use strict';
 
 const _ = require('lodash');
+const AdmZip = require('adm-zip');
 const Configstore = require('configstore');
+const os = require('os');
 const path = require('path');
+const Storage = require('@google-cloud/storage');
+const tmp = require('tmp');
 const uuid = require('uuid');
 
 const CloudFunction = require('./cloudfunction');
@@ -26,6 +30,8 @@ const Operation = require('./operation');
 const pkg = require('../../package.json');
 const protos = require('./protos');
 const Schema = require('../utils/schema');
+
+const GCS_URL = /^gs:\/\/([A-Za-z0-9][\w-.]+[A-Za-z0-9])\/(.+)$/;
 
 class ConfigAdapter {
   constructor (opts = {}) {
@@ -94,7 +100,7 @@ const FunctionsConfigSchema = {
     projectId: {
       type: 'string'
     },
-    location: {
+    region: {
       type: 'string'
     },
     storage: {
@@ -108,7 +114,7 @@ const FunctionsConfigSchema = {
       type: 'number'
     }
   },
-  required: ['projectId', 'location', 'storage', 'supervisorHost', 'supervisorPort']
+  required: ['projectId', 'region', 'storage', 'supervisorHost', 'supervisorPort']
 };
 
 /**
@@ -130,6 +136,9 @@ class Functions {
     if (this.config.storage === 'configstore') {
       this.adapter = new ConfigAdapter(this.config);
     }
+    this.storage = Storage({
+      projectId: this.config.projectId
+    });
   }
 
   /**
@@ -167,10 +176,47 @@ class Functions {
     return Promise.resolve()
       .then(() => {
         if (!cloudfunction.serviceAccount) {
-          throw new Error('Local deployment using "--source-url" is not supported yet!');
+          if (cloudfunction.gcsUrl || cloudfunction.sourceArchiveUrl) {
+            const archiveUrl = cloudfunction.gcsUrl || cloudfunction.sourceArchiveUrl;
+
+            if (archiveUrl.startsWith('file://')) {
+              // TODO
+              return cloudfunction;
+            } else if (archiveUrl.startsWith('gs://')) {
+              const matches = archiveUrl.match(GCS_URL);
+              if (!matches) {
+                throw new Error(`Unsupported archive url: ${archiveUrl}`);
+              }
+              const name = path.parse(matches[2]).base;
+              const file = this.storage.bucket(matches[1]).file(matches[2]);
+
+              const zipName = tmp.tmpNameSync({
+                postfix: `-${name}`
+              });
+
+              return file.download({
+                destination: zipName
+              })
+                .then(() => {
+                  const zip = new AdmZip(zipName);
+                  const parts = path.parse(zipName);
+                  const dirName = path.join(parts.dir, parts.name);
+
+                  cloudfunction.serviceAccount = dirName;
+                  zip.extractAllTo(dirName);
+                })
+                .then(() => this.adapter.createFunction(cloudfunction))
+                .then(() => cloudfunction);
+            } else {
+              throw new Error(`Unsupported archive url: ${archiveUrl}`);
+            }
+          } else {
+            throw new Error('Local deployment using "--source-url" is not supported yet!');
+          }
         }
         // Function was deployed from the local file system, so we're not going
         // to do anything else here.
+        return cloudfunction;
       });
   }
 
@@ -236,11 +282,16 @@ class Functions {
           function: _.cloneDeep(cloudfunction)
         };
 
+        if (request.function.gcsUrl) {
+          request.function.sourceArchiveUrl = request.function.gcsUrl;
+          delete request.function.gcsUrl;
+        }
+
         // TODO: Filter out fields that cannot be edited by the user
         cloudfunction = this.cloudfunction(cloudfunction.name, cloudfunction);
 
         if (cloudfunction.httpsTrigger) {
-          cloudfunction.httpsTrigger.url = `http://${this.config.supervisorHost}:${this.config.supervisorPort}/${this.config.projectId}/${this.config.location}/${cloudfunction.shortName}`;
+          cloudfunction.httpsTrigger.url = `http://${this.config.supervisorHost}:${this.config.supervisorPort}/${this.config.projectId}/${this.config.region}/${cloudfunction.shortName}`;
         }
 
         _.merge(cloudfunction, {
@@ -272,10 +323,13 @@ class Functions {
               .then(() => {
                 // Asynchronously perform the creation of the CloudFunction
                 setImmediate(() => {
+                  cloudfunction.latestOperation = operation.name;
+                  cloudfunction.availableMemoryMb = Math.floor(os.totalmem() / 1000000);
+
                   // Create the CloudFunction
                   this.adapter.createFunction(cloudfunction)
                     .then(() => this._unpackArchive(cloudfunction))
-                    .then(() => {
+                    .then((cloudfunction) => {
                       operation.done = true;
                       operation.response = {
                         typeUrl: protos.getPath(protos.CloudFunction),

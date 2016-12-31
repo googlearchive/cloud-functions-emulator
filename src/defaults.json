@@ -7,6 +7,7 @@
   "inspectPort": 9229,
   "isolation": "childprocess",
   "logFile": "logs/cloud-functions-emulator.log",
+  "region": "us-central1",
   "restHost": "localhost",
   "restPort": 8008,
   "runSupervisor": true,

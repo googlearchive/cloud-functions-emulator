@@ -25,8 +25,8 @@ const EPILOGUE = `Available configuration options:
     ${'projectId'.bold}
       ${OPTIONS.projectId.description}
 
-    ${'location'.bold}
-      ${OPTIONS.location.description}
+    ${'region'.bold}
+      ${OPTIONS.region.description}
 
   ${'EMULATOR'.underline} - Emulates the Cloud Functions API.
     ${'grpcHost'.bold}

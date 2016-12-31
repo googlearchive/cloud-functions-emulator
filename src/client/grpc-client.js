@@ -59,7 +59,7 @@ class GrpcClient extends Client {
   callFunction (name, data) {
     return new Promise((resolve, reject) => {
       this.functionsClient.callFunction({
-        name: CloudFunction.formatName(this.config.projectId, this.config.location, name),
+        name: CloudFunction.formatName(this.config.projectId, this.config.region, name),
         data: JSON.stringify(data)
       }, (err, body) => {
         if (err) {
@@ -88,7 +88,7 @@ class GrpcClient extends Client {
   createFunction (cloudfunction) {
     return new Promise((resolve, reject) => {
       this.functionsClient.createFunction({
-        location: CloudFunction.formatLocation(this.config.projectId, this.config.location),
+        location: CloudFunction.formatLocation(this.config.projectId, this.config.region),
         function: cloudfunction.toProtobuf()
       }, (err, operation) => {
         if (err) {
@@ -103,7 +103,7 @@ class GrpcClient extends Client {
   deleteFunction (name) {
     return new Promise((resolve, reject) => {
       this.functionsClient.deleteFunction({
-        name: CloudFunction.formatName(this.config.projectId, this.config.location, name)
+        name: CloudFunction.formatName(this.config.projectId, this.config.region, name)
       }, (err, operation) => {
         if (err) {
           reject(this._processError(err));
@@ -119,7 +119,7 @@ class GrpcClient extends Client {
   getFunction (name) {
     return new Promise((resolve, reject) => {
       this.functionsClient.getFunction({
-        name: CloudFunction.formatName(this.config.projectId, this.config.location, name)
+        name: CloudFunction.formatName(this.config.projectId, this.config.region, name)
       }, (err, cloudfunction) => {
         if (err) {
           reject(this._processError(err));
@@ -134,7 +134,7 @@ class GrpcClient extends Client {
     return new Promise((resolve, reject) => {
       this.functionsClient.listFunctions({
         pageSize: 100,
-        location: CloudFunction.formatLocation(this.config.projectId, this.config.location)
+        location: CloudFunction.formatLocation(this.config.projectId, this.config.region)
       }, (err, response) => {
         if (err) {
           reject(this._processError(err));

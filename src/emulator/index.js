@@ -19,12 +19,10 @@ require('colors');
 
 const _ = require('lodash');
 const cli = require('yargs');
-const os = require('os');
 const path = require('path');
 const winston = require('winston');
 
 const defaults = require('../defaults.json');
-defaults.location = _.kebabCase(os.userInfo().username);
 const getProjectId = require('../utils/project');
 const loadHandler = require('./loadhandler');
 const logs = require('./logs');
@@ -139,7 +137,7 @@ exports.main = (args) => {
     isolation: opts.isolation,
     port: opts.supervisorPort,
     projectId: opts.projectId,
-    location: opts.location
+    region: opts.region
   });
   const restService = Service.restService(functions, supervisor, {
     host: opts.restHost,

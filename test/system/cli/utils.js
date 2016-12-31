@@ -16,7 +16,7 @@
 'use strict';
 
 const _ = require(`lodash`);
-const execSync = require(`child_process`).execSync;
+const spawnSync = require(`child_process`).spawnSync;
 const path = require(`path`);
 
 const env = _.cloneDeep(process.env);
@@ -24,5 +24,11 @@ const env = _.cloneDeep(process.env);
 env.XDG_CONFIG_HOME = path.join(__dirname, `../`);
 
 exports.run = (cmd, cwd) => {
-  return execSync(cmd, { cwd, env }).toString().trim();
+  const output = spawnSync(cmd, {
+    cwd,
+    env,
+    shell: true
+  });
+
+  return output.stdout.toString().trim() + output.stderr.toString().trim();
 };
