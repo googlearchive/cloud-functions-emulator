@@ -134,6 +134,6 @@ module.exports = {
   useMocks: {
     description: `When ${'true'.bold}, ${'mocks.js'.green} will be loaded at startup. ${'Default:'.bold} ${defaults.useMocks.toString().green}`,
     requiresArg: false,
-    type: 'boolean'
+    type: ['boolean', 'string']
   }
 };

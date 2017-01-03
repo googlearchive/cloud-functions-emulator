@@ -48,6 +48,10 @@ module.exports = {
       body: req.body
     }).end();
   },
+  helloModule (req, res) {
+    const path = require('path');
+    res.send(path.join('foo', 'bar')).end();
+  },
   helloThrow (event, callback) {
     throw new Error('uncaught exception!');
   },

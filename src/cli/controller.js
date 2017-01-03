@@ -18,6 +18,7 @@
 const _ = require('lodash');
 const AdmZip = require('adm-zip');
 const Configstore = require('configstore');
+const execSync = require('child_process').execSync;
 const fs = require('fs');
 const path = require('path');
 const spawn = require('child_process').spawn;
@@ -92,10 +93,23 @@ class Controller {
       let sourceArchiveUrl;
 
       opts.localPath = path.resolve(opts.localPath);
+
+      if (!fs.existsSync(opts.localPath)) {
+        throw new Error('Provided directory does not exist.');
+      } else {
+        const exportedKeys = execSync(`node -e 'console.log(Object.keys(require("${opts.localPath}") || {}))'`).toString().trim();
+        // TODO: Move this check to the Emulator during unpacking
+        // TODO: Make "index.js" dynamic
+        if (!exportedKeys.includes(opts.entryPoint) && !exportedKeys.includes(name)) {
+          throw new Error(`Node.js module defined by file index.js is expected to export function named ${opts.entryPoint || name}`);
+        }
+      }
+
       const tmpName = tmp.tmpNameSync({
         prefix: `${opts.region}-${name}-`,
         postfix: '.zip'
       });
+
       const zip = new AdmZip();
       // TODO: Find a way to ignore node_modules, and make it configurable
       zip.addLocalFolder(opts.localPath);

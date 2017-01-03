@@ -190,18 +190,18 @@ function makeTests (service, override) {
         }
       });
 
-      it.skip(`should fail when the module does not exist`, () => {
+      it(`should fail when the module does not exist`, () => {
         const output = run(`${override || cmd} deploy ${name} --local-path=test/test_module/foo/bar --trigger-http ${deployArgs}`, cwd);
-        console.log(output);
-        // TODO: Verify output once it gets fixed
+        assert(output.includes(`Provided directory does not exist.`));
       });
 
-      // TODO: Fix this. It currently deploys the function when it shouldn`t
-      it.skip(`should fail when the function does not exist`, () => {
-        // TODO: Verify output once it gets fixed
-        const output = run(`${override || cmd} deploy doesNotExist --local-path=test/test_module/ --trigger-http ${deployArgs}`, cwd);
-        console.log(output);
-      });
+      if (!override) {
+        it(`should fail when the function does not exist`, () => {
+          // TODO: Make this work for the SDK
+          const output = run(`${cmd} deploy doesNotExist --local-path=test/test_module/ --trigger-http ${deployArgs}`, cwd);
+          assert(output.includes(`Node.js module defined by file index.js is expected to export function named doesNotExist`));
+        });
+      }
 
       it(`should deploy a function using a stage bucket`);
     });

@@ -24,7 +24,6 @@ const winston = require('winston');
 
 const defaults = require('../defaults.json');
 const getProjectId = require('../utils/project');
-const loadHandler = require('./loadhandler');
 const logs = require('./logs');
 const Model = require('../model');
 const OPTIONS = require('../options');
@@ -137,7 +136,8 @@ exports.main = (args) => {
     isolation: opts.isolation,
     port: opts.supervisorPort,
     projectId: opts.projectId,
-    region: opts.region
+    region: opts.region,
+    useMocks: opts.useMocks
   });
   const restService = Service.restService(functions, supervisor, {
     host: opts.restHost,
@@ -147,19 +147,6 @@ exports.main = (args) => {
     host: opts.grpcHost,
     port: opts.grpcPort
   });
-
-  // Override Module._load to we can inject mocks into calls to require()
-  if (opts.useMocks) {
-    try {
-      const override = require('../mocks');
-      if (override) {
-        loadHandler.init(override);
-        console.debug('Mock handler found.  Require calls will be intercepted');
-      }
-    } catch (e) {
-      console.error('Mocks enabled but no mock handler found.  Require calls will NOT be intercepted');
-    }
-  }
 
   // Cause each service to start listening for connections
   if (opts.runSupervisor) {

@@ -18,6 +18,7 @@
 
 const bodyParser = require('body-parser');
 const express = require('express');
+const path = require('path');
 const serializerr = require('serializerr');
 const request = require('supertest');
 
@@ -25,6 +26,19 @@ const Debug = require('../utils/debug');
 
 const inspect = Debug.getInspect();
 const debug = Debug.getDebug();
+
+let _originalLoader = null;
+
+const loadHandler = {
+  init (handler) {
+    const Module = require('module');
+    _originalLoader = Module._load;
+    Module._load = function (...args) {
+      const override = handler.onRequire(process.env['FUNCTION_NAME'], args[0]);
+      return (override || _originalLoader.apply(this, args));
+    };
+  }
+};
 
 function main (name, cloudfunction, context, event, callback) {
   let start;
@@ -48,8 +62,27 @@ function main (name, cloudfunction, context, event, callback) {
       }
     };
   }
+
   // Unload the code if is already loaded
   delete require.cache[cloudfunction.serviceAccount];
+
+  if (context.useMocks) {
+    try {
+      let override;
+      if (typeof context.useMocks === 'string') {
+        override = require(path.resolve(context.useMocks));
+      } else {
+        override = require(path.join(__dirname, '../../mocks'));
+      }
+      if (override) {
+        loadHandler.init(override);
+        console.log('Mock handler found. Require calls will be intercepted');
+      }
+    } catch (e) {
+      console.error('Mocks enabled but no mock handler found. Require calls will NOT be intercepted');
+      console.error(e);
+    }
+  }
 
   // Require the target module to load the function for invocation
   const functionModule = require(cloudfunction.serviceAccount);

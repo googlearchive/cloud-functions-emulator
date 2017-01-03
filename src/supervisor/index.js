@@ -37,6 +37,12 @@ class Supervisor {
     this.functions = functions;
     this.config = _.cloneDeep(opts);
 
+    if (this.config.useMocks === 'true') {
+      this.config.useMocks = true;
+    } else if (this.config.useMocks === 'false') {
+      this.config.useMocks = false;
+    }
+
     this.server = express();
     this.server.use(bodyParser.json());
     this.server.use(bodyParser.raw());
@@ -145,6 +151,7 @@ class Supervisor {
    * Invokes a function.
    */
   invoke (cloudfunction, data, context = {}, opts = {}) {
+    context.useMocks = this.config.useMocks;
     if (this.config.isolation === 'inprocess') {
       return this.invokeInline(cloudfunction, data, context, opts);
     } else if (this.config.isolation === 'childprocess') {
@@ -165,7 +172,21 @@ class Supervisor {
    */
   invokeInline (cloudfunction, data, context = {}, opts = {}) {
     return new Promise((resolve, reject) => {
-      worker(cloudfunction, data, context, opts, (err, result) => {
+      // Prepare an execution event
+      const event = {
+        // A unique identifier for this execution
+        eventId: uuid.v4(),
+        // The current ISO 8601 timestamp
+        timestamp: (new Date()).toISOString(),
+        // TODO: The event type
+        eventType: 'TODO',
+        // TODO: The resource that triggered the event
+        resource: 'TODO',
+        // The event payload
+        data
+      };
+
+      worker(cloudfunction.shortName, cloudfunction, context, event, (err, result) => {
         if (err) {
           reject(err);
         } else {

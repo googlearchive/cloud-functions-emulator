@@ -65,7 +65,7 @@ exports.handler = (opts) => {
         table.push(['Status'.white, 'RUNNING'.green]);
         table.push(['Uptime'.white, time]);
         table.push(['Process ID'.white, config.pid]);
-        table.push(['Rest Service'.white, `http://${config.restHost}:${config.restPort}/`]);
+        table.push(['REST Service'.white, `http://${config.restHost}:${config.restPort}/`]);
         table.push(['gRPC Service'.white, `http://${config.grpcHost}:${config.grpcPort}/`]);
         if (config.inspect || config.debug) {
           table.push(['Debugger'.white, 'ACTIVE'.green]);
