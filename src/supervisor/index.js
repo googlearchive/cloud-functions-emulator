@@ -60,6 +60,7 @@ class Supervisor {
     });
 
     this.server.all('/:project/:location/:name', (req, res, next) => this.handleRequest(req, res).catch(next));
+    this.server.all('/:project/:location/:name/:extra*', (req, res, next) => this.handleRequest(req, res).catch(next));
 
     this.server.all('*', (req, res, next) => {
       res.status(404).end();
@@ -125,8 +126,8 @@ class Supervisor {
         const context = {
           method: req.method,
           headers: req.headers,
-          url: req.url,
-          originalUrl: req.originalUrl
+          url: req.url.replace(`/${req.params.project}/${req.params.location}`, ''),
+          originalUrl: req.originalUrl.replace(`/${req.params.project}/${req.params.location}`, '')
         };
         return this.invoke(cloudfunction, req.body || {}, context);
       })
