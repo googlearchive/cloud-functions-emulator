@@ -18,3 +18,4 @@ app.yaml
 test/system/configstore
 test/system/*.log
 .idea/
+test/firebase/

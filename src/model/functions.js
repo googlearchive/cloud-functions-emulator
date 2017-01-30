@@ -18,8 +18,10 @@
 const _ = require('lodash');
 const AdmZip = require('adm-zip');
 const Configstore = require('configstore');
+const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const spawn = require('child_process').spawn;
 const Storage = require('@google-cloud/storage');
 const tmp = require('tmp');
 const uuid = require('uuid');
@@ -172,12 +174,58 @@ class Functions {
       });
   }
 
+  _checkForYarn (dirName) {
+    return new Promise((resolve, reject) => {
+      fs.access(path.join(dirName, 'yarn.lock'), (err) => {
+        if (err) {
+          resolve(false);
+          return;
+        }
+        resolve(true);
+      });
+    });
+  }
+
+  _installNpm (dirName) {
+    console.debug('Functions', '_installNpm', dirName);
+    return new Promise((resolve, reject) => {
+      spawn('npm', ['install'], {
+        cwd: dirname
+      }, (err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        // TODO: Print output?
+        resolve();
+      });
+    });
+  }
+
+  _installYarn (dirName) {
+    console.debug('Functions', '_installYarn', archiveUrl);
+    return new Promise((resolve, reject) => {
+      spawn('yarn', ['install'], {
+        cwd: dirname
+      }, (err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        // TODO: Print output?
+        resolve();
+      });
+    });
+  }
+
   _unpackArchive (cloudfunction) {
+    console.debug('Functions', '_unpackArchive', cloudfunction);
     return Promise.resolve()
       .then(() => {
         if (!cloudfunction.serviceAccount) {
           if (cloudfunction.gcsUrl || cloudfunction.sourceArchiveUrl) {
             const archiveUrl = cloudfunction.gcsUrl || cloudfunction.sourceArchiveUrl;
+            console.debug('Functions', '_unpackArchive', archiveUrl);
 
             if (archiveUrl.startsWith('file://')) {
               // TODO
@@ -190,9 +238,13 @@ class Functions {
               const name = path.parse(matches[2]).base;
               const file = this.storage.bucket(matches[1]).file(matches[2]);
 
-              const zipName = tmp.tmpNameSync({
+              let zipName = tmp.tmpNameSync({
                 postfix: `-${name}`
               });
+              if (!zipName.endsWith('.zip')) {
+                zipName = `${zipName}.zip`;
+              }
+              console.debug('Functions', '_unpackArchive', zipName);
 
               return file.download({
                 destination: zipName
@@ -201,9 +253,19 @@ class Functions {
                   const zip = new AdmZip(zipName);
                   const parts = path.parse(zipName);
                   const dirName = path.join(parts.dir, parts.name);
+                  console.debug('Functions', '_unpackArchive', dirName);
 
                   cloudfunction.serviceAccount = dirName;
                   zip.extractAllTo(dirName);
+
+                  return _checkForYarn()
+                    .then((hasYarn) => {
+                      if (hasYarn) {
+                        return this._installNpm(dirName);
+                      } else {
+                        return this._installYarn(dirName);
+                      }
+                    });
                 })
                 .then(() => this.adapter.createFunction(cloudfunction))
                 .then(() => cloudfunction);
