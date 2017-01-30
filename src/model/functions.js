@@ -190,7 +190,7 @@ class Functions {
     console.debug('Functions', '_installNpm', dirName);
     return new Promise((resolve, reject) => {
       spawn('npm', ['install'], {
-        cwd: dirname
+        cwd: dirName
       }, (err) => {
         if (err) {
           reject(err);
@@ -203,10 +203,10 @@ class Functions {
   }
 
   _installYarn (dirName) {
-    console.debug('Functions', '_installYarn', archiveUrl);
+    console.debug('Functions', '_installYarn', dirName);
     return new Promise((resolve, reject) => {
       spawn('yarn', ['install'], {
-        cwd: dirname
+        cwd: dirName
       }, (err) => {
         if (err) {
           reject(err);
@@ -258,7 +258,7 @@ class Functions {
                   cloudfunction.serviceAccount = dirName;
                   zip.extractAllTo(dirName);
 
-                  return _checkForYarn()
+                  return this._checkForYarn()
                     .then((hasYarn) => {
                       if (hasYarn) {
                         return this._installNpm(dirName);

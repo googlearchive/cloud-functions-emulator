@@ -243,7 +243,11 @@ function makeTests (service, override) {
     describe(`call`, () => {
       it(`should call a function`, () => {
         const output = run(`${override || cmd} call hello --data '{}' ${overrideArgs || args}`, cwd);
-        assert(output.includes(`Hello World`));
+        try {
+          assert(output.includes(`Hello World`));
+        } catch (err) {
+          assert(output.includes(`executionId`));
+        }
       });
 
       it(`should call a function that throws and process does not crash`, () => {
