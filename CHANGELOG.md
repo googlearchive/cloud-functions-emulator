@@ -1,3 +1,13 @@
+##### 1.0.0-alpha.1 - 31 January 2017
+
+###### Breaking changes
+
+- This release includes a complete rewrite of the entire Emulator.
+- Documentation for the new release can be found at https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki
+- If you have trouble upgrading, delete the following folder:
+  - OSX/Linux - `/Users/YOUR_USERNAME/.config/configstore/@google-cloud/functions-emulator`
+  - Windows - ``
+
 ##### 0.4.0 - 05 December 2016
 
 ###### Breaking changes

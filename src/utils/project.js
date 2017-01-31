@@ -47,5 +47,17 @@ module.exports = (projectId) => {
     return projectId;
   }
 
-  throw new Error('Please provide a project ID: "functions config set projectId YOUR_PROJECT_ID" or "functions start --projectId YOUR_PROJECT_ID" or "export GCLOUD_PROJECT=YOUR_PROJECT_ID"');
+  let isConfigCommand = false;
+
+  process.argv.forEach((arg, i) => {
+    const nextArg = process.argv[i + 1];
+    if (arg === 'config' && (nextArg === 'set' || nextArg === 'get' || nextArg === 'list')) {
+      isConfigCommand = true;
+      return false;
+    }
+  });
+
+  if (!isConfigCommand) {
+    throw new Error('Please provide a project ID: "functions config set projectId YOUR_PROJECT_ID" or "functions start --projectId YOUR_PROJECT_ID" or "export GCLOUD_PROJECT=YOUR_PROJECT_ID"');
+  }
 };
