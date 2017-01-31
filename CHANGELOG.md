@@ -6,7 +6,7 @@
 - Documentation for the new release can be found at https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki
 - If you have trouble upgrading, delete the following folder:
   - OSX/Linux - `/Users/YOUR_USERNAME/.config/configstore/@google-cloud/functions-emulator`
-  - Windows - ``
+  - Windows - `C:\Users\YOUR_USERNAME\.config\configstore\@google-cloud\functions-emulator`
 
 ##### 0.4.0 - 05 December 2016
 
