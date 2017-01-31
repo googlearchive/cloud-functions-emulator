@@ -326,7 +326,7 @@ class Controller {
           // Ignore any error
           if (!err) {
             // Attempt to find the Chrome debugging URL in the last 300 characters that were logged
-            matches = content.substring(content.length - 300).match(/(chrome-devtools:\/\/devtools\S+)\s/);
+            matches = content.substring(content.length - (this.config.versbose ? 600 : 300)).match(/(chrome-devtools:\/\/devtools\S+)\s/);
           }
 
           resolve(matches ? matches[1] : undefined);
@@ -445,6 +445,7 @@ class Controller {
           `--projectId=${this.config.projectId}`,
           `--timeout=${this.config.timeout}`,
           `--verbose=${this.config.verbose}`,
+          `--isolation=${this.config.isolation}`,
           `--useMocks=${this.config.useMocks}`,
           `--logFile=${this.config.logFile}`,
           `--restHost=${this.config.restHost}`,

@@ -172,7 +172,10 @@ class Supervisor {
    * @returns {Promise}
    */
   invokeInline (cloudfunction, data, context = {}, opts = {}) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
+      context.originalUrl = `/${this.config.projectId}/${this.config.region}/${cloudfunction.shortName}`;
+      context.headers = {};
+
       // Prepare an execution event
       const event = {
         // A unique identifier for this execution
@@ -189,9 +192,9 @@ class Supervisor {
 
       worker(cloudfunction.shortName, cloudfunction, context, event, (err, result) => {
         if (err) {
-          reject(err);
+          resolve({ executionId: event.eventId, error: err });
         } else {
-          resolve(result);
+          resolve({ executionId: event.eventId, result });
         }
       });
     });

@@ -82,16 +82,20 @@ exports.handler = (opts) => {
   return controller.doIfRunning()
     .then(() => {
       if (controller.server.get('inspect')) {
-        controller.getDebuggingUrl().then((debugUrl) => {
-          let debugStr = `Function execution paused. Connect to the debugger on port ${controller.server.get('inspectPort')} (e.g. using the "node2" launch type in VSCode), or open the following URL in Chrome:`;
-          if (debugUrl) {
-            // If found, include it in the string that gets printed
-            debugStr += `\n\n    ${debugUrl}\n`;
-          } else {
-            debugStr += `\n\nError: Could not find Chrome debugging URL in log file. Look for it yourself in ${controller.server.get('logFile')}.`;
-          }
-          console.log(debugStr);
-        });
+        if (controller.server.get('isolation') === 'inprocess') {
+          console.log(`Function execution paused. Connect to the debugger on port ${controller.server.get('inspectPort')} (e.g. using the "node" launch type in VSCode).\n`);
+        } else {
+          controller.getDebuggingUrl().then((debugUrl) => {
+            let debugStr = `Function execution paused. Connect to the debugger on port ${controller.server.get('inspectPort')} (e.g. using the "node2" launch type in VSCode), or open the following URL in Chrome:`;
+            if (debugUrl) {
+              // If found, include it in the string that gets printed
+              debugStr += `\n\n    ${debugUrl}\n`;
+            } else {
+              debugStr += `\n\nError: Could not find Chrome debugging URL in log file. Look for it yourself in ${controller.server.get('logFile')}.`;
+            }
+            console.log(debugStr);
+          });
+        }
       } else if (controller.server.get('debug')) {
         console.log(`Function execution paused. Connect to the debugger on port ${controller.server.get('debugPort')} (e.g. using the "node" launch type in VSCode).\n`);
       }

@@ -119,7 +119,7 @@ module.exports = {
   isolation: {
     description: `The Supervisor's isolation model. Choices are ${'inprocess'.green} and ${'childprocess'.green}. ${'Default:'.bold} ${defaults.isolation.toString().green}`,
     requiresArg: true,
-    type: 'number'
+    type: 'string'
   },
   supervisorHost: {
     description: `The host of the Supervisor. ${'Default:'.bold} ${defaults.supervisorHost.toString().green}`,
