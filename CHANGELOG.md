@@ -1,4 +1,4 @@
-##### 1.0.0-alpha.1 - 31 January 2017
+##### 1.0.0-alpha.1 - 01 February 2017
 
 ###### Breaking changes
 
