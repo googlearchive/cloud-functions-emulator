@@ -20,6 +20,7 @@ _Disclaimer: This is not an official Google product._
 * [Where is the documentation?](#where-is-the-documentation)
   * CLI Docs: `functions --help`
   * [How-To Guides](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/How-To-Guides)
+* [Contributing](#contributing)
 * [License](#license)
 
 ## What is the Google Cloud Functions Emulator?
@@ -76,6 +77,12 @@ For a quick reference, the Emulator CLI is self-documenting. Run the following t
     functions --help
 
 For everything else see the [How-To Guides](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/How-To-Guides).
+
+## Contributing
+
+To give feedback, report a bug, or request a feature, please [open an issue](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues).
+
+To contribute a change, [check out the contributing guide](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/blob/master/.github/CONTRIBUTING.md).
 
 ## License
 
