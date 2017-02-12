@@ -50,7 +50,8 @@
     "system-cover": "nyc --cache mocha test/_setup test/ --grep \"system/\" --recursive -t 10000 -S -R spec --require intelli-espower-loader && nyc report --reporter=html",
     "test": "npm run lint && npm run cover",
     "format": "semistandard-format -w",
-    "start": "node ."
+    "start": "node .",
+    "postinstall": "node scripts/upgrade-warning"
   },
   "dependencies": {
     "@google-cloud/storage": "0.7.0",
