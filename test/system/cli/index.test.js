@@ -15,6 +15,7 @@
 
 'use strict';
 
+const got = require(`got`);
 const path = require(`path`);
 
 process.env.XDG_CONFIG_HOME = path.join(__dirname, `../`);
@@ -27,6 +28,7 @@ const uuid = require(`uuid`);
 
 const pkg = require(`../../../package.json`);
 const run = require(`./utils`).run;
+const getProjectId = require('../../../src/utils/project');
 
 const bucketName = `cloud-functions-emulator-${uuid.v4()}`;
 const cmd = `node bin/functions`;
@@ -43,6 +45,8 @@ const GCLOUD = process.env.GCLOUD_CMD_OVERRIDE || `gcloud`;
 const REST_PORT = 8088;
 const GRPC_PORT = 8089;
 const SUPERVISOR_PORT = 8090;
+const REGION = `us-central1`;
+const PROJECT_ID = getProjectId(null, false);
 
 function makeTests (service, override) {
   const args = `--logFile=${logFile} --service=${service} --grpcHost=localhost --grpcPort=${GRPC_PORT} --debug=false --inspect=false --restHost=localhost --restPort=${REST_PORT} --runSupervisor=true --supervisorHost=localhost --supervisorPort=${SUPERVISOR_PORT} --verbose`;
@@ -52,7 +56,7 @@ function makeTests (service, override) {
   describe(`${service}${override ? '-sdk' : ''}`, () => {
     before(() => {
       if (override) {
-        overrideArgs = `--region=us-central1`;
+        overrideArgs = `--region=${REGION}`;
         const output = spawnSync(`${GCLOUD} info --format='value(config.properties.api_endpoint_overrides.cloudfunctions)'`, { shell: true });
         currentEndpoint = output.stdout.toString().trim() + output.stderr.toString().trim();
         spawnSync(`${GCLOUD} config set api_endpoint_overrides/cloudfunctions http://localhost:${REST_PORT}/`, { shell: true, stdio: ['ignore', 'ignore', 'ignore'] });
@@ -282,6 +286,18 @@ function makeTests (service, override) {
       it(`should call an HTTP function`, () => {
         const output = run(`${override || cmd} call helloGET --data '{}' ${overrideArgs || args}`, cwd);
         assert(output.includes(`method: 'POST'`));
+      });
+
+      it(`should call an HTTP function via trigger URL`, () => {
+        return got(`http://localhost:${SUPERVISOR_PORT}/${PROJECT_ID}/${REGION}/helloGET`, {
+          method: 'GET',
+          headers: {
+            'x-api-key': 'any'
+          },
+          json: true
+        }).then((response) => {
+          assert.equal(response.body.headers[`x-api-key`], `any`);
+        });
       });
 
       it(`should call an HTTP function and send it JSON`, () => {

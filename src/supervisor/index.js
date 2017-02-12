@@ -174,7 +174,7 @@ class Supervisor {
   invokeInline (cloudfunction, data, context = {}, opts = {}) {
     return new Promise((resolve) => {
       context.originalUrl = `/${this.config.projectId}/${this.config.region}/${cloudfunction.shortName}`;
-      context.headers = {};
+      context.headers || (context.headers = {});
 
       // Prepare an execution event
       const event = {
@@ -212,7 +212,7 @@ class Supervisor {
   invokeSecure (cloudfunction, data, context = {}, opts = {}) {
     return new Promise((resolve, reject) => {
       context.originalUrl = `/${this.config.projectId}/${this.config.region}/${cloudfunction.shortName}`;
-      context.headers = {};
+      context.headers || (context.headers = {});
 
       // Prepare an execution event
       const event = {
