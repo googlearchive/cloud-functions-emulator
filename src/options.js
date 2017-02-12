@@ -15,10 +15,15 @@
 
 'use strict';
 
+const Configstore = require('configstore');
+const path = require('path');
+
 const defaults = require('./defaults.json');
 const getProjectId = require('./utils/project');
+const pkg = require('../package.json');
 
-const PROJECT_ID = getProjectId();
+const config = new Configstore(path.join(pkg.name, '/config'));
+const PROJECT_ID = getProjectId(config.get('projectId'));
 
 module.exports = {
   /**

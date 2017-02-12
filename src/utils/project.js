@@ -26,7 +26,7 @@ function trim (str) {
   return str;
 }
 
-module.exports = (projectId) => {
+module.exports = (projectId, printWarning = true) => {
   if (projectId) {
     return projectId;
   }
@@ -37,7 +37,9 @@ module.exports = (projectId) => {
     return cloudSDKProjectId;
   }
   try {
-    console.log(`Inferring project ID from Cloud SDK config. Speed up CLI commands by setting a project ID: ${'functions config set projectId YOUR_PROJECT_ID'.bold} or ${'export GCLOUD_PROJECT=YOUR_PROJECT_ID'.bold}`);
+    if (printWarning) {
+      console.log(`Inferring project ID from Cloud SDK config. Speed up CLI commands by setting a project ID: ${'functions config set projectId YOUR_PROJECT_ID'.bold} or ${'export GCLOUD_PROJECT=YOUR_PROJECT_ID'.bold}`);
+    }
     cloudSDKProjectId = projectId = trim(execSync(`gcloud info --format='value(config.project)'`));
   } catch (err) {
     // Print some error message?
