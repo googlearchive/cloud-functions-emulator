@@ -36,7 +36,7 @@ are the recommended upgrade steps:
 If you have trouble after upgrading, try deleting the config
 directory found in:
 
-    ~/.config/Configstore/@google-cloud/functions-emulator
+    ~/.config/configstore/@google-cloud/functions-emulator
 
 The restart the emulator. You can also check for any renegade
 Node.js emulator processes that may need to be killed:
