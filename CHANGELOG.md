@@ -1,8 +1,9 @@
-##### 1.0.0-alpha.2 - 12 February 2017
+##### 1.0.0-alpha.2 - 13 February 2017
 
 ###### Bug fixes
 
 - #32 - custom headers request headers are lost
+- #34 - functions deploy fails on Windows
 
 ##### 1.0.0-alpha.1 - 01 February 2017
 
