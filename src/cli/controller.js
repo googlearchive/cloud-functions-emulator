@@ -94,10 +94,17 @@ class Controller {
 
       opts.localPath = path.resolve(opts.localPath);
 
+      let pathForCmd = opts.localPath;
+
+      if (process.platform === 'win32') {
+        // See https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/34
+        pathForCmd = opts.localPath.replace(/\\/g, '/');
+      }
+
       if (!fs.existsSync(opts.localPath)) {
         throw new Error('Provided directory does not exist.');
       } else {
-        const exportedKeys = execSync(`node -e 'console.log(Object.keys(require("${opts.localPath}") || {}))'`).toString().trim();
+        const exportedKeys = execSync(`node -e "console.log(Object.keys(require('${pathForCmd}') || {}))"`).toString().trim();
         // TODO: Move this check to the Emulator during unpacking
         // TODO: Make "index.js" dynamic
         if (!exportedKeys.includes(opts.entryPoint) && !exportedKeys.includes(name)) {
