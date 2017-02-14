@@ -1,7 +1,7 @@
 {
   "name": "@google-cloud/functions-emulator",
   "description": "Google Cloud Functions Emulator",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "license": "Apache-2.0",
   "author": "Google Inc.",
   "engines": {
@@ -20,6 +20,7 @@
     "CONTRIBUTORS",
     "mocks.js",
     "src/",
+    "scripts/",
     "yarn.lock"
   ],
   "semistandard": {

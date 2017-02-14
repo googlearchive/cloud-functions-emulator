@@ -1,3 +1,9 @@
+##### 1.0.0-alpha.3 - 14 February 2017
+
+###### Bug fixes
+
+- #38 - Cannot find module 'upgrade-warning'
+
 ##### 1.0.0-alpha.2 - 13 February 2017
 
 ###### Bug fixes
