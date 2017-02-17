@@ -34,7 +34,7 @@ const pkg = require('../../package.json');
 
 const { CloudFunction } = Model;
 
-const TIMEOUT_POLL_INCREMENT = 500;
+const TIMEOUT_POLL_DECREMENT = 500;
 const STATE = {
   STOPPED: 0,
   RUNNING: 1
@@ -163,13 +163,13 @@ class Controller {
    * @returns {Promise}
    */
   _waitForStart (i) {
-    if (!i) {
-      i = this.config.timeout / TIMEOUT_POLL_INCREMENT;
+    if (i === undefined) {
+      i = this.config.timeout;
     }
 
     return this.client.testConnection()
       .catch(() => {
-        i--;
+        i -= TIMEOUT_POLL_DECREMENT;
 
         if (i <= 0) {
           throw new Error('Timeout waiting for emulator start'.red);
@@ -178,7 +178,7 @@ class Controller {
         return new Promise((resolve, reject) => {
           setTimeout(() => {
             this._waitForStart(i).then(resolve, reject);
-          }, TIMEOUT_POLL_INCREMENT);
+          }, TIMEOUT_POLL_DECREMENT);
         });
       });
   }
@@ -190,13 +190,13 @@ class Controller {
    * @returns {Promise}
    */
   _waitForStop (i) {
-    if (!i) {
-      i = this.config.timeout / TIMEOUT_POLL_INCREMENT;
+    if (i === undefined) {
+      i = this.config.timeout;
     }
 
     return this.client.testConnection()
       .then(() => {
-        i--;
+        i -= TIMEOUT_POLL_DECREMENT;
 
         if (i <= 0) {
           throw new Error('Timeout waiting for emulator stop');
@@ -205,7 +205,7 @@ class Controller {
         return new Promise((resolve, reject) => {
           setTimeout(() => {
             this._waitForStop(i).then(resolve, reject);
-          }, TIMEOUT_POLL_INCREMENT);
+          }, TIMEOUT_POLL_DECREMENT);
         });
       }, () => {});
   }

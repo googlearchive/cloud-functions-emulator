@@ -44,8 +44,7 @@ exports.builder = (yargs) => {
 exports.handler = (opts) => {
   const controller = new Controller(opts);
 
-  return controller.doIfRunning()
-    .then(() => controller.kill())
+  return controller.kill()
     .then(() => {
       controller.write(controller.name);
       controller.write(' KILLED\n'.red);

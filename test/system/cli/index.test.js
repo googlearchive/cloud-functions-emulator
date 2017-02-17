@@ -370,7 +370,7 @@ function makeTests (service, override) {
 
         output = run(`${cmd} status ${args}`, cwd);
         assert(output.includes(`STOPPED`));
-      }).timeout(10000);
+      }).timeout(20000);
     });
   });
 }
@@ -385,6 +385,6 @@ describe(`system/cli`, () => {
   });
 
   makeTests(`rest`);
-  makeTests(`rest`, `${GCLOUD} alpha functions`);
+  makeTests(`rest`, `${GCLOUD} beta functions`);
   makeTests(`grpc`);
 });
