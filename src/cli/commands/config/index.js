@@ -81,6 +81,8 @@ const EPILOGUE = `Available configuration options:
 
     ${'useMocks'.bold}
       ${OPTIONS.useMocks.description}
+
+    For more information, see https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Configuring-the-Emulator
 `;
 const COMMAND = `functions config ${'<command>'.yellow} ${'[options]'.yellow}`;
 const DESCRIPTION = `Manages the settings stored in ${config.path.bold}.`;

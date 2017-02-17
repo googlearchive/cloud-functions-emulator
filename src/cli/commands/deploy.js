@@ -99,7 +99,8 @@ exports.builder = (yargs) => {
       }
     }, _.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort'])))
     .implies('stage-bucket', 'local-path')
-    .implies('source-path', 'source-url');
+    .implies('source-path', 'source-url')
+    .epilogue('For more information, see https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Deploying-functions');
 
   EXAMPLES['deploy'].forEach((e) => yargs.example(e[0], e[1]));
 };

@@ -38,7 +38,8 @@ exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
     .demand(1)
-    .command(require('./read'));
+    .command(require('./read'))
+    .epilogue('For more information, see https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Viewing-logs');
 
   EXAMPLES['logs'].forEach((e) => yargs.example(e[0], e[1]));
 };

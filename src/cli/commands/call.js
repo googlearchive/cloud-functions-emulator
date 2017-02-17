@@ -56,7 +56,8 @@ exports.builder = (yargs) => {
         requiresArg: true,
         type: 'string'
       }
-    }, _.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort'])));
+    }, _.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort'])))
+    .epilogue('For more information, see https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Calling-functions');
 
   EXAMPLES['call'].forEach((e) => yargs.example(e[0], e[1]));
 };
