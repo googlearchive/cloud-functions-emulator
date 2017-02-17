@@ -67,7 +67,7 @@ exports.builder = (yargs) => {
         type: 'string'
       },
       'stage-directory': {
-        description: `The emulator supports storing function code on the local filesystem. ${'Default:'.bold} ${os.tmpdir().green}`,
+        description: `${'Emulator-specific:'.bold} The emulator supports storing function code on the local filesystem. ${'Default:'.bold} ${os.tmpdir().green}`,
         requiresArg: true,
         type: 'string'
       },
@@ -76,9 +76,14 @@ exports.builder = (yargs) => {
         requiresArg: true,
         type: 'string'
       },
-      'trigger-event': {
-        choices: ['topic.publish', 'object.change', 'user.create', 'user.delete', 'data.write'],
-        description: 'Specifies which action should trigger the function. If omitted, a default EVENT_TYPE for --trigger-provider will be used. For a list of acceptable values, call functions event_types list. EVENT_TYPE must be one of: topic.publish, object.change, user.create, user.delete, data.write.',
+      // 'trigger-event': {
+      //   choices: ['topic.publish', 'object.change', 'user.create', 'user.delete', 'data.write'],
+      //   description: 'Specifies which action should trigger the function. If omitted, a default EVENT_TYPE for --trigger-provider will be used. For a list of acceptable values, call functions event_types list. EVENT_TYPE must be one of: topic.publish, object.change, user.create, user.delete, data.write.',
+      //   requiresArg: true,
+      //   type: 'string'
+      // },
+      'trigger-bucket': {
+        description: 'Google Cloud Storage bucket name. Every change in files in this bucket will trigger function execution.',
         requiresArg: true,
         type: 'string'
       },
@@ -86,16 +91,21 @@ exports.builder = (yargs) => {
         description: `Every HTTP POST request to the function's endpoint (web_trigger.url parameter of the deploy output) will trigger function execution. Result of the function execution will be returned in response body.`,
         requiresArg: false
       },
-      'trigger-provider': {
-        choices: ['cloud.pubsub', 'cloud.storage', 'firebase.auth', 'firebase.database'],
-        description: 'Trigger this function in response to an event in another service. For a list of acceptable values, call gcloud functions event-types list. PROVIDER must be one of: cloud.pubsub, cloud.storage, firebase.auth, firebase.database.',
+      'trigger-topic': {
+        description: 'Name of Pub/Sub topic. Every message published in this topic will trigger function execution with message contents passed as input data.',
         requiresArg: true,
         type: 'string'
-      },
-      'trigger-resource': {
-        description: 'Specifies which resource from --trigger-provider is being observed. E.g. if --trigger-provider is cloud.storage, --trigger-resource must be a bucket name. For a list of expected resources, call functions event_types list.',
-        requiresArg: true,
-        type: 'string'
+      // },
+      // 'trigger-provider': {
+      //   choices: ['cloud.pubsub', 'cloud.storage', 'firebase.auth', 'firebase.database'],
+      //   description: 'Trigger this function in response to an event in another service. For a list of acceptable values, call gcloud functions event-types list. PROVIDER must be one of: cloud.pubsub, cloud.storage, firebase.auth, firebase.database.',
+      //   requiresArg: true,
+      //   type: 'string'
+      // },
+      // 'trigger-resource': {
+      //   description: 'Specifies which resource from --trigger-provider is being observed. E.g. if --trigger-provider is cloud.storage, --trigger-resource must be a bucket name. For a list of expected resources, call functions event_types list.',
+      //   requiresArg: true,
+      //   type: 'string'
       }
     }, _.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort'])))
     .implies('stage-bucket', 'local-path')

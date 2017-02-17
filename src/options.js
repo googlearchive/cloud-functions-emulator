@@ -40,7 +40,7 @@ module.exports = {
     type: 'string'
   },
   storage: {
-    description: `The only choice right now is ${'configstore'.green}. ${'Default:'.bold} ${defaults.storage.toString().green}`,
+    description: `${'Emulator-specific:'.bold} The only choice right now is ${'configstore'.green}. ${'Default:'.bold} ${defaults.storage.toString().green}`,
     requiresArg: true,
     type: 'string'
   },
@@ -49,12 +49,12 @@ module.exports = {
    * CLI settings
    */
   service: {
-    description: `Which wire protocol to use when communicating with the Emulator. Choices are ${'rest'.green} or ${'grpc'.green}. ${'Default:'.bold} ${defaults.service.toString().green}`,
+    description: `${'Emulator-specific:'.bold} Which wire protocol to use when communicating with the Emulator. Choices are ${'rest'.green} or ${'grpc'.green}. ${'Default:'.bold} ${defaults.service.toString().green}`,
     requiresArg: true,
     type: 'string'
   },
   timeout: {
-    description: `The timeout in milliseconds the CLI should wait for the Emulator to start or stop. ${'Default:'.bold} ${defaults.timeout.toString().green}`,
+    description: `${'Emulator-specific:'.bold} The timeout in milliseconds the CLI should wait for the Emulator to start or stop. ${'Default:'.bold} ${defaults.timeout.toString().green}`,
     requiresArg: true,
     type: 'number'
   },
@@ -63,32 +63,32 @@ module.exports = {
    * Emulator settings
    */
   grpcHost: {
-    description: `The host of the Cloud Functions Emulator gRPC API. ${'Default:'.bold} ${defaults.grpcHost.toString().green}`,
+    description: `${'Emulator-specific:'.bold} The host of the Cloud Functions Emulator gRPC API. ${'Default:'.bold} ${defaults.grpcHost.toString().green}`,
     requiresArg: true,
     type: 'string'
   },
   grpcPort: {
-    description: `The port of the Cloud Functions Emulator gRPC API. ${'Default:'.bold} ${defaults.grpcPort.toString().green}`,
+    description: `${'Emulator-specific:'.bold} The port of the Cloud Functions Emulator gRPC API. ${'Default:'.bold} ${defaults.grpcPort.toString().green}`,
     requiresArg: true,
     type: 'number'
   },
   logFile: {
-    description: `The path to the logs file to which function logs will be written. ${'Default:'.bold} ${defaults.logFile.toString().green}`,
+    description: `${'Emulator-specific:'.bold} The path to the logs file to which function logs will be written. ${'Default:'.bold} ${defaults.logFile.toString().green}`,
     requiresArg: true,
     type: 'string'
   },
   restHost: {
-    description: `The host of the Cloud Functions Emulator REST API. ${'Default:'.bold} ${defaults.restHost.toString().green}`,
+    description: `${'Emulator-specific:'.bold} The host of the Cloud Functions Emulator REST API. ${'Default:'.bold} ${defaults.restHost.toString().green}`,
     requiresArg: true,
     type: 'string'
   },
   restPort: {
-    description: `The port of the Cloud Functions Emulator REST API. ${'Default:'.bold} ${defaults.restPort.toString().green}`,
+    description: `${'Emulator-specific:'.bold} The port of the Cloud Functions Emulator REST API. ${'Default:'.bold} ${defaults.restPort.toString().green}`,
     requiresArg: true,
     type: 'number'
   },
   runSupervisor: {
-    description: `When ${'true'.bold}, runs the Supervisor as part of the Emulator. ${'Default:'.bold} ${defaults.runSupervisor.toString().green}`,
+    description: `${'Emulator-specific:'.bold} When ${'true'.bold}, runs the Supervisor as part of the Emulator. ${'Default:'.bold} ${defaults.runSupervisor.toString().green}`,
     requiresArg: false,
     type: 'boolean'
   },
@@ -102,17 +102,17 @@ module.exports = {
    * Supervisor settings
    */
   debug: {
-    description: `When ${'true'.bold}, enables the Node.js Debugger for function invocations. ${'Default:'.bold} ${defaults.debug.toString().green}`,
+    description: `${'Emulator-specific:'.bold} When ${'true'.bold}, enables the Node.js Debugger for function invocations. ${'Default:'.bold} ${defaults.debug.toString().green}`,
     type: 'boolean',
     requiresArg: false
   },
   debugPort: {
-    description: `The port for the Node.js Debugger. ${'Default:'.bold} ${defaults.debugPort.toString().green}`,
+    description: `${'Emulator-specific:'.bold} The port for the Node.js Debugger. ${'Default:'.bold} ${defaults.debugPort.toString().green}`,
     requiresArg: true,
     type: 'number'
   },
   inspect: {
-    description: `When ${'true'.bold}, enables the Node.js Inspector for function invocations. ${'Default:'.bold} ${defaults.inspect.toString().green}`,
+    description: `${'Emulator-specific:'.bold} When ${'true'.bold}, enables the Node.js Inspector for function invocations. ${'Default:'.bold} ${defaults.inspect.toString().green}`,
     type: 'boolean',
     requiresArg: false
   },
@@ -122,22 +122,22 @@ module.exports = {
     type: 'number'
   },
   isolation: {
-    description: `The Supervisor's isolation model. Choices are ${'inprocess'.green} and ${'childprocess'.green}. ${'Default:'.bold} ${defaults.isolation.toString().green}`,
+    description: `${'Emulator-specific:'.bold} ${'Emulator-specific:'.bold} The Supervisor's isolation model. Choices are ${'inprocess'.green} and ${'childprocess'.green}. ${'Default:'.bold} ${defaults.isolation.toString().green}`,
     requiresArg: true,
     type: 'string'
   },
   supervisorHost: {
-    description: `The host of the Supervisor. ${'Default:'.bold} ${defaults.supervisorHost.toString().green}`,
+    description: `${'Emulator-specific:'.bold} The host of the Supervisor. ${'Default:'.bold} ${defaults.supervisorHost.toString().green}`,
     requiresArg: true,
     type: 'string'
   },
   supervisorPort: {
-    description: `The port of the Supervisor. ${'Default:'.bold} ${defaults.supervisorPort.toString().green}`,
+    description: `${'Emulator-specific:'.bold} The port of the Supervisor. ${'Default:'.bold} ${defaults.supervisorPort.toString().green}`,
     requiresArg: true,
     type: 'number'
   },
   useMocks: {
-    description: `When ${'true'.bold}, ${'mocks.js'.green} will be loaded at startup. ${'Default:'.bold} ${defaults.useMocks.toString().green}`,
+    description: `${'Emulator-specific:'.bold} When ${'true'.bold}, ${'mocks.js'.green} will be loaded at startup. ${'Default:'.bold} ${defaults.useMocks.toString().green}`,
     requiresArg: false,
     type: ['boolean', 'string']
   }

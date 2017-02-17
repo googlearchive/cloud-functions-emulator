@@ -51,7 +51,7 @@ exports.builder = (yargs) => {
       },
       file: {
         alias: 'f',
-        description: 'A path to a JSON file to send to the function.',
+        description: `${'Emulator-specific:'.bold} Alternative to the ${'--data'.bold} flag. A path to a JSON file to send to the function.`,
         normalize: true,
         requiresArg: true,
         type: 'string'
