@@ -46,5 +46,5 @@ exports.builder = (yargs) => {
   EXAMPLES['event-types.list'].forEach((e) => yargs.example(e[0], e[1]));
 };
 exports.handler = (opts) => {
-  console.log(execSync('gcloud alpha functions event-types list').toString());
+  console.log(execSync('gcloud beta functions event-types list').toString());
 };

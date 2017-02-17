@@ -86,10 +86,6 @@ exports.builder = (yargs) => {
         description: `Every HTTP POST request to the function's endpoint (web_trigger.url parameter of the deploy output) will trigger function execution. Result of the function execution will be returned in response body.`,
         requiresArg: false
       },
-      'trigger-params': {
-        description: `Specifies \nadditional\n parameters. For example --trigger-params path specifies which sub-path within --trigger-resource is being observed. Paths may contain named wildcards by surrounding components with curly brackets, e.g. literal/{wildcard}/anotherLiteral. In this case, the value of all wildcards is included in the event as "params". Not all --trigger-providers support a --trigger-param path. For a list of services which support --trigger-param path, call functions event_types list.`,
-        requiresArg: false
-      },
       'trigger-provider': {
         choices: ['cloud.pubsub', 'cloud.storage', 'firebase.auth', 'firebase.database'],
         description: 'Trigger this function in response to an event in another service. For a list of acceptable values, call gcloud functions event-types list. PROVIDER must be one of: cloud.pubsub, cloud.storage, firebase.auth, firebase.database.',
