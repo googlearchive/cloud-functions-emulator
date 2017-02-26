@@ -1,3 +1,9 @@
+##### 1.0.0-alpha.4 - 25 February 2017
+
+###### Bug fixes
+
+- #45 - Cannot Pass query string to cloud functions
+
 ##### 1.0.0-alpha.3 - 14 February 2017
 
 ###### Bug fixes
