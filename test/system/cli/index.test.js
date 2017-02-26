@@ -289,7 +289,7 @@ function makeTests (service, override) {
       });
 
       it(`should call an HTTP function via trigger URL`, () => {
-        return got(`http://localhost:${SUPERVISOR_PORT}/${PROJECT_ID}/${REGION}/helloGET`, {
+        return got(`http://localhost:${SUPERVISOR_PORT}/${PROJECT_ID}/${REGION}/helloGET?foo=bar&beep=boop`, {
           method: 'GET',
           headers: {
             'x-api-key': 'any'
@@ -297,6 +297,11 @@ function makeTests (service, override) {
           json: true
         }).then((response) => {
           assert.equal(response.body.headers[`x-api-key`], `any`);
+          assert.equal(response.body.method, `GET`);
+          assert.deepEqual(response.body.query, {
+            foo: 'bar',
+            beep: 'boop'
+          });
         });
       });
 

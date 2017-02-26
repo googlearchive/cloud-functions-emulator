@@ -126,6 +126,7 @@ class Supervisor {
         const context = {
           method: req.method,
           headers: req.headers,
+          query: req.query,
           url: req.url.replace(`/${req.params.project}/${req.params.location}`, ''),
           originalUrl: req.originalUrl.replace(`/${req.params.project}/${req.params.location}`, '')
         };
@@ -175,6 +176,7 @@ class Supervisor {
     return new Promise((resolve) => {
       context.originalUrl = `/${this.config.projectId}/${this.config.region}/${cloudfunction.shortName}`;
       context.headers || (context.headers = {});
+      context.query || (context.query = {});
 
       // Prepare an execution event
       const event = {
@@ -213,6 +215,7 @@ class Supervisor {
     return new Promise((resolve, reject) => {
       context.originalUrl = `/${this.config.projectId}/${this.config.region}/${cloudfunction.shortName}`;
       context.headers || (context.headers = {});
+      context.query || (context.query = {});
 
       // Prepare an execution event
       const event = {

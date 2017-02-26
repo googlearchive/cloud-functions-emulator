@@ -38,7 +38,8 @@ module.exports = {
   helloGET (req, res) {
     res.send({
       method: req.method,
-      headers: req.headers
+      headers: req.headers,
+      query: req.query
     }).end();
   },
   helloPOST (req, res) {

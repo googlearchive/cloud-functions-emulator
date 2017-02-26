@@ -124,9 +124,9 @@ function main (name, cloudfunction, context, event, callback) {
       try {
         console.log(`User function triggered, starting execution`);
         start = Date.now();
-        let agent = request(app)
-          .post(context.originalUrl)
+        let agent = request(app)[(context.method || 'POST').toLowerCase()](context.originalUrl)
           .set(context.headers)
+          .query(context.query)
           .send(event.data);
 
         if (inspect.enabled || debug.enabled) {
