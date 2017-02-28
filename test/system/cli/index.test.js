@@ -289,7 +289,22 @@ function makeTests (service, override) {
       });
 
       it(`should call an HTTP function via trigger URL`, () => {
-        return got(`http://localhost:${SUPERVISOR_PORT}/${PROJECT_ID}/${REGION}/helloGET?foo=bar&beep=boop`, {
+        return got(`http://localhost:${SUPERVISOR_PORT}/${PROJECT_ID}/${REGION}/helloGET`, {
+          method: 'GET',
+          headers: {
+            'x-api-key': 'any'
+          },
+          json: true
+        }).then((response) => {
+          assert.equal(response.body.headers[`x-api-key`], `any`);
+          assert.equal(response.body.method, `GET`);
+          assert.deepEqual(response.body.query, {});
+          assert.equal(response.body.path, `/helloGET`);
+        });
+      });
+
+      it(`should call an HTTP function via trigger URL with extras`, () => {
+        return got(`http://localhost:${SUPERVISOR_PORT}/${PROJECT_ID}/${REGION}/helloGET/test?foo=bar&beep=boop`, {
           method: 'GET',
           headers: {
             'x-api-key': 'any'
@@ -302,6 +317,7 @@ function makeTests (service, override) {
             foo: 'bar',
             beep: 'boop'
           });
+          assert.equal(response.body.path, `/helloGET/test`);
         });
       });
 

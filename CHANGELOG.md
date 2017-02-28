@@ -1,3 +1,9 @@
+##### 1.0.0-alpha.5 - 28 February 2017
+
+###### Bug fixes
+
+- #46 - Request path not forwarded to function
+
 ##### 1.0.0-alpha.4 - 25 February 2017
 
 ###### Bug fixes

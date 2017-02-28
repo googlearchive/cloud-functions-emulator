@@ -126,7 +126,6 @@ class Supervisor {
         const context = {
           method: req.method,
           headers: req.headers,
-          query: req.query,
           url: req.url.replace(`/${req.params.project}/${req.params.location}`, ''),
           originalUrl: req.originalUrl.replace(`/${req.params.project}/${req.params.location}`, '')
         };
@@ -154,6 +153,9 @@ class Supervisor {
    */
   invoke (cloudfunction, data, context = {}, opts = {}) {
     context.useMocks = this.config.useMocks;
+    context.originalUrl = context.originalUrl || `/${cloudfunction.shortName}`;
+    context.headers || (context.headers = {});
+    context.query || (context.query = {});
     if (this.config.isolation === 'inprocess') {
       return this.invokeInline(cloudfunction, data, context, opts);
     } else if (this.config.isolation === 'childprocess') {
@@ -174,10 +176,6 @@ class Supervisor {
    */
   invokeInline (cloudfunction, data, context = {}, opts = {}) {
     return new Promise((resolve) => {
-      context.originalUrl = `/${this.config.projectId}/${this.config.region}/${cloudfunction.shortName}`;
-      context.headers || (context.headers = {});
-      context.query || (context.query = {});
-
       // Prepare an execution event
       const event = {
         // A unique identifier for this execution
@@ -213,10 +211,6 @@ class Supervisor {
    */
   invokeSecure (cloudfunction, data, context = {}, opts = {}) {
     return new Promise((resolve, reject) => {
-      context.originalUrl = `/${this.config.projectId}/${this.config.region}/${cloudfunction.shortName}`;
-      context.headers || (context.headers = {});
-      context.query || (context.query = {});
-
       // Prepare an execution event
       const event = {
         // A unique identifier for this execution
