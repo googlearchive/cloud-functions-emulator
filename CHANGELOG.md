@@ -1,3 +1,9 @@
+##### 1.0.0-alpha.6 - 28 February 2017
+
+###### Bug fixes
+
+- #47 - Sometimes function is killed before it reports result
+
 ##### 1.0.0-alpha.5 - 28 February 2017
 
 ###### Bug fixes
