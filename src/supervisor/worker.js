@@ -51,14 +51,9 @@ function main (name, cloudfunction, context, event, callback) {
         process.send({
           error: err
         });
-        setImmediate(() => {
-          process.exit(1);
-        });
+        process.exitCode = 1;
       } else {
         process.send({ result });
-        setImmediate(() => {
-          process.exit(0);
-        });
       }
     };
   }
@@ -101,54 +96,42 @@ function main (name, cloudfunction, context, event, callback) {
   };
 
   if (cloudfunction.httpsTrigger) {
-    if (context.req && context.res) {
-      try {
-        console.log(`User function triggered, starting execution`);
-        start = Date.now();
-        // The following line invokes the function
-        handler(context.req, context.res);
-      } catch (err) {
-        errback(err);
+    const app = express();
+    app.use(bodyParser.json());
+    app.use(bodyParser.raw());
+    app.use(bodyParser.text());
+    app.use(bodyParser.urlencoded({
+      extended: true
+    }));
+    app.all('*', handler);
+
+    try {
+      console.log(`User function triggered, starting execution`);
+      start = Date.now();
+      let agent = request(app)[(context.method || 'POST').toLowerCase()](context.originalUrl)
+        .set(context.headers)
+        .query(context.query)
+        .send(event.data);
+
+      if (inspect.enabled || debug.enabled) {
+        debugger; // eslint-disable-line
       }
-      return;
-    } else {
-      const app = express();
-      app.use(bodyParser.json());
-      app.use(bodyParser.raw());
-      app.use(bodyParser.text());
-      app.use(bodyParser.urlencoded({
-        extended: true
-      }));
-      app.all('*', handler);
-
-      try {
-        console.log(`User function triggered, starting execution`);
-        start = Date.now();
-        let agent = request(app)[(context.method || 'POST').toLowerCase()](context.originalUrl)
-          .set(context.headers)
-          .query(context.query)
-          .send(event.data);
-
-        if (inspect.enabled || debug.enabled) {
-          debugger; // eslint-disable-line
+      // The following line invokes the function
+      agent.end((err, response) => {
+        if (err) {
+          errback(err);
+          return;
         }
-        // The following line invokes the function
-        agent.end((err, response) => {
-          if (err) {
-            errback(err);
-            return;
-          }
-          errback(null, {
-            body: response.text,
-            statusCode: response.statusCode,
-            headers: response.headers
-          });
+        errback(null, {
+          body: response.text,
+          statusCode: response.statusCode,
+          headers: response.headers
         });
-      } catch (err) {
-        errback(err);
-      }
-      return;
+      });
+    } catch (err) {
+      errback(err);
     }
+    return;
   } else {
     if (handler.length >= 2) {
       // Pass in the event and the errback

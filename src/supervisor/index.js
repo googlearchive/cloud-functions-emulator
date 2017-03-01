@@ -248,6 +248,7 @@ class Supervisor {
       // Spawn a child process in which to execute the user's function
       // TODO: Warn when the Supervisor process ends but a child process is
       // still running
+      // TODO: Forcefully exit worker process after maximum timeout
       const worker = fork(path.join(__dirname, 'worker.js'), args, {
         // Execute the process in the context of the user's code
         cwd: cloudfunction.localPath,
