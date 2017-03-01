@@ -126,24 +126,35 @@ class Supervisor {
         const context = {
           method: req.method,
           headers: req.headers,
-          url: req.url.replace(`/${req.params.project}/${req.params.location}`, ''),
-          originalUrl: req.originalUrl.replace(`/${req.params.project}/${req.params.location}`, '')
+          url: req.url.replace(`/${req.params.project}/${req.params.location}/${cloudfunction.shortName}`, ''),
+          originalUrl: req.originalUrl.replace(`/${req.params.project}/${req.params.location}/${cloudfunction.shortName}`, '')
         };
         return this.invoke(cloudfunction, req.body || {}, context);
       })
       .then((response) => {
-        const result = response.result;
-        if (result.statusCode) {
+        let result;
+        if (response.result) {
+          result = response.result;
+        } else if (response.error) {
+          let error = response.error;
+          result = error.result;
+          if (error.status) {
+            res.status(error.status);
+          }
+        }
+
+        if (result && result.statusCode) {
           res.status(result.statusCode);
         }
-        if (result.headers) {
+        if (result && result.headers) {
           for (let key in result.headers) {
             res.set(key, result.headers[key]);
           }
         }
-        if (result.body) {
-          res.send(result.body);
+        if (result && (result.text || result.body)) {
+          res.send(result.text || result.body);
         }
+
         res.end();
       });
   }
@@ -153,7 +164,7 @@ class Supervisor {
    */
   invoke (cloudfunction, data, context = {}, opts = {}) {
     context.useMocks = this.config.useMocks;
-    context.originalUrl = context.originalUrl || `/${cloudfunction.shortName}`;
+    context.originalUrl || (context.originalUrl = '');
     context.headers || (context.headers = {});
     context.query || (context.query = {});
     if (this.config.isolation === 'inprocess') {

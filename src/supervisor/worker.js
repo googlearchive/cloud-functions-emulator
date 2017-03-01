@@ -103,7 +103,7 @@ function main (name, cloudfunction, context, event, callback) {
     app.use(bodyParser.urlencoded({
       extended: true
     }));
-    app.all('*', handler);
+    app.use(handler);
 
     try {
       console.log(`User function triggered, starting execution`);
@@ -117,17 +117,20 @@ function main (name, cloudfunction, context, event, callback) {
         debugger; // eslint-disable-line
       }
       // The following line invokes the function
-      agent.end((err, response) => {
-        if (err) {
-          errback(err);
-          return;
-        }
-        errback(null, {
-          body: response.text,
-          statusCode: response.statusCode,
-          headers: response.headers
+      agent
+        .timeout({ deadline: 540000 }) // TODO: Take into account the function's timeout setting
+        .on('error', errback)
+        .end((err, response) => {
+          if (err) {
+            errback(err);
+            return;
+          }
+          errback(null, {
+            body: response.text,
+            statusCode: response.statusCode,
+            headers: response.headers
+          });
         });
-      });
     } catch (err) {
       errback(err);
     }

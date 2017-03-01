@@ -299,7 +299,7 @@ function makeTests (service, override) {
           assert.equal(response.body.headers[`x-api-key`], `any`);
           assert.equal(response.body.method, `GET`);
           assert.deepEqual(response.body.query, {});
-          assert.equal(response.body.path, `/helloGET`);
+          assert.equal(response.body.path, `/`);
         });
       });
 
@@ -317,7 +317,7 @@ function makeTests (service, override) {
             foo: 'bar',
             beep: 'boop'
           });
-          assert.equal(response.body.path, `/helloGET/test`);
+          assert.equal(response.body.path, `/test`);
         });
       });
 
