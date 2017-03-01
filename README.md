@@ -31,8 +31,6 @@ The Emulator allows you to [**deploy**](https://github.com/GoogleCloudPlatform/c
 
 ## How do I get started?
 
-1. (Optional, but recommended) Sign up for the [Google Cloud Functions Alpha](https://docs.google.com/a/google.com/forms/d/1WQNWPK3xdLnw4oXPT_AIVR9-gd6DLo5ZIucyxzSQ5fQ/viewform) and explore the [Cloud Functions Documentation](https://cloud.google.com/functions/docs/).
-
 1. Write a function:
 
         mkdir helloWorld
