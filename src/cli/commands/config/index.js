@@ -44,9 +44,6 @@ const EPILOGUE = `Available configuration options:
     ${'restPort'.bold}
       ${OPTIONS.restPort.description}
 
-    ${'runSupervisor'.bold}
-      ${OPTIONS.runSupervisor.description}
-
     ${'verbose'.bold}
       ${OPTIONS.verbose.description}
 
@@ -69,9 +66,6 @@ const EPILOGUE = `Available configuration options:
 
     ${'inspectPort'.bold}
       ${OPTIONS.inspectPort.description}
-
-    ${'isolation'.bold}
-      ${OPTIONS.isolation.description}
 
     ${'supervisorHost'.bold}
       ${OPTIONS.supervisorHost.description}
@@ -104,7 +98,6 @@ exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .demand(1)
     .command(require('./list'))
     .command(require('./set'))
     .command(require('./defaults'))

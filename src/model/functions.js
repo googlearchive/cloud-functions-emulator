@@ -174,6 +174,18 @@ class Functions {
       });
   }
 
+  _checkForPackageJson (dirName) {
+    return new Promise((resolve, reject) => {
+      fs.access(path.join(dirName, 'package.json'), (err) => {
+        if (err) {
+          resolve(false);
+          return;
+        }
+        resolve(true);
+      });
+    });
+  }
+
   _checkForYarn (dirName) {
     return new Promise((resolve, reject) => {
       fs.access(path.join(dirName, 'yarn.lock'), (err) => {
@@ -258,12 +270,17 @@ class Functions {
                   cloudfunction.serviceAccount = dirName;
                   zip.extractAllTo(dirName);
 
-                  return this._checkForYarn()
-                    .then((hasYarn) => {
-                      if (hasYarn) {
-                        return this._installNpm(dirName);
-                      } else {
-                        return this._installYarn(dirName);
+                  return this._checkForPackageJson(dirName)
+                    .then((hasPackageJson) => {
+                      if (hasPackageJson) {
+                        return this._checkForYarn(dirName)
+                          .then((hasYarn) => {
+                            if (hasYarn) {
+                              return this._installNpm(dirName);
+                            } else {
+                              return this._installYarn(dirName);
+                            }
+                          });
                       }
                     });
                 })

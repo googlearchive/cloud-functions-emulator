@@ -452,32 +452,20 @@ class Controller {
           `--projectId=${this.config.projectId}`,
           `--timeout=${this.config.timeout}`,
           `--verbose=${this.config.verbose}`,
-          `--isolation=${this.config.isolation}`,
           `--useMocks=${this.config.useMocks}`,
           `--logFile=${this.config.logFile}`,
           `--restHost=${this.config.restHost}`,
           `--restPort=${this.config.restPort}`,
-          `--runSupervisor=${this.config.runSupervisor}`,
           `--supervisorHost=${this.config.supervisorHost}`,
           `--supervisorPort=${this.config.supervisorPort}`
         ];
 
-        // Only start the Emulator itself in debug or inspect mode if the
-        // isolation model is "inprocess"
-        if (this.config.isolation === 'inprocess') {
-          if (this.config.inspect) {
-            args.unshift(`--inspect=${this.config.inspectPort}`);
-          } else if (this.config.debug) {
-            args.unshift(`--debug=${this.config.debugPort}`);
-          }
-        } else {
-          if (this.config.inspect) {
-            args.push(`--inspect=${this.config.inspect}`);
-            args.push(`--inspectPort=${this.config.inspectPort}`);
-          } else if (this.config.debug) {
-            args.push(`--debug=${this.config.debug}`);
-            args.push(`--debugPort=${this.config.debugPort}`);
-          }
+        if (this.config.inspect) {
+          args.push(`--inspect=${this.config.inspect}`);
+          args.push(`--inspectPort=${this.config.inspectPort}`);
+        } else if (this.config.debug) {
+          args.push(`--debug=${this.config.debug}`);
+          args.push(`--debugPort=${this.config.debugPort}`);
         }
 
         // Make sure the child is detached, otherwise it will be bound to the
@@ -498,19 +486,18 @@ class Controller {
           grpcPort: this.config.grpcPort,
           inspect: this.config.inspect,
           inspectPort: this.config.inspectPort,
-          isolation: this.config.isolation,
           logFile: this.config.logFile,
           projectId: this.config.projectId,
           region: this.config.region,
           restHost: this.config.restHost,
           restPort: this.config.restPort,
-          runSupervisor: this.config.runSupervisor,
           started: Date.now(),
           storage: this.config.storage,
           supervisorHost: this.config.supervisorHost,
           supervisorPort: this.config.supervisorPort,
           useMocks: this.config.useMocks,
-          verbose: this.config.verbose
+          verbose: this.config.verbose,
+          version: pkg.version
         });
         this.server.delete('stopped');
 

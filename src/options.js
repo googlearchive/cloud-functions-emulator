@@ -87,11 +87,6 @@ module.exports = {
     requiresArg: true,
     type: 'number'
   },
-  runSupervisor: {
-    description: `${'Emulator-specific:'.bold} When ${'true'.bold}, runs the Supervisor as part of the Emulator. ${'Default:'.bold} ${defaults.runSupervisor.toString().green}`,
-    requiresArg: false,
-    type: 'boolean'
-  },
   verbose: {
     description: `When ${'true'.bold}, shows debug logs from the Emulator itself in the log file. ${'Default:'.bold} ${defaults.verbose.toString().green}`,
     requiresArg: false,
@@ -120,11 +115,6 @@ module.exports = {
     description: `The port for the Node.js Inspector. ${'Default:'.bold} ${defaults.inspectPort.toString().green}`,
     requiresArg: true,
     type: 'number'
-  },
-  isolation: {
-    description: `${'Emulator-specific:'.bold} ${'Emulator-specific:'.bold} The Supervisor's isolation model. Choices are ${'inprocess'.green} and ${'childprocess'.green}. ${'Default:'.bold} ${defaults.isolation.toString().green}`,
-    requiresArg: true,
-    type: 'string'
   },
   supervisorHost: {
     description: `${'Emulator-specific:'.bold} The host of the Supervisor. ${'Default:'.bold} ${defaults.supervisorHost.toString().green}`,

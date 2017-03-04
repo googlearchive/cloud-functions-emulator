@@ -27,7 +27,8 @@ exports.run = (cmd, cwd) => {
   const output = spawnSync(cmd, {
     cwd,
     env,
-    shell: true
+    shell: true,
+    timeout: 60000
   });
 
   return output.stdout.toString().trim() + output.stderr.toString().trim();

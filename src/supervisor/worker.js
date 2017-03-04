@@ -13,19 +13,12 @@
  * limitations under the License.
  */
 
-// Debugging information: TODO
 'use strict';
 
 const bodyParser = require('body-parser');
 const express = require('express');
 const path = require('path');
 const serializerr = require('serializerr');
-const request = require('supertest');
-
-const Debug = require('../utils/debug');
-
-const inspect = Debug.getInspect();
-const debug = Debug.getDebug();
 
 let _originalLoader = null;
 
@@ -40,144 +33,113 @@ const loadHandler = {
   }
 };
 
-function main (name, cloudfunction, context, event, callback) {
-  let start;
+function main () {
+  process.on('message', (message) => {
+    const name = message.name;
+    const cloudfunction = message.cloudfunction;
 
-  if (!callback) {
-    callback = (err, result) => {
-      const duration = Date.now() - start;
-      console.log(`Execution took ${duration} ms, user function completed successfully`);
-      if (err) {
-        process.send({
-          error: err
-        });
-        process.exitCode = 1;
-      } else {
-        process.send({ result });
-      }
-    };
-  }
+    // Unload the code if is already loaded
+    delete require.cache[cloudfunction.serviceAccount];
 
-  // Unload the code if is already loaded
-  delete require.cache[cloudfunction.serviceAccount];
-
-  if (context.useMocks) {
-    try {
-      let override;
-      if (typeof context.useMocks === 'string') {
-        override = require(path.resolve(context.useMocks));
-      } else {
-        override = require(path.join(__dirname, '../../mocks'));
+    if (message.useMocks) {
+      try {
+        let override;
+        if (typeof message.useMocks === 'string') {
+          override = require(path.resolve(message.useMocks));
+        } else {
+          override = require(path.join(__dirname, '../../mocks'));
+        }
+        if (override) {
+          loadHandler.init(override);
+          console.log('Mock handler found. Require calls will be intercepted');
+        }
+      } catch (e) {
+        console.error('Mocks enabled but no mock handler found. Require calls will NOT be intercepted');
+        console.error(e);
       }
-      if (override) {
-        loadHandler.init(override);
-        console.log('Mock handler found. Require calls will be intercepted');
-      }
-    } catch (e) {
-      console.error('Mocks enabled but no mock handler found. Require calls will NOT be intercepted');
-      console.error(e);
     }
-  }
 
-  // Require the target module to load the function for invocation
-  const functionModule = require(cloudfunction.serviceAccount);
-  const handler = functionModule[cloudfunction.entryPoint || name];
+    // Require the target module to load the function for invocation
+    const functionModule = require(cloudfunction.serviceAccount);
+    const handler = functionModule[cloudfunction.entryPoint || name];
 
-  if (!handler) {
-    throw new Error(`No function found with name ${cloudfunction.entryPoint || name}`);
-  }
-
-  const errback = (err, result) => {
-    if (err) {
-      callback(serializerr(err));
-    } else {
-      callback(null, result);
+    if (!handler) {
+      throw new Error(`No function found with name ${cloudfunction.entryPoint || name}`);
     }
-  };
 
-  if (cloudfunction.httpsTrigger) {
     const app = express();
+
+    // Parse request body
     app.use(bodyParser.json());
     app.use(bodyParser.raw());
     app.use(bodyParser.text());
     app.use(bodyParser.urlencoded({
       extended: true
     }));
-    app.use(handler);
 
-    try {
+    // Never cache
+    app.use((req, res, next) => {
+      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.set('Pragma', 'no-cache');
+      res.set('Expires', 0);
+      next();
+    });
+
+    app.use((req, res) => {
+      const start = Date.now();
       console.log(`User function triggered, starting execution`);
-      start = Date.now();
-      let agent = request(app)[(context.method || 'POST').toLowerCase()](context.originalUrl)
-        .set(context.headers)
-        .query(context.query)
-        .send(event.data);
 
-      if (inspect.enabled || debug.enabled) {
-        debugger; // eslint-disable-line
-      }
-      // The following line invokes the function
-      agent
-        .timeout({ deadline: 540000 }) // TODO: Take into account the function's timeout setting
-        .on('error', errback)
-        .end((err, response) => {
-          if (err) {
-            errback(err);
-            return;
-          }
-          errback(null, {
-            body: response.text,
-            statusCode: response.statusCode,
-            headers: response.headers
-          });
-        });
-    } catch (err) {
-      errback(err);
-    }
-    return;
-  } else {
-    if (handler.length >= 2) {
-      // Pass in the event and the errback
-      try {
-        if (inspect.enabled || debug.enabled) {
-          debugger; // eslint-disable-line
+      const errback = (err, result) => {
+        if (err) {
+          console.log(`Function crashed`);
+          console.log(err);
+          res.status(500).json(serializerr(err));
+        } else {
+          res.json(result);
+          const duration = Date.now() - start;
+          console.log(`Execution took ${duration} ms, user function completed successfully`);
         }
-        console.log(`User function triggered, starting execution`);
-        start = Date.now();
-        // The following line invokes the function
-        handler(event, errback);
+
+        res.end();
+      };
+
+      try {
+        if (cloudfunction.httpsTrigger) {
+          res.on('finish', () => {
+            const duration = Date.now() - start;
+            console.log(`Execution took ${duration} ms, user function completed successfully`);
+          });
+
+          handler(req, res);
+        } else {
+          if (handler.length >= 2) {
+            handler(req.body, errback);
+          } else {
+            return Promise.resolve()
+              .then(() => handler(req.body))
+              .then((result) => {
+                errback(null, result);
+              })
+              .catch(errback);
+          }
+        }
       } catch (err) {
         errback(err);
       }
-      return;
-    } else {
-      // Just pass in the event, and wrap in a promise
-      return Promise.resolve()
-        .then(() => {
-          if (inspect.enabled || debug.enabled) {
-            debugger; // eslint-disable-line
-          }
-          console.log(`User function triggered, starting execution`);
-          start = Date.now();
-          // The following line invokes the function
-          return handler(event);
-        })
-        .then((result) => {
-          errback(null, result);
-        })
-        .catch(errback);
-    }
-  }
+    });
+
+    app.use((err, req, res, next) => {
+      console.error(err);
+    });
+
+    const server = app.listen(0, 'localhost', () => {
+      process.send(server.address().port);
+    });
+  });
 }
 
 module.exports = main;
 
 if (module === require.main) {
-  const args = process.argv.slice(2);
-  const name = args.shift();
-  const cloudfunction = JSON.parse(args.shift());
-  const context = JSON.parse(args.shift());
-  const event = JSON.parse(args.shift());
-
-  main(name, cloudfunction, context, event);
+  main();
 }

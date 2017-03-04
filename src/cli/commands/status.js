@@ -89,14 +89,6 @@ exports.handler = (opts) => {
         }
 
         table.push([{ colSpan: 2, content: 'Supervisor'.cyan }]);
-
-        if (config.runSupervisor) {
-          table.push(['Status'.white, 'RUNNING'.green]);
-          table.push(['Isolation Mode'.white, config.isolation]);
-        } else {
-          table.push(['Status'.white, 'DETACHED'.yellow]);
-        }
-
         table.push(['Trigger URL'.white, `http://${config.supervisorHost}:${config.supervisorPort}/${config.projectId}/${config.region}/FUNCTION_NAME`]);
       } else {
         let time;

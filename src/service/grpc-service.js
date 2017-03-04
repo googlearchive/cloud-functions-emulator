@@ -15,8 +15,10 @@
 
 'use strict';
 
+const got = require('got');
 const grpc = require('grpc');
 const http = require('http');
+const uuid = require('uuid');
 
 const Model = require('../model');
 const Service = require('./service');
@@ -28,7 +30,7 @@ const {
   status
 } = grpc;
 
-const { protos } = Model;
+const { CloudFunction, protos } = Model;
 
 function notImplemented (call, cb) {
   cb({
@@ -71,6 +73,7 @@ class RpcService extends Service {
    * @param {function} The callback function.
    */
   callFunction (call, cb) {
+    const eventId = uuid.v4();
     return this.functions.getFunction(call.request.name)
       .then((cloudfunction) => {
         if (typeof call.request.data === 'string') {
@@ -80,23 +83,50 @@ class RpcService extends Service {
             call.request.data = {};
           }
         }
-        return this.supervisor.invoke(cloudfunction, call.request.data, {}, this.config);
+
+        const event = {
+          // A unique identifier for this execution
+          eventId,
+          // The current ISO 8601 timestamp
+          timestamp: (new Date()).toISOString(),
+          // TODO: The event type
+          eventType: 'TODO',
+          // TODO: The resource that triggered the event
+          resource: 'TODO',
+          // The event payload
+          data: call.request.data
+        };
+
+        const parts = CloudFunction.parseName(call.request.name);
+
+        return got.post(`http://${this.supervisor.config.host}:${this.supervisor.config.port}/${parts.project}/${parts.location}/${parts.name}`, {
+          body: JSON.stringify(cloudfunction.httpsTrigger ? event.data : event),
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          json: true
+        });
       })
       .then((response) => {
-        if (response.result) {
-          try {
-            response.result = JSON.stringify(response.result);
-          } catch (err) {
+        const message = {
+          executionId: eventId
+        };
+        try {
+          message.result = JSON.stringify(response.body);
+        } catch (err) {
 
-          }
-        } else if (response.error) {
-          try {
-            response.error = JSON.stringify(response.error);
-          } catch (err) {
-
-          }
         }
-        cb(null, response);
+        cb(null, message);
+      }, (err) => {
+        const message = {
+          executionId: eventId
+        };
+        try {
+          message.error = JSON.stringify(err.response.body);
+        } catch (err) {
+
+        }
+        cb(null, message);
       });
   }
 
@@ -111,7 +141,8 @@ class RpcService extends Service {
    */
   createFunction (call, cb) {
     return this.functions.createFunction(call.request.location, call.request.function)
-      .then((operation) => cb(null, operation.toProtobuf()));
+      .then((operation) => cb(null, operation.toProtobuf()))
+      .then(() => this.supervisor.delete(call.request.function.name));
   }
 
   /**
@@ -124,7 +155,8 @@ class RpcService extends Service {
    */
   deleteFunction (call, cb) {
     return this.functions.deleteFunction(call.request.name)
-      .then((operation) => cb(null, operation.toProtobuf()));
+      .then((operation) => cb(null, operation.toProtobuf()))
+      .then(() => this.supervisor.delete(call.request.name));
   }
 
   /**
@@ -197,6 +229,7 @@ class RpcService extends Service {
    * @param {function} The callback function.
    */
   listFunctions (call, cb) {
+    console.log('LIST FUNCTIONS');
     const request = call.request;
 
     // This is used by the CLI to get a heartbeat from the gRPC Service
@@ -223,10 +256,14 @@ class RpcService extends Service {
     this.server.bind(`${this.config.host}:${this.config.port}`, ServerCredentials.createInsecure());
     this.server.start();
     console.debug(`${this.type} service listening at ${this.config.host}:${this.config.port}.`);
+
+    return this;
   }
 
   stop () {
     this.server.tryShutdown(() => super.stop());
+
+    return this;
   }
 }
 

@@ -43,7 +43,6 @@ exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .demand(2)
     .epilogue(configCommand.helpMessage);
 
   EXAMPLES['config.set'].forEach((e) => yargs.example(e[0], e[1]));

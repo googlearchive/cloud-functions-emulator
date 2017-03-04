@@ -155,7 +155,7 @@ class GrpcClient extends Client {
       this.functionsClient.listFunctions({
         pageSize: 1,
         location: 'heartbeat'
-      }, (err, response) => {
+      }, { deadline }, (err, response) => {
         if (err) {
           reject(this._processError(err));
         } else {

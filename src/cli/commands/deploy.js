@@ -43,7 +43,6 @@ exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .demand(1)
     .options(_.merge({
       'entry-point': {
         description: 'The name of the function exported in the source code that will be executed.',

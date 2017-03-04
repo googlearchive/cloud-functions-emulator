@@ -22,6 +22,7 @@ const got = require('got');
 const http = require('http');
 const path = require('path');
 const url = require('url');
+const uuid = require('uuid');
 
 const errors = require('../utils/errors');
 const Model = require('../model');
@@ -152,11 +153,54 @@ class RestService extends Service {
    *
    */
   callFunction (req, res) {
+    if (req.headers['user-agent'].includes('google-cloud-sdk') && typeof req.body.data === 'string') {
+      try {
+        req.body.data = JSON.parse(req.body.data);
+      } catch (err) {
+
+      }
+    }
     const name = CloudFunction.formatName(req.params.project, req.params.location, req.params.name);
+    const eventId = uuid.v4();
     return this.functions.getFunction(name)
-      .then((cloudfunction) => this.supervisor.invoke(cloudfunction, req.body.data, {}, this.config))
+      .then((cloudfunction) => {
+        const event = {
+          // A unique identifier for this execution
+          eventId,
+          // The current ISO 8601 timestamp
+          timestamp: (new Date()).toISOString(),
+          // TODO: The event type
+          eventType: 'TODO',
+          // TODO: The resource that triggered the event
+          resource: 'TODO',
+          // The event payload
+          data: req.body.data
+        };
+
+        return got.post(`http://${this.supervisor.config.host}:${this.supervisor.config.port}/${req.params.project}/${req.params.location}/${req.params.name}`, {
+          body: JSON.stringify(cloudfunction.httpsTrigger ? event.data : event),
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          json: true
+        });
+      })
       .then((response) => {
-        res.status(200).send(response).end();
+        res
+          .status(200)
+          .send({
+            executionId: eventId,
+            result: response.body
+          })
+          .end();
+      }, (err) => {
+        res
+          .status(200)
+          .send({
+            executionId: eventId,
+            error: err.response.body
+          })
+          .end();
       });
   }
 
@@ -168,6 +212,7 @@ class RestService extends Service {
     return this.functions.createFunction(location, req.body)
       .then((operation) => {
         res.status(200).json(operation).end();
+        return this.supervisor.delete(req.body.name);
       });
   }
 
@@ -186,6 +231,7 @@ class RestService extends Service {
     return this.functions.deleteFunction(name)
       .then((operation) => {
         res.status(200).json(operation).end();
+        return this.supervisor.delete(name);
       });
   }
 
@@ -303,16 +349,24 @@ class RestService extends Service {
       });
   }
 
+  on (...args) {
+    this._server.on(...args);
+    return this;
+  }
+
   start () {
     super.start();
 
     this._server = this.server.listen(this.config.port, this.config.host, () => {
       console.debug(`${this.type} service listening at ${this._server.address().address}:${this._server.address().port}.`);
     });
+
+    return this;
   }
 
   stop () {
     this._server.close(() => super.stop());
+    return this;
   }
 }
 

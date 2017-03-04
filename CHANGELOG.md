@@ -1,3 +1,12 @@
+##### 1.0.0-alpha.7 - 05 March 2017
+
+###### Breaking changes
+- #44 - Re-architect to process per function
+
+###### Bug fixes
+- #46 (again) - Inconsistent behaviour for parsing path and path params
+- #53 - HTTP Function hangs when debugging
+
 ##### 1.0.0-alpha.6 - 28 February 2017
 
 ###### Bug fixes
