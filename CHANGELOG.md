@@ -1,12 +1,12 @@
 ##### 1.0.0-alpha.7 - 05 March 2017
 
 ###### Breaking changes
+- [#35](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/35), [#44](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/44) - Re-architect to process per function, allowing simulation of "warm" functions
 - [#43](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/43) - Improve upgrade awareness of the Emulator. CLI and Emulator version can no longer mismatch.
-- [#44](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/44) - Re-architect to process per function
+- [#31](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/31), [#54](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/54) - Cleanup temporary archives
 
 ###### Backwards compatible changes
 - [#52](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/52) - Display on default console window in Mac is difficult to read
-- [#54](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/54) - Cleanup temporary archives
 
 ###### Bug fixes
 - [#46](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/46) (again) - Inconsistent behaviour for parsing path and path params
