@@ -17,6 +17,7 @@
 
 const bodyParser = require('body-parser');
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
 const serializerr = require('serializerr');
 
@@ -133,7 +134,25 @@ function main () {
     });
 
     const server = app.listen(0, 'localhost', () => {
-      process.send(server.address().port);
+      process.send({
+        port: server.address().port
+      });
+    });
+
+    if (!cloudfunction.serviceAccount) {
+      return;
+    }
+
+    fs.watch(cloudfunction.serviceAccount, {
+      recursive: true
+    }, () => {
+      process.send({
+        close: true
+      });
+      server.close(() => {
+        console.log(`Worker for ${name} closed due to file changes.`);
+        process.exit();
+      });
     });
   });
 }

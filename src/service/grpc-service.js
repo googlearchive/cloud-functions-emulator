@@ -229,7 +229,6 @@ class RpcService extends Service {
    * @param {function} The callback function.
    */
   listFunctions (call, cb) {
-    console.log('LIST FUNCTIONS');
     const request = call.request;
 
     // This is used by the CLI to get a heartbeat from the gRPC Service

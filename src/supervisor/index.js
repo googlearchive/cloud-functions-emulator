@@ -140,25 +140,48 @@ class Supervisor {
 
         // Anything the user logs will be logged at the Debug level
         worker.stdout.on('data', (chunk) => {
-          console.log(chunk.toString('utf8'));
+          let str = chunk.toString('utf8');
+          if (str.charAt(str.length - 1) === '\n') {
+            str = str.substring(0, str.length - 1);
+          }
+          console.log(str);
         });
 
         // Any errors logged by the user will be logged at the Error level
         worker.stderr.on('data', (chunk) => {
-          console.error(chunk.toString('utf8'));
+          let str = chunk.toString('utf8');
+          if (str.charAt(str.length - 1) === '\n') {
+            str = str.substring(0, str.length - 1);
+          }
+          console.error(str);
         });
+
+        let timeoutId;
 
         // Finally, wait for the child process to shutdown
         worker.on('close', (code) => {
+          clearTimeout(timeoutId);
           console.log(`${key} worker closed.`);
+          this._workerPool.delete(key);
         });
 
         this._workerPool.set(key, worker);
 
         return new Promise((resolve) => {
-          worker.on('message', (port) => {
-            worker.port = port;
-            resolve();
+          worker.on('message', (message) => {
+            if (message.port) {
+              // The worker now has a ported and is receiving connections
+              worker.port = message.port;
+              resolve();
+            } else if (message.close) {
+              // The worker has signaled that it needs to shutdown
+              this._workerPool.delete(key);
+              const pid = worker.pid;
+              // Give the worker 60 seconds to shutdown before killing it
+              timeoutId = setTimeout(() => {
+                process.kill(pid, 'SIGKILL');
+              }, 60 * 1000);
+            }
           });
 
           worker.send({

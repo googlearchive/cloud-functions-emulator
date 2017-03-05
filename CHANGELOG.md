@@ -1,3 +1,8 @@
+##### 1.0.0-alpha.9 - 05 March 2017
+
+###### Breaking changes
+- [#62](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/62) - Add support for live-reloading of functions. Function workings will now automatically shutdown when they detect changes to the function's code. A new worker will be started the next time the function is called.
+
 ##### 1.0.0-alpha.8 - 05 March 2017
 
 ###### Bug fixes
