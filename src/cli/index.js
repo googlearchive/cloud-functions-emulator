@@ -60,7 +60,7 @@ More How-To documentation can be found at:
 Something not working? Have a feature request? Open an issue at:
   ${'https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues'.bold.underline}.
 
-${'Contributions welcome!'.cyan}`;
+${'Contributions welcome!'.green}`;
 
 exports.main = (args) => {
   // Load the commands

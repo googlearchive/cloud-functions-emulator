@@ -48,7 +48,7 @@ exports.handler = (opts) => {
   return controller.status()
     .then((status) => {
       const table = new Table({
-        head: [{ colSpan: 2, content: controller.name.cyan }]
+        head: [{ colSpan: 2, content: controller.name.bold }]
       });
       const config = status.metadata;
 
@@ -62,34 +62,34 @@ exports.handler = (opts) => {
           time = `${Math.floor(time)} seconds`;
         }
 
-        table.push(['Status'.white, 'RUNNING'.green]);
-        table.push(['Uptime'.white, time]);
-        table.push(['Process ID'.white, config.pid]);
-        table.push(['REST Service'.white, `http://${config.restHost}:${config.restPort}/`]);
-        table.push(['gRPC Service'.white, `http://${config.grpcHost}:${config.grpcPort}/`]);
+        table.push(['Status', 'RUNNING'.green]);
+        table.push(['Uptime', time]);
+        table.push(['Process ID', config.pid]);
+        table.push(['REST Service', `http://${config.restHost}:${config.restPort}/`]);
+        table.push(['gRPC Service', `http://${config.grpcHost}:${config.grpcPort}/`]);
         if (config.inspect || config.debug) {
-          table.push(['Debugger'.white, 'ACTIVE'.green]);
+          table.push(['Debugger', 'ACTIVE'.green]);
           if (config.inspect) {
-            table.push(['Debugger Port'.white, `${config.inspectPort}`.white]);
+            table.push(['Debugger Port', `${config.inspectPort}`]);
           } else {
-            table.push(['Debugger Port'.white, `${config.debugPort}`.white]);
+            table.push(['Debugger Port', `${config.debugPort}`]);
           }
         } else if (config.debug) {
-          table.push(['Debugger'.white, 'INACTIVE'.yellow]);
+          table.push(['Debugger', 'INACTIVE'.yellow]);
         }
-        table.push(['Log file'.white, config.logFile]);
-        table.push(['Project ID'.white, config.projectId]);
-        table.push(['Region'.white, config.region]);
-        table.push(['Storage Mode'.white, config.storage]);
+        table.push(['Log file', config.logFile]);
+        table.push(['Project ID', config.projectId]);
+        table.push(['Region', config.region]);
+        table.push(['Storage Mode', config.storage]);
 
         if (config.mocks) {
-          table.push(['Mocks'.white, 'LOADED'.green]);
+          table.push(['Mocks', 'LOADED'.green]);
         } else {
-          table.push(['Mocks'.white, 'NOT LOADED'.yellow]);
+          table.push(['Mocks', 'NOT LOADED'.yellow]);
         }
 
-        table.push([{ colSpan: 2, content: 'Supervisor'.cyan }]);
-        table.push(['Trigger URL'.white, `http://${config.supervisorHost}:${config.supervisorPort}/${config.projectId}/${config.region}/FUNCTION_NAME`]);
+        table.push([{ colSpan: 2, content: 'Supervisor'.bold }]);
+        table.push(['Trigger URL', `http://${config.supervisorHost}:${config.supervisorPort}/${config.projectId}/${config.region}/FUNCTION_NAME`]);
       } else {
         let time;
         if (config.stopped) {
@@ -103,12 +103,12 @@ exports.handler = (opts) => {
           }
         }
 
-        table.push(['Status'.white, 'STOPPED'.yellow]);
+        table.push(['Status', 'STOPPED'.yellow]);
         if (time) {
-          table.push(['Last up'.white, `${time.yellow} ${'ago'.white}`]);
+          table.push(['Last up', `${time.yellow} ${'ago'}`]);
         }
         if (config.logFile) {
-          table.push(['Last log file'.white, config.logFile]);
+          table.push(['Last log file', config.logFile]);
         }
       }
 

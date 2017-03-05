@@ -62,7 +62,7 @@ exports.handler = (opts) => {
         controller.log(`No functions deployed ¯\\_(ツ)_/¯. Run ${'functions deploy --help'.bold} for how to deploy a function.`);
       } else {
         const table = new Table({
-          head: ['Name'.cyan, 'Trigger'.cyan, 'Resource'.cyan]
+          head: ['Name'.bold, 'Trigger'.bold, 'Resource'.bold]
         });
 
         cloudfunctions.forEach((cloudfunction) => {
@@ -82,9 +82,9 @@ exports.handler = (opts) => {
           }
           if (pathExists(cloudfunction.serviceAccount)) {
             table.push([
-              cloudfunction.shortName.white,
-              trigger.white,
-              resource.white
+              cloudfunction.shortName,
+              trigger,
+              resource
             ]);
           } else {
             table.push([

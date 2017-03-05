@@ -80,7 +80,7 @@ exports.handler = (opts) => {
     .then((status) => {
       if (status.state === controller.STATE.RUNNING) {
         controller.write(controller.name);
-        controller.write(' RUNNING\n'.cyan);
+        controller.write(' RUNNING\n'.green);
         return;
       }
 

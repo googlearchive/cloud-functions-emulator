@@ -53,7 +53,7 @@ exports.handler = (opts) => {
     .then(() => controller.describe(opts.functionName))
     .then((cloudfunction) => {
       const table = new Table({
-        head: ['Property'.cyan, 'Value'.cyan]
+        head: ['Property'.bold, 'Value'.bold]
       });
 
       let trigger, resource, params;
@@ -68,21 +68,21 @@ exports.handler = (opts) => {
         trigger = 'Unknown';
       }
 
-      table.push(['Name', cloudfunction.shortName.white]);
+      table.push(['Name', cloudfunction.shortName]);
       if (cloudfunction.entryPoint) {
-        table.push(['Entry Point', cloudfunction.entryPoint.white]);
+        table.push(['Entry Point', cloudfunction.entryPoint]);
       }
-      table.push(['Trigger', trigger.white]);
+      table.push(['Trigger', trigger]);
       if (resource) {
-        table.push(['Resource', resource.white]);
+        table.push(['Resource', resource]);
       }
       if (params) {
-        table.push(['Params', params.white]);
+        table.push(['Params', params]);
       }
       if (cloudfunction.serviceAccount) {
-        table.push(['Local path', cloudfunction.serviceAccount.white]);
+        table.push(['Local path', cloudfunction.serviceAccount]);
       }
-      table.push(['Archive', cloudfunction.sourceArchiveUrl.white]);
+      table.push(['Archive', cloudfunction.sourceArchiveUrl]);
 
       controller.log(table.toString());
     })

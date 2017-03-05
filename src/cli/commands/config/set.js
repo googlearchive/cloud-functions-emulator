@@ -56,6 +56,6 @@ exports.handler = (opts) => {
     config.set(opts.key, opts.value);
   }
 
-  controller.log(`${opts.key.cyan} set to: ${JSON.stringify(opts.value).green}`);
+  controller.log(`${opts.key.bold} set to: ${JSON.stringify(opts.value).green}`);
   controller.log('\nYou must restart the emulator for changes to take effect...');
 };

@@ -61,7 +61,7 @@ exports.handler = (opts) => {
     controller.log(`Config file: ${config.path.green}`);
 
     const table = new Table({
-      head: ['Key'.cyan, 'Value'.cyan]
+      head: ['Key'.bold, 'Value'.bold]
     });
 
     let value;
@@ -69,7 +69,7 @@ exports.handler = (opts) => {
     for (let key in defaults) {
       value = defaults[key];
 
-      table.push([key.white, `${value}`.white]);
+      table.push([key, `${value}`]);
     }
 
     controller.log(table.toString());
