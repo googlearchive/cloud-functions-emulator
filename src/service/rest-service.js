@@ -198,7 +198,7 @@ class RestService extends Service {
           .status(200)
           .send({
             executionId: eventId,
-            error: err.response.body
+            error: err.response ? err.response.body : err
           })
           .end();
       });

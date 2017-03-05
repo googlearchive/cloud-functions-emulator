@@ -244,13 +244,7 @@ class Controller {
       .then((cloudfunctions) => Promise.all(cloudfunctions.map((cloudfunction) => this.undeploy(cloudfunction.shortName))));
   }
 
-  /**
-   * Deploys a function.
-   *
-   * @param {string} name Intended name of the new function.
-   * @param {object} opts Configuration options.
-   */
-  deploy (name, opts) {
+  _create (name, opts) {
     return new Promise((resolve, reject) => {
       const cloudfunction = new CloudFunction(CloudFunction.formatName(this.config.projectId, this.config.region, name));
 
@@ -306,6 +300,25 @@ class Controller {
 
         return this.client.createFunction(cloudfunction);
       });
+  }
+
+  /**
+   * Deploys a function.
+   *
+   * @param {string} name Intended name of the new function.
+   * @param {object} opts Configuration options.
+   */
+  deploy (name, opts) {
+    return this.client.getFunction(name)
+      .then(
+        () => this.undeploy(name).then(() => this._create(name, opts)),
+        (err) => {
+          if (err.code === 404 || err.code === 5) {
+            return this._create(name, opts);
+          }
+          return Promise.reject(err);
+        }
+      );
   }
 
   /**

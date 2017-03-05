@@ -198,7 +198,7 @@ function makeTests (service, override) {
       });
 
       it(`should fail when the module does not exist`, () => {
-        const output = run(`${override || cmd} deploy ${name} --local-path=test/test_module/foo/bar --trigger-http ${deployArgs}`, cwd);
+        const output = run(`${override || cmd} deploy fail --local-path=test/test_module/foo/bar --trigger-http ${deployArgs}`, cwd);
         assert(output.includes(`Provided directory does not exist.`));
       });
 
@@ -248,6 +248,14 @@ function makeTests (service, override) {
     });
 
     describe(`call`, () => {
+      let deployArgs = shortArgs;
+
+      before(() => {
+        if (override) {
+          deployArgs = `${overrideArgs} --stage-bucket=${bucketName}`;
+        }
+      });
+
       it(`should call a function`, () => {
         const output = run(`${override || cmd} call hello --data='{}' ${overrideArgs || shortArgs}`, cwd);
         try {
@@ -284,6 +292,20 @@ function makeTests (service, override) {
       it(`should call a function returns JSON`, () => {
         const output = run(`${override || cmd} call helloJSON --data '{}' ${overrideArgs || shortArgs}`, cwd);
         assert(output.includes(`{ message: 'Hello World' }`));
+      });
+
+      it(`should re-deploy over a function`, () => {
+        const output = run(`${override || cmd} deploy helloJSON --entry-point=helloPromise --local-path=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
+        if (override) {
+          assert(output.includes(`/functions/helloJSON`));
+        } else {
+          assert(output.includes(`Function helloJSON deployed.`));
+        }
+      });
+
+      it(`should call the re-deployed function`, () => {
+        const output = run(`${override || cmd} call helloJSON --data '{"foo":"bar"}' ${overrideArgs || shortArgs}`, cwd);
+        assert(output.includes(`bar`));
       });
 
       it(`should call an HTTP function`, () => {

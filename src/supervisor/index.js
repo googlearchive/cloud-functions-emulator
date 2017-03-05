@@ -281,7 +281,8 @@ class Supervisor {
   clear () {
     for (let [key, worker] of this._workerPool) {
       console.debug(`Stopping worker ${key}...`);
-      worker.kill();
+      worker.kill('SIGKILL');
+      this._workerPool.delete(key);
     }
   }
 
@@ -298,9 +299,10 @@ class Supervisor {
     for (let [_key, worker] of this._workerPool) {
       if (_key === key) {
         console.debug(`Stopping worker ${key}...`);
-        worker.kill();
+        worker.kill('SIGKILL');
       }
     }
+    this._workerPool.delete(key);
   }
 
   /**

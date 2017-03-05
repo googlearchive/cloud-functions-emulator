@@ -1,3 +1,8 @@
+##### 1.0.0-alpha.8 - 05 March 2017
+
+###### Bug fixes
+- [#48](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/48) - Deploying an already deployed function should update the existing function, not fail
+
 ##### 1.0.0-alpha.7 - 05 March 2017
 
 ###### Breaking changes
