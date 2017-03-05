@@ -41,13 +41,11 @@ exports.options = [
   'grpcPort',
   'inspect',
   'inspectPort',
-  'isolation',
   'logFile',
   'projectId',
   'region',
   'restHost',
   'restPort',
-  'runSupervisor',
   'service',
   'storage',
   'supervisorHost',
@@ -97,29 +95,10 @@ exports.handler = (opts) => {
           controller.write(' STARTED\n'.green);
           controller.log(`HTTP functions receiving requests at http://${config.supervisorHost}:${config.supervisorPort}/${config.projectId}/${config.region}/FUNCTION_NAME\n`);
 
-          // Only start the Emulator itself in debug or inspect mode if the
-          // isolation model is "inprocess"
-          if (config.isolation === 'inprocess') {
-            if (config.inspect) {
-              promise = controller.getDebuggingUrl().then((debugUrl) => {
-                let debugStr = `Started in inspect mode. Connect to the debugger on port ${config.inspectPort} (e.g. using the "node2" launch type in VSCode), or open the following URL in Chrome:`;
-                if (debugUrl) {
-                  // If found, include it in the string that gets printed
-                  debugStr += `\n\n    ${debugUrl}\n`;
-                } else {
-                  debugStr += `\n\nError: Could not find Chrome debugging URL in log file. Look for it yourself in ${config.logFile}.`;
-                }
-                console.log(`${debugStr}\n`);
-              });
-            } else if (config.debug) {
-              console.log(`Connect to the debugger on port ${config.debugPort} (e.g. using the "node" launch type in VSCode).\n`);
-            }
-          } else {
-            if (config.inspect) {
-              console.log(`Inspect mode is enabled for the Supervisor. During function execution the debugger will listen on port ${config.inspectPort} and the Chrome debugging URL will be printed to the console.\n`);
-            } else if (config.debug) {
-              console.log(`Debug mode is enabled for the Supervisor. During function execution the debugger will listen on port ${config.debugPort}.\n`);
-            }
+          if (config.inspect) {
+            console.log(`Inspect mode is enabled for the Supervisor. Check the logs for the workers' debugger ports.\n`);
+          } else if (config.debug) {
+            console.log(`Debug mode is enabled for the Supervisor. Check the logs for the workers' debugger ports.\n`);
           }
 
           return promise;

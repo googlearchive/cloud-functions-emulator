@@ -37,7 +37,6 @@ exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .demand(1)
     .command(require('./list'));
 
   EXAMPLES['event-types'].forEach((e) => yargs.example(e[0], e[1]));

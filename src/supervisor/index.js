@@ -18,23 +18,32 @@
 require('colors');
 
 const _ = require('lodash');
-const bodyParser = require('body-parser');
-const express = require('express');
 const fork = require('child_process').fork;
 const http = require('http');
+const httpProxy = require('http-proxy');
+const net = require('net');
 const path = require('path');
-const uuid = require('uuid');
+const url = require('url');
 
 const errors = require('../utils/errors');
 const Model = require('../model');
-const OPTIONS = require('../options');
-const worker = require('./worker');
+
+const MAX_IDLE = 5 * 60 * 1000;
+const IDLE_PRUNE_INTERVAL = 60 * 1000;
+const NAME_REG_EXP = /^\/([-\w]+)\/([-\w]+)\/([A-Za-z][-A-Za-z0-9]*)/;
 
 const { CloudFunction } = Model;
 
+/**
+ * The Supervisor service manages the function worker pool.
+ *
+ * @class Supervisor
+ * @param {object} functions
+ * @param {object} opts
+ */
 class Supervisor {
   constructor (functions, opts) {
-    this.functions = functions;
+    this._functions = functions;
     this.config = _.cloneDeep(opts);
 
     if (this.config.useMocks === 'true') {
@@ -43,321 +52,339 @@ class Supervisor {
       this.config.useMocks = false;
     }
 
-    this.server = express();
-    this.server.use(bodyParser.json());
-    this.server.use(bodyParser.raw());
-    this.server.use(bodyParser.text());
-    this.server.use(bodyParser.urlencoded({
-      extended: true
-    }));
-
-    // Never cache
-    this.server.use((req, res, next) => {
-      res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.set('Pragma', 'no-cache');
-      res.set('Expires', 0);
-      next();
+    // Setup the proxy server
+    this._proxy = httpProxy.createProxyServer({
+      ignorePath: true
     });
-
-    this.server.all('/:project/:location/:name', (req, res, next) => this.handleRequest(req, res).catch(next));
-    this.server.all('/:project/:location/:name/:extra*', (req, res, next) => this.handleRequest(req, res).catch(next));
-
-    this.server.all('*', (req, res, next) => {
-      res.status(404).end();
+    this._proxy.on('proxyReq', (proxyReq, req, res, options) => {
+      proxyReq.url = req.workerUrl;
     });
+    this._server = http.createServer((req, res) => this.handleRequest(req, res));
 
-    // Define error handlers last
-    this.server.use((err, req, res, next) => {
-      // Check for a serialized error and deserialize it if necessary
-      if (!(err instanceof Error) && err.name && err.stack && err.message) {
-        const _err = err;
-        err = new Error(_err.message);
-        err.stack = _err.stack;
-      }
+    this._workerPool = new Map();
 
-      // TODO: Extract most of this error handling/formatting into a utility
-      if (err instanceof Error) {
-        res.status(500).send(err.stack).end();
-      } else if (typeof err === 'object') {
-        if (err.code) {
-          if (err.code === errors.status.FAILED_PRECONDITION) {
-            res.status(400).json({
-              error: {
-                code: 400,
-                status: 'FAILED_PRECONDITION',
-                message: err.message || http.STATUS_CODES['400'],
-                errors: [err.message || http.STATUS_CODES['400']]
-              }
-            }).end();
-          } else if (err.code === errors.status.NOT_FOUND) {
-            res.status(404).json({
-              error: {
-                code: 404,
-                status: 'NOT_FOUND',
-                message: err.message || http.STATUS_CODES['404'],
-                errors: [err.message || http.STATUS_CODES['404']]
-              }
-            }).end();
-          } else {
-            res.status(500).json({
-              error: {
-                code: 500,
-                status: 'INTERNAL',
-                message: err.message || http.STATUS_CODES['500'],
-                errors: [err.message || http.STATUS_CODES['500']]
-              }
-            }).end();
-          }
-        } else {
-          res.status(500).end();
-        }
-      } else if (err) {
-        res.status(500).end();
-      } else {
-        res.status(404).end();
-      }
-    });
+    // Check for and close idle workers
+    setInterval(() => this._prune(), IDLE_PRUNE_INTERVAL);
   }
 
-  handleRequest (req, res) {
+  /**
+   * Gets or creates a worker.
+   *
+   * @method Superviser#_acquire
+   * @private
+   * @param {string} key
+   * @param {object} cloudfunction
+   * @returns Promise
+   */
+  _acquire (key, cloudfunction) {
     return Promise.resolve()
-      .then(() => this.functions.getFunction(CloudFunction.formatName(req.params.project, req.params.location, req.params.name)))
-      .then((cloudfunction) => {
-        const context = {
-          method: req.method,
-          headers: req.headers,
-          url: req.url.replace(`/${req.params.project}/${req.params.location}/${cloudfunction.shortName}`, ''),
-          originalUrl: req.originalUrl.replace(`/${req.params.project}/${req.params.location}/${cloudfunction.shortName}`, '')
-        };
-        return this.invoke(cloudfunction, req.body || {}, context);
+      .then(() => {
+        if (!this._workerPool.has(key)) {
+          return this._create(key, cloudfunction);
+        }
       })
-      .then((response) => {
-        let result;
-        if (response.result) {
-          result = response.result;
-        } else if (response.error) {
-          let error = response.error;
-          result = error.result;
-          if (error.status) {
-            res.status(error.status);
-          }
-        }
-
-        if (result && result.statusCode) {
-          res.status(result.statusCode);
-        }
-        if (result && result.headers) {
-          for (let key in result.headers) {
-            res.set(key, result.headers[key]);
-          }
-        }
-        if (result && (result.text || result.body)) {
-          res.send(result.text || result.body);
-        }
-
-        res.end();
+      .then(() => {
+        const worker = this._workerPool.get(key);
+        worker.lastAccessed = Date.now();
+        return worker;
       });
   }
 
   /**
-   * Invokes a function.
+   * Creates a new worker.
+   *
+   * @method Superviser#_create
+   * @private
+   * @param {string} key
+   * @param {object} cloudfunction
+   * @returns Promise
    */
-  invoke (cloudfunction, data, context = {}, opts = {}) {
-    context.useMocks = this.config.useMocks;
-    context.originalUrl || (context.originalUrl = '');
-    context.headers || (context.headers = {});
-    context.query || (context.query = {});
-    if (this.config.isolation === 'inprocess') {
-      return this.invokeInline(cloudfunction, data, context, opts);
-    } else if (this.config.isolation === 'childprocess') {
-      return this.invokeSecure(cloudfunction, data, context, opts);
-    } else {
-      throw new Error(`Isolation model "${this.config.isolation}" not supported!`);
+  _create (key, cloudfunction) {
+    return Promise.resolve()
+      .then(() => {
+        if (this.config.inspect) {
+          return this._getPort(this.config.inspectPort)
+            .then((port) => {
+              console.log(`Debugger (via --inspect) for ${key} listening on port ${port}.`);
+              return [`--inspect=${port}`];
+            });
+        } else if (this.config.debug) {
+          return this._getPort(this.config.debugPort)
+            .then((port) => {
+              console.log(`Debugger (via --debug) for ${key} listening on port ${port}.`);
+              return [`--debug=${port}`];
+            });
+        }
+        return [];
+      })
+      .then((execArgv) => {
+        // Spawn a child process in which to execute the user's function
+        // TODO: Warn when the Supervisor process ends but a child process is
+        // still running
+        // TODO: Forcefully exit worker process after maximum timeout
+        const worker = fork(path.join(__dirname, 'worker.js'), [], {
+          // Execute the process in the context of the user's code
+          cwd: cloudfunction.localPath,
+          // Emulate the environment variables of the production service
+          env: _.merge({}, process.env, {
+            FUNCTION_NAME: cloudfunction.shortName,
+            GCLOUD_PROJECT: this.config.projectId
+          }),
+          // Optionally prepare to debug the child process
+          execArgv,
+          // Allow stdin, stdout, and stderr to be piped to the parent so we can
+          // capture the user's logs
+          silent: true
+        });
+
+        // Anything the user logs will be logged at the Debug level
+        worker.stdout.on('data', (chunk) => {
+          console.log(chunk.toString('utf8'));
+        });
+
+        // Any errors logged by the user will be logged at the Error level
+        worker.stderr.on('data', (chunk) => {
+          console.error(chunk.toString('utf8'));
+        });
+
+        // Finally, wait for the child process to shutdown
+        worker.on('close', (code) => {
+          console.log(`${key} worker closed.`);
+        });
+
+        this._workerPool.set(key, worker);
+
+        return new Promise((resolve) => {
+          worker.on('message', (port) => {
+            worker.port = port;
+            resolve();
+          });
+
+          worker.send({
+            name: cloudfunction.shortName,
+            cloudfunction,
+            useMocks: this.config.useMocks
+          });
+        });
+      });
+  }
+
+  /**
+   * Get an open port.
+   *
+   * @method Supervisor#_getPort
+   * @private
+   * @returns Promise
+   */
+  _getPort (start) {
+    return new Promise((resolve) => {
+      let portrange = start;
+
+      function getPort (cb) {
+        const port = portrange;
+        portrange += 1;
+
+        const server = net.createServer();
+        server.listen(port, () => {
+          server.once('close', () => cb(port));
+          server.close();
+        });
+        server.on('error', () => getPort(cb));
+      }
+
+      getPort(resolve);
+    });
+  }
+
+  /**
+   * Closes idle workers.
+   *
+   * @method Supervisor#prune
+   * @private
+   */
+  _prune () {
+    for (let [key, worker] of this._workerPool) {
+      // Find workers that been idle longer than MAX_IDLE
+      if ((Date.now() - worker.lastAccessed) >= MAX_IDLE) {
+        // Shutdown and remove idle workers from the pool
+        worker.kill();
+        this._workerPool.delete(key);
+      }
     }
   }
 
   /**
-   * Executes a function in this process.
+   * Sends a formatted error response.
    *
-   * @param {object} cloudfunction The cloudfunction to invoke.
-   * @param {object} data The data to pass to the function.
-   * @param {object} context Request context.
-   * @param {object} opts Configuration options.
-   * @returns {Promise}
+   * @method Supervisor#_sendError
+   * @private
+   * @param {*} err
+   * @param {object} res
    */
-  invokeInline (cloudfunction, data, context = {}, opts = {}) {
-    return new Promise((resolve) => {
-      // Prepare an execution event
-      const event = {
-        // A unique identifier for this execution
-        eventId: uuid.v4(),
-        // The current ISO 8601 timestamp
-        timestamp: (new Date()).toISOString(),
-        // TODO: The event type
-        eventType: 'TODO',
-        // TODO: The resource that triggered the event
-        resource: 'TODO',
-        // The event payload
-        data
-      };
+  _sendError (err, res) {
+    // Check for a serialized error and deserialize it if necessary
+    if (!(err instanceof Error) && err.name && err.stack && err.message) {
+      const _err = err;
+      err = new Error(_err.message);
+      err.stack = _err.stack;
+    }
 
-      worker(cloudfunction.shortName, cloudfunction, context, event, (err, result) => {
-        if (err) {
-          resolve({ executionId: event.eventId, error: err });
+    res.statusCode = 500;
+
+    // TODO: Extract most of this error handling/formatting into a utility
+    if (err instanceof Error) {
+      res.write(err.stack);
+    } else if (typeof err === 'object') {
+      if (err.code) {
+        if (err.code === errors.status.FAILED_PRECONDITION) {
+          res.statusCode = 400;
+          res.write(JSON.stringify({
+            error: {
+              code: 400,
+              status: 'FAILED_PRECONDITION',
+              message: err.message || http.STATUS_CODES['400'],
+              errors: [err.message || http.STATUS_CODES['400']]
+            }
+          }));
+        } else if (err.code === errors.status.NOT_FOUND) {
+          res.statusCode = 404;
+          res.write(JSON.stringify({
+            error: {
+              code: 404,
+              status: 'NOT_FOUND',
+              message: err.message || http.STATUS_CODES['404'],
+              errors: [err.message || http.STATUS_CODES['404']]
+            }
+          }));
         } else {
-          resolve({ executionId: event.eventId, result });
+          res.write(JSON.stringify({
+            error: {
+              code: 500,
+              status: 'INTERNAL',
+              message: err.message || http.STATUS_CODES['500'],
+              errors: [err.message || http.STATUS_CODES['500']]
+            }
+          }));
         }
-      });
-    });
+      }
+    }
+
+    res.end();
   }
 
   /**
-   * Executes a function in a child process.
+   * Shut down all workers.
    *
-   * @param {object} cloudfunction The cloudfunction to invoke.
-   * @param {object} data The data to pass to the function.
-   * @param {object} context Request context.
-   * @param {object} opts Configuration options.
-   * @returns {Promise}
+   * @method Supervisor#clear
    */
-  invokeSecure (cloudfunction, data, context = {}, opts = {}) {
-    return new Promise((resolve, reject) => {
-      // Prepare an execution event
-      const event = {
-        // A unique identifier for this execution
-        eventId: uuid.v4(),
-        // The current ISO 8601 timestamp
-        timestamp: (new Date()).toISOString(),
-        // TODO: The event type
-        eventType: 'TODO',
-        // TODO: The resource that triggered the event
-        resource: 'TODO',
-        // The event payload
-        data
-      };
-
-      // This is the information the worker needs to execute the function
-      const args = [
-        // The short name of the function
-        cloudfunction.shortName,
-        // The remaining function metadata
-        JSON.stringify(cloudfunction),
-        // The request context
-        JSON.stringify(context),
-        // The request data
-        JSON.stringify(event)
-      ];
-
-      let execArgv = [];
-
-      if (this.config.inspect) {
-        execArgv = [`--inspect=${this.config.inspectPort}`, '--debug-brk'];
-      } else if (this.config.debug) {
-        execArgv = [`--debug=${this.config.debugPort}`, '--debug-brk'];
-      }
-
-      // Spawn a child process in which to execute the user's function
-      // TODO: Warn when the Supervisor process ends but a child process is
-      // still running
-      // TODO: Forcefully exit worker process after maximum timeout
-      const worker = fork(path.join(__dirname, 'worker.js'), args, {
-        // Execute the process in the context of the user's code
-        cwd: cloudfunction.localPath,
-        // Emulate the environment variables of the production service
-        env: _.merge({}, process.env, {
-          FUNCTION_NAME: cloudfunction.shortName,
-          GCLOUD_PROJECT: this.config.projectId
-        }),
-        // Optionally prepare to debug the child process
-        execArgv,
-        // Allow stdin, stdout, and stderr to be piped to the parent so we can
-        // capture the user's logs
-        silent: true
-      });
-
-      // Anything the user logs will be logged at the Debug level
-      worker.stdout.on('data', (chunk) => {
-        console.log(chunk.toString('utf8'));
-      });
-
-      // Any errors logged by the user will be logged at the Error level
-      worker.stderr.on('data', (chunk) => {
-        console.error(chunk.toString('utf8'));
-      });
-
-      // Variables to hold the final result or error of the execution
-      let result, error;
-
-      // Listen for success and error messages from the worker
-      worker.on('message', (message) => {
-        if (message.result) {
-          result = message.result;
-        } else if (message.error) {
-          error = message.error;
-        }
-      });
-
-      // Finally, wait for the child process to shutdown
-      worker.on('close', (code) => {
-        if (code) {
-          resolve({ executionId: event.eventId, error });
-        } else {
-          resolve({ executionId: event.eventId, result });
-        }
-      });
-    });
+  clear () {
+    for (let [key, worker] of this._workerPool) {
+      console.debug(`Stopping worker ${key}...`);
+      worker.kill();
+    }
   }
 
+  /**
+   * Shut down any worker for the given Cloud Function.
+   *
+   * @method Supervisor#delete
+   * @param {string} name
+   */
+  delete (name) {
+    const parts = CloudFunction.parseName(name);
+    const key = `/${parts.project}/${parts.location}/${parts.name}`;
+
+    for (let [_key, worker] of this._workerPool) {
+      if (_key === key) {
+        console.debug(`Stopping worker ${key}...`);
+        worker.kill();
+      }
+    }
+  }
+
+  /**
+   * Handles an incoming request.
+   *
+   * @method Superviser#handleRequest
+   * @param {object} req
+   * @param {object} res
+   */
+  handleRequest (req, res) {
+    const parts = url.parse(req.url);
+    const matches = parts.pathname.match(NAME_REG_EXP);
+
+    if (!matches) {
+      res.statusCode = 404;
+      res.end();
+      return;
+    }
+
+    const [, project, location, name] = matches;
+    const formattedName = CloudFunction.formatName(project, location, name);
+    const key = `/${project}/${location}/${name}`;
+
+    this._functions.getFunction(formattedName)
+      .then((cloudfunction) => this._acquire(key, cloudfunction))
+      .then((worker) => {
+        this._proxy.web(req, res, {
+          target: `http://localhost:${worker.port}${req.url.replace(key, '') || '/'}`
+        });
+      })
+      .catch((err) => {
+        console.error(err);
+        this._sendError(err, res);
+      });
+  }
+
+  /**
+   * Adds an event listener to the proxy server.
+   *
+   * @method Supervisor#on
+   * @param {string} event
+   * @param {function} handler
+   */
+  on (...args) {
+    this._server.on(...args);
+    return this;
+  }
+
+  /**
+   * Starts the Supervisor service, causing the proxy server to start listening
+   * on the configured port.
+   *
+   * @method Supervisor#start
+   */
   start () {
     console.debug(`Starting supervisor at ${this.config.host}:${this.config.port}...`);
-    this._server = this.server.listen(this.config.port, this.config.host, () => {
+    this._server.listen(this.config.port, this.config.host, () => {
       console.debug(`Supervisor listening at ${this._server.address().address}:${this._server.address().port}.`);
     });
+
+    process.on('exit', () => {
+      this.stop();
+    });
+
+    return this;
   }
 
+  /**
+   * Stops the Supervisor service, causing the workers and proxy server to
+   * shut down.
+   *
+   * @method Supervisor#stop
+   */
   stop () {
     console.debug(`Stopping supervisor...`);
+
+    this.clear();
+
     this._server.close(() => {
       console.debug('Supervisor stopped.');
     });
+
+    return this;
   }
 }
 
 exports.Supervisor = Supervisor;
 exports.supervisor = (...args) => new Supervisor(...args);
-
-const COMMAND = `./bin/supervisor ${'[options]'.yellow}`;
-const DESCRIPTION = `The Google Cloud Functions Emulator Supervisor service. The service is responsible for invoking functions.
-
-  You can let run Emulator run the Supervisor process, or you can start the Supervisor service separately.`;
-const USAGE = `Usage:
-  In the cloud-functions-emulator directory run the following:
-
-    ${COMMAND.bold}
-
-  Or from any directory run the following:
-
-    ${('/path/to/cloud-functions-emulator/bin/supervisor ' + '[options]'.yellow).bold}
-
-Description:
-  ${DESCRIPTION}`;
-
-exports.main = (args) => {
-  const cli = require('yargs');
-
-  const opts = cli
-    .usage(USAGE)
-    .options(_.merge(_.pick(OPTIONS, ['debug', 'debugPort', 'inspect', 'inspectPort', 'isolation', 'logFile', 'projectId', 'region', 'storage', 'useMocks']), {
-      host: _.cloneDeep(OPTIONS.supervisorHost),
-      port: _.cloneDeep(OPTIONS.supervisorPort)
-    }))
-    .wrap(120)
-    .help()
-    .version()
-    .strict()
-    .argv;
-
-  const supervisor = new Supervisor(opts);
-
-  supervisor.start();
-};

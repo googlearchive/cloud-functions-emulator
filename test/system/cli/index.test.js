@@ -49,7 +49,8 @@ const REGION = `us-central1`;
 const PROJECT_ID = getProjectId(null, false);
 
 function makeTests (service, override) {
-  const args = `--logFile=${logFile} --service=${service} --grpcHost=localhost --grpcPort=${GRPC_PORT} --debug=false --inspect=false --restHost=localhost --restPort=${REST_PORT} --runSupervisor=true --supervisorHost=localhost --supervisorPort=${SUPERVISOR_PORT} --verbose`;
+  const shortArgs = `--service=${service} --grpcHost=localhost --grpcPort=${GRPC_PORT} --restHost=localhost --restPort=${REST_PORT}`;
+  const args = `${shortArgs} --logFile=${logFile} --debug=false --inspect=false --supervisorHost=localhost --supervisorPort=${SUPERVISOR_PORT} --verbose`;
   let overrideArgs = ``;
   let currentEndpoint;
 
@@ -83,10 +84,12 @@ function makeTests (service, override) {
       config.set('logFile', logFile);
       server.set('logFile', logFile);
 
-      let output = run(`${cmd} restart ${args}`, cwd);
+      run(`${cmd} kill ${args}`, cwd);
+
+      let output = run(`${cmd} start ${args}`, cwd);
       assert(output.includes(`${prefix} STARTED`));
 
-      output = run(`${cmd} clear ${args}`, cwd);
+      output = run(`${cmd} clear ${shortArgs}`, cwd);
       assert(output.includes(`${prefix} CLEARED`));
     });
 
@@ -100,16 +103,16 @@ function makeTests (service, override) {
       let output = run(`${cmd} restart ${args}`, cwd);
       assert(output.includes(`STARTED`));
 
-      output = run(`${cmd} clear ${args}`, cwd);
+      output = run(`${cmd} clear ${shortArgs}`, cwd);
       assert(output.includes(`${prefix} CLEARED`));
 
-      output = run(`${cmd} stop ${args}`, cwd);
+      output = run(`${cmd} stop ${shortArgs}`, cwd);
       assert(output.includes(`${prefix} STOPPED`));
     });
 
     describe(`config`, () => {
       it(`should list configuration`, () => {
-        let output = run(`${cmd} config list ${args}`, cwd);
+        let output = run(`${cmd} config list`, cwd);
         assert(output.includes(`grpcHost`));
         assert(output.includes(`grpcPort`));
         assert(output.includes(`restHost`));
@@ -118,7 +121,7 @@ function makeTests (service, override) {
     });
 
     describe(`deploy`, () => {
-      let deployArgs = args;
+      let deployArgs = shortArgs;
 
       before(() => {
         if (override) {
@@ -126,13 +129,13 @@ function makeTests (service, override) {
           const output = run(`${override} list`, cwd);
           assert(output.includes(`Listed 0 items.`));
         } else {
-          const output = run(`${cmd} list ${args}`, cwd);
+          const output = run(`${cmd} list ${shortArgs}`, cwd);
           assert(output.includes(`No functions deployed`));
         }
       });
 
       it(`should deploy a background function`, () => {
-        const output = run(`${override || cmd} deploy ${name} --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-event=object.change --trigger-resource=test ${deployArgs}`, cwd);
+        const output = run(`${override || cmd} deploy ${name} --local-path=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
         if (override) {
           assert(output.includes(`/functions/${name}`));
         } else {
@@ -141,7 +144,7 @@ function makeTests (service, override) {
       });
 
       it(`should deploy a function with JSON`, () => {
-        const output = run(`${override || cmd} deploy helloData --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-event=object.change --trigger-resource=test ${deployArgs}`, cwd);
+        const output = run(`${override || cmd} deploy helloData --local-path=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
         if (override) {
           assert(output.includes(`/functions/helloData`));
         } else {
@@ -150,7 +153,7 @@ function makeTests (service, override) {
       });
 
       it(`should deploy a synchronous function`, () => {
-        const output = run(`${override || cmd} deploy helloPromise --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-event=object.change --trigger-resource=test ${deployArgs}`, cwd);
+        const output = run(`${override || cmd} deploy helloPromise --local-path=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
         if (override) {
           assert(output.includes(`/functions/helloPromise`));
         } else {
@@ -159,7 +162,7 @@ function makeTests (service, override) {
       });
 
       it(`should deploy a function that throws and process does not crash`, () => {
-        const output = run(`${override || cmd} deploy helloThrow --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-event=object.change --trigger-resource=test ${deployArgs}`, cwd);
+        const output = run(`${override || cmd} deploy helloThrow --local-path=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
         if (override) {
           assert(output.includes(`/functions/helloThrow`));
         } else {
@@ -168,7 +171,7 @@ function makeTests (service, override) {
       });
 
       it(`should deploy a function returns JSON`, () => {
-        const output = run(`${override || cmd} deploy helloJSON --local-path=test/test_module/ --trigger-provider=cloud.storage --trigger-event=object.change --trigger-resource=test ${deployArgs}`, cwd);
+        const output = run(`${override || cmd} deploy helloJSON --local-path=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
         if (override) {
           assert(output.includes(`/functions/helloJSON`));
         } else {
@@ -212,7 +215,7 @@ function makeTests (service, override) {
 
     describe(`describe`, () => {
       it(`should describe a background function`, () => {
-        const output = run(`${override || cmd} describe ${name} ${overrideArgs || args}`, cwd);
+        const output = run(`${override || cmd} describe ${name} ${overrideArgs || shortArgs}`, cwd);
         assert(output.includes(name));
         if (override) {
           assert(output.includes(`eventTrigger`));
@@ -223,7 +226,7 @@ function makeTests (service, override) {
       });
 
       it(`should describe an HTTP function`, () => {
-        const output = run(`${override || cmd} describe helloGET ${overrideArgs || args}`, cwd);
+        const output = run(`${override || cmd} describe helloGET ${overrideArgs || shortArgs}`, cwd);
         assert(output.includes(`helloGET`));
         if (override) {
           assert(output.includes(`httpsTrigger`));
@@ -236,7 +239,7 @@ function makeTests (service, override) {
 
     describe(`list`, () => {
       it(`should list functions`, () => {
-        const output = run(`${override || cmd} list ${override ? '' : args}`, cwd);
+        const output = run(`${override || cmd} list ${override ? '' : shortArgs}`, cwd);
         assert(output.includes(name));
         assert(output.includes(`helloData`));
         assert(output.includes(`helloGET`));
@@ -246,7 +249,7 @@ function makeTests (service, override) {
 
     describe(`call`, () => {
       it(`should call a function`, () => {
-        const output = run(`${override || cmd} call hello --data '{}' ${overrideArgs || args}`, cwd);
+        const output = run(`${override || cmd} call hello --data='{}' ${overrideArgs || shortArgs}`, cwd);
         try {
           assert(output.includes(`Hello World`));
         } catch (err) {
@@ -256,9 +259,9 @@ function makeTests (service, override) {
 
       it(`should call a function that throws and process does not crash`, () => {
         // TODO: Verify output when it gets fixed
-        let output = run(`${override || cmd} call helloThrow --data '{}' ${overrideArgs || args}`, cwd);
+        let output = run(`${override || cmd} call helloThrow --data='{}' ${overrideArgs || shortArgs}`, cwd);
 
-        output = run(`${cmd} status ${args}`, cwd);
+        output = run(`${cmd} status ${shortArgs}`, cwd);
         assert(output.includes(`RUNNING`));
       });
 
@@ -269,22 +272,22 @@ function makeTests (service, override) {
       }
 
       it(`should call a function with JSON`, () => {
-        const output = run(`${override || cmd} call helloData --data '{"foo":"bar"}' ${overrideArgs || args}`, cwd);
+        const output = run(`${override || cmd} call helloData --data '{"foo":"bar"}' ${overrideArgs || shortArgs}`, cwd);
         assert(output.includes(`bar`));
       });
 
       it(`should call a synchronous function`, () => {
-        const output = run(`${override || cmd} call helloPromise --data '{"foo":"bar"}' ${overrideArgs || args}`, cwd);
+        const output = run(`${override || cmd} call helloPromise --data '{"foo":"bar"}' ${overrideArgs || shortArgs}`, cwd);
         assert(output.includes(`bar`));
       });
 
       it(`should call a function returns JSON`, () => {
-        const output = run(`${override || cmd} call helloJSON --data '{}' ${overrideArgs || args}`, cwd);
+        const output = run(`${override || cmd} call helloJSON --data '{}' ${overrideArgs || shortArgs}`, cwd);
         assert(output.includes(`{ message: 'Hello World' }`));
       });
 
       it(`should call an HTTP function`, () => {
-        const output = run(`${override || cmd} call helloGET --data '{}' ${overrideArgs || args}`, cwd);
+        const output = run(`${override || cmd} call helloGET --data '{}' ${overrideArgs || shortArgs}`, cwd);
         assert(output.includes(`method: 'POST'`));
       });
 
@@ -322,14 +325,14 @@ function makeTests (service, override) {
       });
 
       it(`should call an HTTP function and send it JSON`, () => {
-        const output = run(`${override || cmd} call helloPOST --data '{"foo":"bar"}' ${overrideArgs || args}`, cwd);
+        const output = run(`${override || cmd} call helloPOST --data '{"foo":"bar"}' ${overrideArgs || shortArgs}`, cwd);
         assert(output.includes(`body: { foo: 'bar' } }`));
       });
     });
 
     describe(`delete`, () => {
       it(`should delete a function`, () => {
-        let output = run(`${override || cmd} delete helloData ${overrideArgs || args}`, cwd);
+        let output = run(`${override || cmd} delete helloData ${overrideArgs || shortArgs}`, cwd);
         if (override) {
           assert(output.includes(`/functions/helloData`));
           assert(output.includes(`will be deleted`));
@@ -337,7 +340,7 @@ function makeTests (service, override) {
           assert(output.includes(`Function helloData deleted.`));
         }
 
-        output = run(`${override || cmd} list ${overrideArgs || args}`, cwd);
+        output = run(`${override || cmd} list ${overrideArgs || shortArgs}`, cwd);
         assert.equal(output.includes(`No functions deployed`), false);
         assert.equal(output.includes(`helloData`), false);
         assert(output.includes(`hello`));
@@ -346,15 +349,15 @@ function makeTests (service, override) {
 
     describe(`clear`, () => {
       it(`should clear existing functions`, () => {
-        let output = run(`${cmd} list ${args}`, cwd);
+        let output = run(`${cmd} list ${shortArgs}`, cwd);
 
         assert.equal(output.includes(`No functions deployed`), false);
         assert(output.includes(`helloPOST`));
 
-        output = run(`${cmd} clear ${args}`, cwd);
+        output = run(`${cmd} clear ${shortArgs}`, cwd);
         assert(output.includes(`${prefix} CLEARED`));
 
-        output = run(`${cmd} list ${args}`, cwd);
+        output = run(`${cmd} list ${shortArgs}`, cwd);
         assert(output.includes(`No functions deployed`));
       });
     });
@@ -380,16 +383,16 @@ function makeTests (service, override) {
 
     describe(`status`, () => {
       it(`should show the server status`, () => {
-        let output = run(`${cmd} status ${args}`, cwd);
+        let output = run(`${cmd} status ${shortArgs}`, cwd);
         assert(output.includes(`${prefix}`));
         assert(output.includes(`RUNNING`));
         assert(output.includes(`http://localhost:${REST_PORT}/`));
         assert(output.includes(`http://localhost:${GRPC_PORT}/`));
 
-        output = run(`${cmd} stop ${args}`, cwd);
+        output = run(`${cmd} stop ${shortArgs}`, cwd);
         assert(output.includes(`STOPPED`));
 
-        output = run(`${cmd} status ${args}`, cwd);
+        output = run(`${cmd} status ${shortArgs}`, cwd);
         assert(output.includes(`STOPPED`));
       }).timeout(20000);
     });

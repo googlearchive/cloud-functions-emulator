@@ -22,4 +22,26 @@ if (!semver.satisfies(process.version, '>= 6.9.1')) {
   process.exit(1);
 }
 
+const path = require('path');
+const Configstore = require('configstore');
+const pkg = require('../package.json');
+
+const server = new Configstore(path.join(pkg.name, '/.active-server'));
+
+if (server.get('started')) {
+  if (!server.get('stopped')) {
+    const emulatorVersion = server.get('version');
+    const cliVersion = pkg.version;
+
+    if (!semver.satisfies(emulatorVersion, `>= ${cliVersion}`)) {
+      console.error(`The version of the currently running Emulator ${emulatorVersion ? '(' + emulatorVersion + ')' : ''} is lower than that of the installed CLI (${cliVersion}). Please shutdown any running Emulator processes and restart using the installed CLI.`);
+      process.exit(1);
+    }
+  } else {
+    if (server.get('pid')) {
+      console.error(`Warning: You either have an orphaned Emulator process (PID: ${server.get('pid')}) or the previously running Emulator process was not shutdown properly, please verify.`);
+    }
+  }
+}
+
 require('../src/cli').main(process.argv.slice(2));

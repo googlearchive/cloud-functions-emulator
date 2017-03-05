@@ -47,6 +47,59 @@ const USAGE = `Usage:
 Description:
   ${DESCRIPTION}`;
 
+class Emulator {
+  constructor (opts) {
+    this.config = opts;
+
+    const functions = Model.functions(opts);
+    this.supervisor = Supervisor.supervisor(functions, {
+      debug: opts.debug,
+      debugPort: opts.debugPort,
+      host: opts.supervisorHost,
+      inspect: opts.inspect,
+      inspectPort: opts.inspectPort,
+      port: opts.supervisorPort,
+      projectId: opts.projectId,
+      region: opts.region,
+      useMocks: opts.useMocks
+    });
+    this.restService = Service.restService(functions, this.supervisor, {
+      host: opts.restHost,
+      port: opts.restPort
+    });
+    this.grpcService = Service.grpcService(functions, this.supervisor, {
+      host: opts.grpcHost,
+      port: opts.grpcPort
+    });
+  }
+
+  start () {
+    const makeHandler = (name) => {
+      return (err) => {
+        if (err.code === 'EADDRINUSE') {
+          console.error(`${name} (${this.config[name]}) is already in use`);
+        } else {
+          console.error(err);
+        }
+      };
+    };
+
+    this.supervisor
+      .start()
+      .on('error', makeHandler('supervisorPort'));
+    this.restService
+      .start()
+      .on('error', makeHandler('restPort'));
+    this.grpcService.start();
+  }
+
+  stop () {
+    this.supervisor.stop();
+    this.restService.stop();
+    this.grpcService.stop();
+  }
+}
+
 exports.main = (args) => {
   let opts = cli
     .usage(USAGE)
@@ -125,43 +178,10 @@ exports.main = (args) => {
     console.debug(`Using project ID: ${opts.projectId}`);
   }
 
-  // Create the various services
-  const functions = Model.functions(opts);
-  const supervisor = Supervisor.supervisor(functions, {
-    debug: opts.debug,
-    debugPort: opts.debugPort,
-    host: opts.supervisorHost,
-    inspect: opts.inspect,
-    inspectPort: opts.inspectPort,
-    isolation: opts.isolation,
-    port: opts.supervisorPort,
-    projectId: opts.projectId,
-    region: opts.region,
-    useMocks: opts.useMocks
-  });
-  const restService = Service.restService(functions, supervisor, {
-    host: opts.restHost,
-    port: opts.restPort
-  });
-  const grpcService = Service.grpcService(functions, supervisor, {
-    host: opts.grpcHost,
-    port: opts.grpcPort
-  });
+  const emulator = new Emulator(opts);
 
-  // Cause each service to start listening for connections
-  if (opts.runSupervisor) {
-    supervisor.start();
-  }
-  restService.start();
-  grpcService.start();
+  emulator.start();
 
   // The CLI uses SIGTERM to tell the Emulator that it needs to shut down.
-  process.on('SIGTERM', () => {
-    if (opts.runSupervisor) {
-      supervisor.stop();
-    }
-    // TODO: Wait for currently running functions to finish
-    restService.stop();
-    grpcService.stop();
-  });
+  process.on('SIGTERM', () => emulator.stop());
 };
