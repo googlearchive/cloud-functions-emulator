@@ -128,7 +128,8 @@ class Supervisor {
           // Emulate the environment variables of the production service
           env: _.merge({}, process.env, {
             FUNCTION_NAME: cloudfunction.shortName,
-            GCLOUD_PROJECT: this.config.projectId
+            GCLOUD_PROJECT: this.config.projectId,
+            GCP_PROJECT: this.config.projectId
           }),
           // Optionally prepare to debug the child process
           execArgv,
