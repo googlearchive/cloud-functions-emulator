@@ -118,8 +118,23 @@ class Controller {
       });
 
       const zip = new AdmZip();
-      // TODO: Find a way to ignore node_modules, and make it configurable
-      zip.addLocalFolder(opts.localPath);
+
+      const files = fs.readdirSync(opts.localPath);
+      files.forEach((entry) => {
+        if (entry === 'node_modules') {
+          return false;
+        }
+        let content, filename;
+        const entryPath = path.join(opts.localPath, entry);
+        const stats = fs.statSync(entryPath);
+
+        if (stats.isDirectory()) {
+          zip.addLocalFolder(entryPath);
+        } else if (stats.isFile()) {
+          zip.addLocalFile(entryPath);
+        }
+      });
+
       // Copy the function code to a temp directory on the local file system
       zip.writeZip(tmpName);
 
