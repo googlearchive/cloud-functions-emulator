@@ -124,7 +124,6 @@ class Controller {
         if (entry === 'node_modules') {
           return false;
         }
-        let content, filename;
         const entryPath = path.join(opts.localPath, entry);
         const stats = fs.statSync(entryPath);
 

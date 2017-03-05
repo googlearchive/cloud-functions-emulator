@@ -21,6 +21,7 @@ const Configstore = require('configstore');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const rimraf = require('rimraf');
 const spawn = require('child_process').spawn;
 const Storage = require('@google-cloud/storage');
 const tmp = require('tmp');
@@ -466,7 +467,7 @@ class Functions {
   deleteFunction (name) {
     console.debug('Functions', 'deleteFunction', name);
     return this.getFunction(name)
-      .then(() => {
+      .then((cloudfunction) => {
         const operationName = Operation.generateId();
 
         // Prepare the Operation
@@ -490,6 +491,28 @@ class Functions {
           .then(() => {
             // Asynchronously perform the deletion of the CloudFunction
             setImmediate(() => {
+              if (cloudfunction.sourceArchiveUrl.startsWith('file://')) {
+                try {
+                  fs.unlinkSync(cloudfunction.sourceArchiveUrl.replace('file://', ''));
+                } catch (err) {
+                  console.error(err);
+                }
+              }
+
+              const parts = path.parse(cloudfunction.sourceArchiveUrl);
+
+              if (cloudfunction.sourceArchiveUrl.startsWith('gs://') &&
+                parts.name && cloudfunction.serviceAccount &&
+                cloudfunction.serviceAccount.startsWith('/') &&
+                cloudfunction.serviceAccount.endsWith(parts.name)) {
+                try {
+                  fs.unlinkSync(`${cloudfunction.serviceAccount}.zip`);
+                  rimraf.sync(cloudfunction.serviceAccount);
+                } catch (err) {
+                  console.error(err);
+                }
+              }
+
               // Delete the CloudFunction
               this.adapter.deleteFunction(name)
                 .then(() => {

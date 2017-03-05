@@ -1,42 +1,49 @@
 ##### 1.0.0-alpha.7 - 05 March 2017
 
 ###### Breaking changes
-- #44 - Re-architect to process per function
+- [#43](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/43) - Improve upgrade awareness of the Emulator. CLI and Emulator version can no longer mismatch.
+- [#44](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/44) - Re-architect to process per function
+
+###### Backwards compatible changes
+- [#52](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/52) - Display on default console window in Mac is difficult to read
+- [#54](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/54) - Cleanup temporary archives
 
 ###### Bug fixes
-- #46 (again) - Inconsistent behaviour for parsing path and path params
-- #53 - HTTP Function hangs when debugging
+- [#46](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/46) (again) - Inconsistent behaviour for parsing path and path params
+- [#53](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/53) - HTTP Function hangs when debugging
+- [#56](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/56) - Deployments are slow
+- [#60](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/60) - `GCP_PROJECT` environment variable not set
 
 ##### 1.0.0-alpha.6 - 28 February 2017
 
 ###### Bug fixes
 
-- #47 - Sometimes function is killed before it reports result
+- [#47](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/47) - Sometimes function is killed before it reports result
 
 ##### 1.0.0-alpha.5 - 28 February 2017
 
 ###### Bug fixes
 
-- #46 - Request path not forwarded to function
+- [#46](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/46) - Request path not forwarded to function
 
 ##### 1.0.0-alpha.4 - 25 February 2017
 
 ###### Bug fixes
 
-- #45 - Cannot Pass query string to cloud functions
+- [#45](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/45) - Cannot Pass query string to cloud functions
 
 ##### 1.0.0-alpha.3 - 14 February 2017
 
 ###### Bug fixes
 
-- #38 - Cannot find module 'upgrade-warning'
+- [#38](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/38) - Cannot find module 'upgrade-warning'
 
 ##### 1.0.0-alpha.2 - 13 February 2017
 
 ###### Bug fixes
 
-- #32 - custom headers request headers are lost
-- #34 - functions deploy fails on Windows
+- [#32](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/32) - custom headers request headers are lost
+- [#34](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/34) - functions deploy fails on Windows
 
 ##### 1.0.0-alpha.1 - 01 February 2017
 
@@ -66,7 +73,7 @@
 ##### 0.3.2 - 25 November 2016
 
 ###### Backwards compatible changes
-- #8, #9 - Added `--file` option to `call` command.
+- [#8](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/8), [#9](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/9) - Added `--file` option to `call` command.
 
 ##### 0.3.1 - 23 November 2016
 
