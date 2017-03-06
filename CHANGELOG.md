@@ -1,3 +1,8 @@
+##### 1.0.0-alpha.12 - 06 March 2017
+
+###### Bug fixes
+- [#64](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/64) - Can start Emulator with mismatching versions
+
 ##### 1.0.0-alpha.11 - 06 March 2017
 
 ###### Breaking changes

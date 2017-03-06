@@ -36,20 +36,21 @@ const pkg = require('../package.json');
 const server = new Configstore(path.join(pkg.name, '/.active-server'));
 
 if (server.get('started')) {
-  if (!server.get('stopped')) {
-    const emulatorVersion = server.get('version');
-    const cliVersion = pkg.version;
+  if (server.get('pid')) {
+    if (!server.get('stopped')) {
+      const emulatorVersion = server.get('version');
+      const cliVersion = pkg.version;
 
-    if (!semver.satisfies(emulatorVersion, `>= ${cliVersion}`)) {
-      console.error(`The version of the currently running Emulator ${emulatorVersion ? '(' + emulatorVersion + ')' : ''} is lower than that of the installed CLI (${cliVersion}). Please shutdown any running Emulator processes and restart using the installed CLI.`);
-      process.exit(1);
-    }
-  } else {
-    /**
-     * 2a. Verify there isn't an orphaned Emulator process.
-     */
-    if (server.get('pid')) {
-      console.error(`Warning: You either have an orphaned Emulator process (PID: ${server.get('pid')}) or the previously running Emulator process was not shutdown properly, please verify.`);
+      if (!semver.satisfies(emulatorVersion, `${cliVersion}`)) {
+        console.error(`The version of the currently running Emulator ${emulatorVersion ? '(' + emulatorVersion + ')' : ''}does not match that of your CLI (${cliVersion}). Please shutdown any running Emulator processes (${'"functions kill"'.bold}) and restart the Emulator (${'"functions start"'.bold}).`);
+      }
+    } else {
+      /**
+       * 2a. Verify there isn't an orphaned Emulator process.
+       */
+      if (server.get('pid')) {
+        console.error(`Warning: You either have an orphaned Emulator process (PID: ${server.get('pid')}) or the previously running Emulator process was not shutdown properly, please verify: ${'"functions kill"'.bold} and ${'"functions start"'.bold}.`);
+      }
     }
   }
 }

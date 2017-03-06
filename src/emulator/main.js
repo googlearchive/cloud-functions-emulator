@@ -19,6 +19,7 @@ require('colors');
 
 const _ = require('lodash');
 const cli = require('yargs');
+const Configstore = require('configstore');
 const path = require('path');
 const winston = require('winston');
 
@@ -26,6 +27,8 @@ const defaults = require('../defaults.json');
 const Emulator = require('./emulator');
 const logs = require('./logs');
 const OPTIONS = require('../options');
+const pkg = require('../../package.json');
+const server = new Configstore(path.join(pkg.name, '/.active-server'));
 
 const COMMAND = `./bin/emulator ${'[options]'.yellow}`;
 const DESCRIPTION = `The Google Cloud Functions Emulator service. The service implements both the REST and gRPC versions of the Google
@@ -131,6 +134,15 @@ function main (args) {
 
   // The CLI uses SIGTERM to tell the Emulator that it needs to shut down.
   process.on('SIGTERM', () => emulator.stop());
+
+  process.on('exit', () => {
+    try {
+      server.delete('pid');
+      server.set('stopped', Date.now());
+    } catch (err) {
+
+    }
+  });
 }
 
 module.exports = main;
