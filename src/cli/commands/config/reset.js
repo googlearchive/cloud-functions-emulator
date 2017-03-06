@@ -17,11 +17,13 @@
 
 require('colors');
 
+const config = require('../../../config');
+const configCommand = require('./');
 const Controller = require('../../controller');
-const EXAMPLES = require('../../examples');
+const defaults = require('../../../defaults');
 
-const COMMAND = `functions logs read ${'[options]'.yellow}`;
-const DESCRIPTION = 'Show logs produced by functions.';
+const COMMAND = `functions config reset`;
+const DESCRIPTION = `Resets configuration to default values, with the exception of ${'projectId'.bold}, which is left alone.`;
 const USAGE = `Usage:
   ${COMMAND.bold}
 
@@ -31,29 +33,25 @@ Description:
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
-exports.command = 'read';
+exports.command = 'reset';
 exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .options({
-      limit: {
-        alias: 'l',
-        default: 20,
-        description: 'Number of log entries to be fetched.',
-        type: 'number',
-        requiresArg: true
-      }
-    });
-
-  EXAMPLES['logs.read'].forEach((e) => yargs.example(e[0], e[1]));
+    .epilogue(configCommand.helpMessage);
 };
 exports.handler = (opts) => {
   const controller = new Controller(opts);
 
-  let limit = 20;
-  if (opts && opts.limit) {
-    limit = parseInt(opts.limit, 10);
+  for (let key in config.all) {
+    if (key !== 'projectId') {
+      config.delete(key);
+      if (key in defaults) {
+        config.set(key, defaults[key]);
+      }
+    }
   }
-  controller.getLogs(limit);
+
+  controller.log(`Configuration reset to defaults.`);
+  controller.log('\nYou must restart the Emulator for changes to take effect...');
 };

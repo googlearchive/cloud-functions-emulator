@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Copyright 2016, Google, Inc.
+ * Copyright 2017, Google, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,4 +22,17 @@ if (!semver.satisfies(process.version, '>= 6.9.1')) {
   process.exit(1);
 }
 
-require('../src/emulator').main(process.argv.slice(2));
+exports.emulator = require('../src/emulator');
+
+if (module === require.main) {
+  exports.emulator.main(process.argv.slice(2));
+} else {
+  exports.cli = require('../src/cli');
+  exports.client = require('../src/client');
+  exports.model = require('../src/model');
+  exports.service = require('../src/service');
+  exports.supervisor = require('../src/supervisor');
+  exports.config = require('../src/config');
+  exports.defaults = require('../src/defaults.json');
+  exports.options = require('../src/options');
+}

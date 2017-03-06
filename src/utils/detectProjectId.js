@@ -15,17 +15,30 @@
 
 'use strict';
 
-/**
- * The mock callback allows you to override the value returned from a `require()` callback
- * This file will be loaded at emulator start time if config.useMocks is set to true in config.js
- */
+const execSync = require('child_process').execSync;
 
-/**
- * Called when the require() method is called
- * @param {String} func The name of the current function being invoked
- * @param {String} module The name of the module being required
- */
-exports.onRequire = function (func, module) {
-  // Return an object or module to override the named module argument
-  return undefined;
+function trim (str) {
+  if (str && typeof str.toString === 'function') {
+    return str.toString().trim();
+  }
+  return str;
+}
+
+module.exports = (projectId) => {
+  if (projectId) {
+    return projectId;
+  }
+  if (process.env.GCLOUD_PROJECT) {
+    return process.env.GCLOUD_PROJECT;
+  }
+  if (process.env.GOOGLE_CLOUD_PROJECT) {
+    return process.env.GOOGLE_CLOUD_PROJECT;
+  }
+  try {
+    projectId = trim(execSync(`gcloud info --format='value(config.project)'`));
+  } catch (err) {
+    // Print some error message?
+  }
+
+  return projectId;
 };

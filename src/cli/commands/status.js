@@ -1,5 +1,5 @@
 /**
- * Copyright 2016, Google, Inc.
+ * Copyright 2017, Google, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,12 +15,11 @@
 
 'use strict';
 
-const _ = require('lodash');
+require('colors');
+
 const Table = require('cli-table2');
 
 const Controller = require('../controller');
-const EXAMPLES = require('../examples');
-const OPTIONS = require('../../options');
 
 const COMMAND = `functions status ${'[options]'.yellow}`;
 const DESCRIPTION = `Reports the current status of the Emulator.`;
@@ -36,11 +35,7 @@ Description:
 exports.command = 'status';
 exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
-  yargs
-    .usage(USAGE)
-    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort']));
-
-  EXAMPLES['status'].forEach((e) => yargs.example(e[0], e[1]));
+  yargs.usage(USAGE);
 };
 exports.handler = (opts) => {
   const controller = new Controller(opts);
@@ -67,29 +62,15 @@ exports.handler = (opts) => {
         table.push(['Process ID', config.pid]);
         table.push(['REST Service', `http://${config.restHost}:${config.restPort}/`]);
         table.push(['gRPC Service', `http://${config.grpcHost}:${config.grpcPort}/`]);
-        if (config.inspect || config.debug) {
-          table.push(['Debugger', 'ACTIVE'.green]);
-          if (config.inspect) {
-            table.push(['Debugger Port', `${config.inspectPort}`]);
-          } else {
-            table.push(['Debugger Port', `${config.debugPort}`]);
-          }
+        table.push(['HTTP Triggers', `http://${config.supervisorHost}:${config.supervisorPort}/${config.projectId}/${config.region}/:function`]);
+        if (config.inspect) {
+          table.push(['Debugger', 'ACTIVE (via --inspect)'.green]);
+          table.push(['Debugger Port', `${config.inspectPort}`]);
         } else if (config.debug) {
-          table.push(['Debugger', 'INACTIVE'.yellow]);
+          table.push(['Debugger', 'ACTIVE (via --debug)'.green]);
+          table.push(['Debugger Port', `${config.debugPort}`]);
         }
         table.push(['Log file', config.logFile]);
-        table.push(['Project ID', config.projectId]);
-        table.push(['Region', config.region]);
-        table.push(['Storage Mode', config.storage]);
-
-        if (config.mocks) {
-          table.push(['Mocks', 'LOADED'.green]);
-        } else {
-          table.push(['Mocks', 'NOT LOADED'.yellow]);
-        }
-
-        table.push([{ colSpan: 2, content: 'Supervisor'.bold }]);
-        table.push(['Trigger URL', `http://${config.supervisorHost}:${config.supervisorPort}/${config.projectId}/${config.region}/FUNCTION_NAME`]);
       } else {
         let time;
         if (config.stopped) {

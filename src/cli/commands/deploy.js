@@ -1,5 +1,5 @@
 /**
- * Copyright 2016, Google, Inc.
+ * Copyright 2017, Google, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,8 +15,9 @@
 
 'use strict';
 
+require('colors');
+
 const _ = require('lodash');
-const os = require('os');
 
 const Controller = require('../controller');
 const describe = require('./describe').handler;
@@ -45,33 +46,26 @@ exports.builder = (yargs) => {
     .usage(USAGE)
     .options(_.merge({
       'entry-point': {
-        description: 'The name of the function exported in the source code that will be executed.',
+        alias: 'e',
+        description: `${'Optional'.bold}. The name of the function exported in the source code that should be deployed.`,
         requiresArg: true,
         type: 'string'
       },
       'local-path': {
         alias: 'l',
-        description: `Path to local directory with source code. Required with --stage-bucket flag. ${'Default:'.bold} ${process.cwd().green} (the current working directory)`,
-        requiresArg: true,
-        type: 'string'
-      },
-      'source-path': {
-        description: 'NOT SUPPORTED. Path to directory with source code in Cloud Source Repositories, when you specify this parameter --source-url flag is required.',
+        description: `Path to local directory with source code. ${'Default:'.bold} ${process.cwd().green} (the current working directory)`,
         requiresArg: true,
         type: 'string'
       },
       'stage-bucket': {
-        description: 'Name of Google Cloud Storage bucket in which source code will be stored. This or "stage-directory" are required if a function is deployed from a local directory.',
-        requiresArg: true,
-        type: 'string'
-      },
-      'stage-directory': {
-        description: `${'Emulator-specific:'.bold} The emulator supports storing function code on the local filesystem. ${'Default:'.bold} ${os.tmpdir().green}`,
+        alias: 's',
+        description: `${'Optional'.bold}. Name of Google Cloud Storage bucket in which source code will be stored.`,
         requiresArg: true,
         type: 'string'
       },
       timeout: {
-        description: 'The function execution timeout, e.g. 30s for 30 seconds. Defaults to 60 seconds.',
+        alias: 't',
+        description: `${'Optional'.bold}. The function execution timeout, e.g. 30s for 30 seconds. Defaults to 60 seconds.`,
         requiresArg: true,
         type: 'string'
       },
@@ -82,16 +76,19 @@ exports.builder = (yargs) => {
       //   type: 'string'
       // },
       'trigger-bucket': {
-        description: 'Google Cloud Storage bucket name. Every change in files in this bucket will trigger function execution.',
+        alias: 'B',
+        description: `Google Cloud Storage bucket name. Every change in files in this bucket will trigger function execution.`,
         requiresArg: true,
         type: 'string'
       },
       'trigger-http': {
-        description: `Every HTTP POST request to the function's endpoint (web_trigger.url parameter of the deploy output) will trigger function execution. Result of the function execution will be returned in response body.`,
+        alias: 'H',
+        description: `Every HTTP request to the function's endpoint will trigger function execution. Result of the function execution will be returned in response body.`,
         requiresArg: false
       },
       'trigger-topic': {
-        description: 'Name of Pub/Sub topic. Every message published in this topic will trigger function execution with message contents passed as input data.',
+        alias: 'T',
+        description: `Name of Pub/Sub topic. Every message published in this topic will trigger function execution with message contents passed as input data.`,
         requiresArg: true,
         type: 'string'
       // },
@@ -106,12 +103,10 @@ exports.builder = (yargs) => {
       //   requiresArg: true,
       //   type: 'string'
       }
-    }, _.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort'])))
-    .implies('stage-bucket', 'local-path')
-    .implies('source-path', 'source-url')
-    .epilogue('For more information, see https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Deploying-functions');
+    }, _.pick(OPTIONS, ['projectId', 'region'])))
+    .epilogue(`See ${'https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Deploying-functions'.bold}`);
 
-  EXAMPLES['deploy'].forEach((e) => yargs.example(e[0], e[1]));
+  EXAMPLES['deploy'].forEach((e) => yargs.example(e[0]));
 };
 exports.handler = (opts) => {
   opts.localPath || (opts.localPath = process.cwd());
@@ -128,15 +123,13 @@ exports.handler = (opts) => {
 
   const controller = new Controller(opts);
 
-  opts.region || (opts.region = controller.config.region);
-
+  // Only deploy if the Emulator is running
   return controller.doIfRunning()
-    .then(() => {
-      return controller.deploy(opts.functionName, opts);
-    })
-    .then(() => {
-      controller.log(`Function ${opts.functionName} deployed.`.green);
-      describe(opts);
-    })
+    // Deploy the function
+    .then(() => controller.deploy(opts.functionName, opts))
+    // Log the status
+    .then(() => controller.log(`Function ${opts.functionName} deployed.`.green))
+    // Print the function details
+    .then(() => describe(opts))
     .catch((err) => controller.handleError(err));
 };

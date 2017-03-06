@@ -1,5 +1,5 @@
 /**
- * Copyright 2016, Google, Inc.
+ * Copyright 2017, Google, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,18 +15,26 @@
 
 'use strict';
 
+require('colors');
+
 const config = require('../../../config');
 const EXAMPLES = require('../../examples');
 const OPTIONS = require('../../../options');
 
 const EPILOGUE = `Available configuration options:
 
-  ${'GLOBAL'.underline} - Settings used by all components.
+  ${'CLI'.underline} - Manages the Emulator.
     ${'projectId'.bold}
       ${OPTIONS.projectId.description}
 
     ${'region'.bold}
       ${OPTIONS.region.description}
+
+    ${'service'.bold}
+      ${OPTIONS.service.description}
+
+    ${'timeout'.bold}
+      ${OPTIONS.timeout.description}
 
   ${'EMULATOR'.underline} - Emulates the Cloud Functions API.
     ${'grpcHost'.bold}
@@ -38,23 +46,6 @@ const EPILOGUE = `Available configuration options:
     ${'logFile'.bold}
       ${OPTIONS.logFile.description}
 
-    ${'restHost'.bold}
-      ${OPTIONS.restHost.description}
-
-    ${'restPort'.bold}
-      ${OPTIONS.restPort.description}
-
-    ${'verbose'.bold}
-      ${OPTIONS.verbose.description}
-
-  ${'CLI'.underline} - Manages the Emulator.
-    ${'service'.bold}
-      ${OPTIONS.service.description}
-
-    ${'timeout'.bold}
-      ${OPTIONS.timeout.description}
-
-  ${'SUPERVISOR'.underline} - Responsible for invoking functions.
     ${'debug'.bold}
       ${OPTIONS.debug.description}
 
@@ -67,6 +58,12 @@ const EPILOGUE = `Available configuration options:
     ${'inspectPort'.bold}
       ${OPTIONS.inspectPort.description}
 
+    ${'restHost'.bold}
+      ${OPTIONS.restHost.description}
+
+    ${'restPort'.bold}
+      ${OPTIONS.restPort.description}
+
     ${'supervisorHost'.bold}
       ${OPTIONS.supervisorHost.description}
 
@@ -76,7 +73,10 @@ const EPILOGUE = `Available configuration options:
     ${'useMocks'.bold}
       ${OPTIONS.useMocks.description}
 
-    For more information, see https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Configuring-the-Emulator
+    ${'verbose'.bold}
+      ${OPTIONS.verbose.description}
+
+    See ${'https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Configuring-the-Emulator'.bold}
 `;
 const COMMAND = `functions config ${'<command>'.yellow} ${'[options]'.yellow}`;
 const DESCRIPTION = `Manages the settings stored in ${config.path.bold}.`;
@@ -100,6 +100,7 @@ exports.builder = (yargs) => {
     .usage(USAGE)
     .command(require('./list'))
     .command(require('./set'))
+    .command(require('./reset'))
     .command(require('./defaults'))
     .epilogue(EPILOGUE);
 

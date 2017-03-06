@@ -1,5 +1,5 @@
 /**
- * Copyright 2016, Google, Inc.
+ * Copyright 2017, Google, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,6 +14,8 @@
  */
 
 'use strict';
+
+require('colors');
 
 exports.call = [
   ['functions call helloWorld', 'Invokes the helloWorld function with no data.'],
@@ -38,22 +40,23 @@ exports['config.set'] = [
   ['functions config set projectId my-project', `Sets ${'projectId'.bold} to ${'my-project'.bold}.`]
 ];
 
-exports.delete = [];
-
-exports.deploy = [
-  ['cd /path/to/module/dir; functions deploy helloWorld --trigger-http', 'Deploy helloWorld as an HTTP function from the module located in /path/to/module/dir.'],
-  ['functions deploy helloWorld --local-path=/path/to/other/module/dir --trigger-http', 'Deploy helloWorld as an HTTP function from the module located in /path/to/other/module/dir.']
+exports.delete = [
+  ['functions delete helloWorld']
 ];
 
-exports.describe = [];
+exports.deploy = [
+  ['cd /path/to/src; functions deploy helloWorld --trigger-http'],
+  ['functions deploy helloWorld --local-path=/path/to/src --trigger-http'],
+  ['functions deploy testHelloWorld -l=/path/to/src --entry-point=helloWorld --trigger-http'],
+  ['cd /path/to/src; functions deploy helloGCS --trigger-bucket=my-bucket'],
+  ['functions deploy helloPubSub -l=/path/to/src --trigger-topic=my-topic']
+];
+
+exports.describe = [
+  ['functions describe helloWorld']
+];
 
 exports['event-types.list'] = [];
-
-exports.kill = [];
-
-exports.list = [];
-
-exports.prune = [];
 
 exports.restart = [];
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2016, Google, Inc.
+ * Copyright 2017, Google, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,6 +15,8 @@
 
 'use strict';
 
+require('colors');
+
 const _ = require('lodash');
 
 const Controller = require('../controller');
@@ -22,7 +24,7 @@ const EXAMPLES = require('../examples');
 const OPTIONS = require('../../options');
 
 const COMMAND = `functions stop ${'[options]'.yellow}`;
-const DESCRIPTION = `Stops the Emulator gracefully.`;
+const DESCRIPTION = `Attempts to stop the Emulator gracefully.`;
 const USAGE = `Usage:
   ${COMMAND.bold}
 
@@ -37,21 +39,16 @@ exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort', 'timeout']));
+    .options(_.pick(OPTIONS, ['timeout']));
 
-  EXAMPLES['status'].forEach((e) => yargs.example(e[0], e[1]));
+  EXAMPLES['stop'].forEach((e) => yargs.example(e[0], e[1]));
 };
 exports.handler = (opts) => {
   const controller = new Controller(opts);
 
   return controller.doIfRunning()
-    .then(() => {
-      controller.log(`Stopping ${controller.name}...`);
-      return controller.stop();
-    })
-    .then(() => {
-      controller.write(controller.name);
-      controller.write(' STOPPED\n'.red);
-    })
+    .then(() => controller.log(`Stopping ${controller.name}...`))
+    .then(() => controller.stop())
+    .then(() => controller.write(`${controller.name} ${'STOPPED'.red}`))
     .catch((err) => controller.handleError(err));
 };

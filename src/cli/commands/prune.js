@@ -1,5 +1,5 @@
 /**
- * Copyright 2016, Google, Inc.
+ * Copyright 2017, Google, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,10 +15,11 @@
 
 'use strict';
 
+require('colors');
+
 const _ = require('lodash');
 
 const Controller = require('../controller');
-const EXAMPLES = require('../examples');
 const list = require('./list').handler;
 const OPTIONS = require('../../options');
 
@@ -38,19 +39,14 @@ exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort']));
-
-  EXAMPLES['prune'].forEach((e) => yargs.example(e[0], e[1]));
+    .options(_.pick(OPTIONS, ['projectId', 'region']));
 };
 exports.handler = (opts) => {
   const controller = new Controller(opts);
 
   return controller.doIfRunning()
     .then(() => controller.prune())
-    .then((count) => {
-      controller.write(controller.name);
-      controller.write((` PRUNED ${count} function(s)\n`).green);
-      list(opts);
-    })
+    .then((count) => controller.log(`${controller.name} ${('PRUNED ' + count + ' function(s)').green}`))
+    .then(() => list(opts))
     .catch((err) => controller.handleError(err));
 };

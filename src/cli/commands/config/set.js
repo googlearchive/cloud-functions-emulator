@@ -1,5 +1,5 @@
 /**
- * Copyright 2016, Google, Inc.
+ * Copyright 2017, Google, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,6 +14,8 @@
  */
 
 'use strict';
+
+require('colors');
 
 const config = require('../../../config');
 const configCommand = require('./');
@@ -57,5 +59,5 @@ exports.handler = (opts) => {
   }
 
   controller.log(`${opts.key.bold} set to: ${JSON.stringify(opts.value).green}`);
-  controller.log('\nYou must restart the emulator for changes to take effect...');
+  controller.log('\nYou must restart the Emulator for changes to take effect...');
 };

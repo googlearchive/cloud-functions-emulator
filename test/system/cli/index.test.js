@@ -1,5 +1,5 @@
 /**
- * Copyright 2016, Google, Inc.
+ * Copyright 2017, Google, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -28,7 +28,7 @@ const uuid = require(`uuid`);
 
 const pkg = require(`../../../package.json`);
 const run = require(`./utils`).run;
-const getProjectId = require('../../../src/utils/project');
+const detectProjectId = require('../../../src/utils/detectProjectId');
 
 const bucketName = `cloud-functions-emulator-${uuid.v4()}`;
 const cmd = `node bin/functions`;
@@ -46,11 +46,11 @@ const REST_PORT = 8088;
 const GRPC_PORT = 8089;
 const SUPERVISOR_PORT = 8090;
 const REGION = `us-central1`;
-const PROJECT_ID = getProjectId(null, false);
+const PROJECT_ID = detectProjectId(null, false);
 
 function makeTests (service, override) {
-  const shortArgs = `--service=${service} --grpcHost=localhost --grpcPort=${GRPC_PORT} --restHost=localhost --restPort=${REST_PORT}`;
-  const args = `${shortArgs} --logFile=${logFile} --debug=false --inspect=false --supervisorHost=localhost --supervisorPort=${SUPERVISOR_PORT} --verbose`;
+  const shortArgs = ``;
+  const args = `--logFile=${logFile} --debug=false --inspect=false --supervisorHost=localhost --supervisorPort=${SUPERVISOR_PORT} --verbose`;
   let overrideArgs = ``;
   let currentEndpoint;
 
@@ -75,6 +75,8 @@ function makeTests (service, override) {
       // Clear all Operations data
       operations.clear();
 
+      config.set('service', service);
+      server.set('service', service);
       config.set('restPort', REST_PORT);
       server.set('restPort', REST_PORT);
       config.set('grpcPort', GRPC_PORT);
@@ -89,7 +91,7 @@ function makeTests (service, override) {
       let output = run(`${cmd} start ${args}`, cwd);
       assert(output.includes(`${prefix} STARTED`));
 
-      output = run(`${cmd} clear ${shortArgs}`, cwd);
+      output = run(`${cmd} clear`, cwd);
       assert(output.includes(`${prefix} CLEARED`));
     });
 
@@ -103,10 +105,10 @@ function makeTests (service, override) {
       let output = run(`${cmd} restart ${args}`, cwd);
       assert(output.includes(`STARTED`));
 
-      output = run(`${cmd} clear ${shortArgs}`, cwd);
+      output = run(`${cmd} clear`, cwd);
       assert(output.includes(`${prefix} CLEARED`));
 
-      output = run(`${cmd} stop ${shortArgs}`, cwd);
+      output = run(`${cmd} stop`, cwd);
       assert(output.includes(`${prefix} STOPPED`));
     });
 
@@ -129,7 +131,7 @@ function makeTests (service, override) {
           const output = run(`${override} list`, cwd);
           assert(output.includes(`Listed 0 items.`));
         } else {
-          const output = run(`${cmd} list ${shortArgs}`, cwd);
+          const output = run(`${cmd} list`, cwd);
           assert(output.includes(`No functions deployed`));
         }
       });

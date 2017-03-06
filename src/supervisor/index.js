@@ -1,5 +1,5 @@
 /**
- * Copyright 2016, Google, Inc.
+ * Copyright 2017, Google, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -118,6 +118,8 @@ class Supervisor {
         return [];
       })
       .then((execArgv) => {
+        const parts = CloudFunction.parseName(cloudfunction.name);
+
         // Spawn a child process in which to execute the user's function
         // TODO: Warn when the Supervisor process ends but a child process is
         // still running
@@ -128,8 +130,8 @@ class Supervisor {
           // Emulate the environment variables of the production service
           env: _.merge({}, process.env, {
             FUNCTION_NAME: cloudfunction.shortName,
-            GCLOUD_PROJECT: this.config.projectId,
-            GCP_PROJECT: this.config.projectId
+            GCLOUD_PROJECT: parts.project,
+            GCP_PROJECT: parts.project
           }),
           // Optionally prepare to debug the child process
           execArgv,

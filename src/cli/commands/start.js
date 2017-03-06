@@ -1,5 +1,5 @@
 /**
- * Copyright 2016, Google, Inc.
+ * Copyright 2017, Google, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,6 +14,8 @@
  */
 
 'use strict';
+
+require('colors');
 
 const _ = require('lodash');
 
@@ -42,11 +44,8 @@ exports.options = [
   'inspect',
   'inspectPort',
   'logFile',
-  'projectId',
-  'region',
   'restHost',
   'restPort',
-  'service',
   'storage',
   'supervisorHost',
   'supervisorPort',
@@ -93,7 +92,6 @@ exports.handler = (opts) => {
 
           controller.write(controller.name);
           controller.write(' STARTED\n'.green);
-          controller.log(`HTTP functions receiving requests at http://${config.supervisorHost}:${config.supervisorPort}/${config.projectId}/${config.region}/FUNCTION_NAME\n`);
 
           if (config.inspect) {
             console.log(`Inspect mode is enabled for the Supervisor. Check the logs for the workers' debugger ports.\n`);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2016, Google, Inc.
+ * Copyright 2017, Google, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,6 +15,8 @@
 
 'use strict';
 
+require('colors');
+
 const _ = require('lodash');
 const Table = require('cli-table2');
 
@@ -23,7 +25,7 @@ const EXAMPLES = require('../examples');
 const OPTIONS = require('../../options');
 
 const COMMAND = `functions describe ${'<functionName>'.yellow} ${'[options]'.yellow}`;
-const DESCRIPTION = `Describes the details of a single deployed function.`;
+const DESCRIPTION = `Prints the details of a single deployed function.`;
 const USAGE = `Usage:
   ${COMMAND.bold}
 
@@ -42,7 +44,7 @@ exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .options(_.pick(OPTIONS, ['grpcHost', 'grpcPort', 'projectId', 'region', 'service', 'restHost', 'restPort']));
+    .options(_.pick(OPTIONS, ['projectId', 'region']));
 
   EXAMPLES['describe'].forEach((e) => yargs.example(e[0], e[1]));
 };

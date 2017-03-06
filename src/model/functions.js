@@ -1,5 +1,5 @@
 /**
- * Copyright 2016, Google, Inc.
+ * Copyright 2017, Google, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -100,12 +100,6 @@ class ConfigAdapter {
 const FunctionsConfigSchema = {
   type: 'object',
   properties: {
-    projectId: {
-      type: 'string'
-    },
-    region: {
-      type: 'string'
-    },
     storage: {
       type: 'string',
       enum: ['configstore']
@@ -117,7 +111,7 @@ const FunctionsConfigSchema = {
       type: 'number'
     }
   },
-  required: ['projectId', 'region', 'storage', 'supervisorHost', 'supervisorPort']
+  required: ['storage', 'supervisorHost', 'supervisorPort']
 };
 
 /**
@@ -139,9 +133,6 @@ class Functions {
     if (this.config.storage === 'configstore') {
       this.adapter = new ConfigAdapter(this.config);
     }
-    this.storage = Storage({
-      projectId: this.config.projectId
-    });
   }
 
   /**
@@ -249,7 +240,11 @@ class Functions {
                 throw new Error(`Unsupported archive url: ${archiveUrl}`);
               }
               const name = path.parse(matches[2]).base;
-              const file = this.storage.bucket(matches[1]).file(matches[2]);
+              const parts = CloudFunction.parseName(cloudfunction.name);
+              const storage = Storage({
+                projectId: parts.project
+              });
+              const file = storage.bucket(matches[1]).file(matches[2]);
 
               let zipName = tmp.tmpNameSync({
                 postfix: `-${name}`
@@ -370,8 +365,10 @@ class Functions {
         // TODO: Filter out fields that cannot be edited by the user
         cloudfunction = this.cloudfunction(cloudfunction.name, cloudfunction);
 
+        const parts = CloudFunction.parseName(cloudfunction.name);
+
         if (cloudfunction.httpsTrigger) {
-          cloudfunction.httpsTrigger.url = `http://${this.config.supervisorHost}:${this.config.supervisorPort}/${this.config.projectId}/${this.config.region}/${cloudfunction.shortName}`;
+          cloudfunction.httpsTrigger.url = `http://${this.config.supervisorHost}:${this.config.supervisorPort}/${parts.project}/${parts.location}/${cloudfunction.shortName}`;
         }
 
         _.merge(cloudfunction, {

@@ -1,3 +1,11 @@
+##### 1.0.0-alpha.11 - 06 March 2017
+
+###### Breaking changes
+- Some options have been removed from commands where they weren't needed
+
+###### Other
+- Cleaned up of the CLI help text
+
 ##### 1.0.0-alpha.10 - 05 March 2017
 
 ###### Backwards compatible changes

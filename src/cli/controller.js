@@ -1,5 +1,5 @@
 /**
- * Copyright 2016, Google, Inc.
+ * Copyright 2017, Google, Inc.
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,7 +13,31 @@
  * limitations under the License.
  */
 
+/**
+ * The Emulator has two services: "rest" and "grpc".
+ *
+ * In "rest" mode the CLI uses a RestClient (implemented using the Google APIs
+ * Client Library) to communicate with the Emulator:
+ *
+ *     |-->-- RestClient - HTTP1.1 - JSON -->--|
+ * CLI -                                       - Emulator
+ *     |--<-- RestClient - HTTP1.1 - JSON --<--|
+ *
+ * In "grpc" mode the CLI uses a GrpcClient (implemented using the Google Cloud
+ * Client Library) to communicate with the Emulator:
+ *
+ *     |-->-- GrpcClient - HTTP2 - Proto -->--|
+ * CLI -                                      - Emulator
+ *     |--<-- GrpcClient - HTTP2 - Proto --<--|
+ *
+ * The Gcloud SDK can be used to talk to the Emulator as well, just do:
+ *
+ *     gcloud config set api_endpoint_overrides/cloudfunctions http://localhost:8008/
+ */
+
 'use strict';
+
+require('colors');
 
 const _ = require('lodash');
 const AdmZip = require('adm-zip');
@@ -26,7 +50,6 @@ const Storage = require('@google-cloud/storage');
 const tmp = require('tmp');
 
 const Client = require('../client');
-const getProjectId = require('../utils/project');
 const Model = require('../model');
 const defaults = require('../defaults.json');
 const logs = require('../emulator/logs');
@@ -55,9 +78,6 @@ class Controller {
     this._config = new Configstore(path.join(pkg.name, '/config'), defaults);
     // Merge the user's configuration with command-line options
     this.config = _.merge({}, defaults, this._config.all, opts);
-
-    // Ensure we've got a project ID
-    this.config.projectId = getProjectId(this.config.projectId);
 
     // We will pipe stdout from the child process to the emulator log file
     this.config.logFile = logs.assertLogsPath(this.config.logFile);
@@ -104,7 +124,11 @@ class Controller {
       if (!fs.existsSync(opts.localPath)) {
         throw new Error('Provided directory does not exist.');
       } else {
-        const exportedKeys = execSync(`node -e "console.log(Object.keys(require('${pathForCmd}') || {}))"`).toString().trim();
+        // Parse the user's code to find the names of the exported functions
+        const exportedKeys = execSync(`node -e "console.log(Object.keys(require('${pathForCmd}') || {}))"`)
+          .toString()
+          .trim();
+
         // TODO: Move this check to the Emulator during unpacking
         // TODO: Make "index.js" dynamic
         if (!exportedKeys.includes(opts.entryPoint) && !exportedKeys.includes(name)) {
@@ -476,7 +500,6 @@ class Controller {
           '.',
           `--grpcHost=${this.config.grpcHost}`,
           `--grpcPort=${this.config.grpcPort}`,
-          `--projectId=${this.config.projectId}`,
           `--timeout=${this.config.timeout}`,
           `--verbose=${this.config.verbose}`,
           `--useMocks=${this.config.useMocks}`,
@@ -514,7 +537,6 @@ class Controller {
           inspect: this.config.inspect,
           inspectPort: this.config.inspectPort,
           logFile: this.config.logFile,
-          projectId: this.config.projectId,
           region: this.config.region,
           restHost: this.config.restHost,
           restPort: this.config.restPort,
