@@ -1,3 +1,8 @@
+##### 1.0.0-alpha.10 - 05 March 2017
+
+###### Backwards compatible changes
+- Export all Emulator classes
+
 ##### 1.0.0-alpha.9 - 05 March 2017
 
 ###### Breaking changes

@@ -100,6 +100,8 @@ class Emulator {
   }
 }
 
+exports.Emulator = Emulator;
+
 exports.main = (args) => {
   let opts = cli
     .usage(USAGE)
