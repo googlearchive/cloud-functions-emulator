@@ -46,18 +46,6 @@ const EPILOGUE = `Available configuration options:
     ${'logFile'.bold}
       ${OPTIONS.logFile.description}
 
-    ${'debug'.bold}
-      ${OPTIONS.debug.description}
-
-    ${'debugPort'.bold}
-      ${OPTIONS.debugPort.description}
-
-    ${'inspect'.bold}
-      ${OPTIONS.inspect.description}
-
-    ${'inspectPort'.bold}
-      ${OPTIONS.inspectPort.description}
-
     ${'restHost'.bold}
       ${OPTIONS.restHost.description}
 

@@ -82,35 +82,6 @@ module.exports = {
     requiresArg: true,
     type: 'number'
   },
-  verbose: {
-    description: `When ${'true'.bold}, shows debug logs from the Emulator itself in the log file. ${'Default:'.bold} ${defaults.verbose.toString().green}`,
-    requiresArg: false,
-    type: 'boolean'
-  },
-
-  /**
-   * Supervisor settings
-   */
-  debug: {
-    description: `When ${'true'.bold}, enables the Node.js Debugger for function invocations. ${'Default:'.bold} ${defaults.debug.toString().green}`,
-    type: 'boolean',
-    requiresArg: false
-  },
-  debugPort: {
-    description: `The port for the Node.js Debugger. ${'Default:'.bold} ${defaults.debugPort.toString().green}`,
-    requiresArg: true,
-    type: 'number'
-  },
-  inspect: {
-    description: `When ${'true'.bold}, enables the Node.js Inspector for function invocations. ${'Default:'.bold} ${defaults.inspect.toString().green}`,
-    type: 'boolean',
-    requiresArg: false
-  },
-  inspectPort: {
-    description: `The port for the Node.js Inspector. ${'Default:'.bold} ${defaults.inspectPort.toString().green}`,
-    requiresArg: true,
-    type: 'number'
-  },
   supervisorHost: {
     description: `The host of the Supervisor, which hosts HTTP functions. ${'Default:'.bold} ${defaults.supervisorHost.toString().green}`,
     requiresArg: true,
@@ -125,5 +96,10 @@ module.exports = {
     description: `When ${'true'.bold}, ${'mocks.js'.green} will be loaded at startup. ${'Default:'.bold} ${defaults.useMocks.toString().green}`,
     requiresArg: false,
     type: ['boolean', 'string']
+  },
+  verbose: {
+    description: `When ${'true'.bold}, shows debug logs from the Emulator itself in the log file. ${'Default:'.bold} ${defaults.verbose.toString().green}`,
+    requiresArg: false,
+    type: 'boolean'
   }
 };

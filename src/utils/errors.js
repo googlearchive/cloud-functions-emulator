@@ -125,6 +125,55 @@ class NotFoundError extends ExtendableError {
   }
 }
 
+function sendRestError (err, res) {
+  if (!(err instanceof Error) && err.name && err.stack && err.message) {
+    const _err = err;
+    err = new Error(_err.message);
+    err.stack = _err.stack;
+  }
+
+  if (err instanceof InvalidArgumentError) {
+    res.status(400).json({
+      error: {
+        code: 400,
+        status: 'INVALID_ARGUMENT',
+        message: err.message || http.STATUS_CODES['400'],
+        errors: [err.message || http.STATUS_CODES['400']]
+      }
+    }).end();
+  } else if (err instanceof ConflictError) {
+    res.status(409).json({
+      error: {
+        code: 409,
+        status: 'ALREADY_EXISTS',
+        message: err.message || http.STATUS_CODES['409'],
+        errors: [err.message || http.STATUS_CODES['409']]
+      }
+    }).end();
+  } else if (err instanceof NotFoundError) {
+    res.status(404).json({
+      error: {
+        code: 404,
+        status: 'NOT_FOUND',
+        message: err.message || http.STATUS_CODES['404'],
+        errors: [err.message || http.STATUS_CODES['404']]
+      }
+    }).end();
+  } else if (err instanceof InternalError) {
+    res.status(500).json({
+      error: {
+        code: 500,
+        status: 'INTERNAL',
+        message: err.message || http.STATUS_CODES['500'],
+        errors: [err.message || http.STATUS_CODES['500']]
+      }
+    }).end();
+  } else {
+    res.status(500).send(err && err.message ? err.message : '').end();
+  }
+}
+
+exports.sendRestError = sendRestError;
 exports.status = grpc.status;
 exports.BadRequest = BadRequest;
 exports.DebugInfo = DebugInfo;

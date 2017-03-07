@@ -19,12 +19,11 @@ const bodyParser = require('body-parser');
 const Configstore = require('configstore');
 const express = require('express');
 const got = require('got');
-const http = require('http');
 const path = require('path');
 const url = require('url');
 const uuid = require('uuid');
 
-const errors = require('../utils/errors');
+const Errors = require('../utils/errors');
 const Model = require('../model');
 const pkg = require('../../package.json');
 const Service = require('./service');
@@ -90,63 +89,11 @@ class RestService extends Service {
         (req, res, next) => this.getOperation(req, res).catch(next)
       )
       .all('*', (req, res, next) => {
-        next({ code: errors.status.NOT_FOUND });
+        next({ code: Errors.status.NOT_FOUND });
       });
 
     // Define error handlers last
-    this.server.use((err, req, res, next) => {
-      // Check for a serialized error and deserialize it if necessary
-      if (!(err instanceof Error) && err.name && err.stack && err.message) {
-        const _err = err;
-        err = new Error(_err.message);
-        err.stack = _err.stack;
-      }
-
-      // TODO: Extract most of this error handling/formatting into a utility
-      if (err instanceof errors.InvalidArgumentError) {
-        res.status(400).json({
-          error: {
-            code: 400,
-            status: 'INVALID_ARGUMENT',
-            message: err.message || http.STATUS_CODES['400'],
-            errors: [err.message || http.STATUS_CODES['400']]
-          }
-        }).end();
-      } else if (err instanceof errors.ConflictError) {
-        res.status(409).json({
-          error: {
-            code: 409,
-            status: 'ALREADY_EXISTS',
-            message: err.message || http.STATUS_CODES['409'],
-            errors: [err.message || http.STATUS_CODES['409']]
-          }
-        }).end();
-      } else if (err instanceof errors.NotFoundError) {
-        res.status(404).json({
-          error: {
-            code: 404,
-            status: 'NOT_FOUND',
-            message: err.message || http.STATUS_CODES['404'],
-            errors: [err.message || http.STATUS_CODES['404']]
-          }
-        }).end();
-      } else if (err instanceof errors.InternalError) {
-        res.status(500).json({
-          error: {
-            code: 500,
-            status: 'INTERNAL',
-            message: err.message || http.STATUS_CODES['500'],
-            errors: [err.message || http.STATUS_CODES['500']]
-          }
-        }).end();
-      } else if (err instanceof Error) {
-        res.status(500).send(err.stack).end();
-      } else if (err) {
-        res.status(500).end();
-      } else {
-        res.status(404).end();
-      }
-    });
+    this.server.use((err, req, res, next) => Errors.sendRestError(err, res));
   }
 
   /**
@@ -212,7 +159,13 @@ class RestService extends Service {
     return this.functions.createFunction(location, req.body)
       .then((operation) => {
         res.status(200).json(operation).end();
-        return this.supervisor.delete(req.body.name);
+        return got.post(`http://${this.supervisor.config.host}:${this.supervisor.config.port}/api/deploy`, {
+          body: JSON.stringify({ name: req.body.name }),
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          json: true
+        });
       });
   }
 
@@ -231,7 +184,13 @@ class RestService extends Service {
     return this.functions.deleteFunction(name)
       .then((operation) => {
         res.status(200).json(operation).end();
-        return this.supervisor.delete(name);
+        return got.post(`http://${this.supervisor.config.host}:${this.supervisor.config.port}/api/delete`, {
+          body: JSON.stringify({ name: req.body.name }),
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          json: true
+        });
       });
   }
 
@@ -261,7 +220,7 @@ class RestService extends Service {
           .catch((err) => {
             if (err && err.statusCode === 404) {
               return Promise.reject({
-                code: errors.status.NOT_FOUND,
+                code: Errors.status.NOT_FOUND,
                 message: 'Discovery document not found for API service.'
               });
             }

@@ -50,7 +50,7 @@ const PROJECT_ID = detectProjectId(null, false);
 
 function makeTests (service, override) {
   const shortArgs = ``;
-  const args = `--logFile=${logFile} --debug=false --inspect=false --supervisorHost=localhost --supervisorPort=${SUPERVISOR_PORT} --verbose`;
+  const args = `--logFile=${logFile} --supervisorHost=localhost --supervisorPort=${SUPERVISOR_PORT} --verbose`;
   let overrideArgs = ``;
   let currentEndpoint;
 
@@ -370,6 +370,46 @@ function makeTests (service, override) {
         assert(output.includes(`hello`));
       });
     });
+
+    if (!override) {
+      describe(`debug`, () => {
+        after(() => {
+          run(`${cmd} reset helloGET ${shortArgs}`, cwd);
+          run(`${cmd} reset helloPOST ${shortArgs}`, cwd);
+        });
+        it(`should debug a function`, () => {
+          let output = run(`${cmd} debug helloGET ${shortArgs}`, cwd);
+          assert(output.includes(`Debugger for helloGET listening on port 5858.`));
+        });
+        it(`should disallow use of same debug port`, () => {
+          let output = run(`${cmd} debug helloPOST ${shortArgs}`, cwd);
+          assert(output.includes(`Debug/Inspect port 5858 already in us`));
+        });
+        it(`should allow configuring debug port`, () => {
+          let output = run(`${cmd} debug helloPOST --port=5859 ${shortArgs}`, cwd);
+          assert(output.includes(`Debugger for helloPOST listening on port 5859.`));
+        });
+      });
+
+      describe(`inspect`, () => {
+        after(() => {
+          run(`${cmd} reset helloGET ${shortArgs}`, cwd);
+          run(`${cmd} reset helloPOST ${shortArgs}`, cwd);
+        });
+        it(`should inspect a function`, () => {
+          let output = run(`${cmd} inspect helloGET ${shortArgs}`, cwd);
+          assert(output.includes(`Debugger for helloGET listening on port 9229.`));
+        });
+        it(`should disallow use of same inspect port`, () => {
+          let output = run(`${cmd} inspect helloPOST ${shortArgs}`, cwd);
+          assert(output.includes(`Debug/Inspect port 9229 already in use`));
+        });
+        it(`should allow configuring inspect port`, () => {
+          let output = run(`${cmd} inspect helloPOST --port=9230 ${shortArgs}`, cwd);
+          assert(output.includes(`Debugger for helloPOST listening on port 9230.`));
+        });
+      });
+    }
 
     describe(`clear`, () => {
       it(`should clear existing functions`, () => {

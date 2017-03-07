@@ -40,6 +40,8 @@ exports['config.set'] = [
   ['functions config set projectId my-project', `Sets ${'projectId'.bold} to ${'my-project'.bold}.`]
 ];
 
+exports.debug = [];
+
 exports.delete = [
   ['functions delete helloWorld']
 ];
@@ -57,6 +59,13 @@ exports.describe = [
 ];
 
 exports['event-types.list'] = [];
+
+exports.inspect = [];
+
+exports.reset = [
+  ['functions reset helloWorld', `Reset the helloWorld function's worker process.`],
+  ['functions reset helloWorld --keep', `Reset the helloWorld function's worker process, but keep its debugging settings, if any.`]
+];
 
 exports.restart = [];
 

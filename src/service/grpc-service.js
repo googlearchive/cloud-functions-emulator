@@ -142,7 +142,15 @@ class RpcService extends Service {
   createFunction (call, cb) {
     return this.functions.createFunction(call.request.location, call.request.function)
       .then((operation) => cb(null, operation.toProtobuf()))
-      .then(() => this.supervisor.delete(call.request.function.name));
+      .then(() => {
+        return got.post(`http://${this.supervisor.config.host}:${this.supervisor.config.port}/api/deploy`, {
+          body: JSON.stringify({ name: call.request.function.name }),
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          json: true
+        });
+      });
   }
 
   /**
@@ -156,7 +164,15 @@ class RpcService extends Service {
   deleteFunction (call, cb) {
     return this.functions.deleteFunction(call.request.name)
       .then((operation) => cb(null, operation.toProtobuf()))
-      .then(() => this.supervisor.delete(call.request.name));
+      .then(() => {
+        return got.post(`http://${this.supervisor.config.host}:${this.supervisor.config.port}/api/delete`, {
+          body: JSON.stringify({ name: call.request.name }),
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          json: true
+        });
+      });
   }
 
   /**

@@ -123,6 +123,8 @@ exports.handler = (opts) => {
 
   const controller = new Controller(opts);
 
+  opts.region || (opts.region = controller.config.region);
+
   // Only deploy if the Emulator is running
   return controller.doIfRunning()
     // Deploy the function

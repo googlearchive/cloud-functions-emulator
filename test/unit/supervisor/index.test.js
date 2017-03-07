@@ -15,7 +15,13 @@
 
 'use strict';
 
-const Supervisor = require('./supervisor');
+const SupervisorPkg = require('../../../src/supervisor');
 
-exports.Supervisor = Supervisor;
-exports.supervisor = (...args) => new Supervisor(...args);
+describe('unit/supervisor', () => {
+  it('should export correct properties', () => {
+    assert.deepEqual(Object.keys(SupervisorPkg), [
+      'Supervisor',
+      'supervisor'
+    ]);
+  });
+});
