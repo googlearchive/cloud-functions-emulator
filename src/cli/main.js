@@ -60,6 +60,7 @@ function main (args) {
     EXAMPLES[key].forEach((e) => cli.example(e[0], e[1]));
   }
 
+  /* eslint-disable */
   cli
     .epilogue(EPILOGUE)
     .help()
@@ -67,6 +68,7 @@ function main (args) {
     .strict()
     .parse(args)
     .argv;
+  /* eslint-enable */
 }
 
 module.exports = main;

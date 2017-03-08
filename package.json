@@ -1,7 +1,7 @@
 {
   "name": "@google-cloud/functions-emulator",
   "description": "Google Cloud Functions Emulator",
-  "version": "1.0.0-alpha.12",
+  "version": "1.0.0-alpha.13",
   "license": "Apache-2.0",
   "author": "Google Inc.",
   "engines": {
@@ -56,11 +56,11 @@
     "@google-cloud/storage": "0.7.0",
     "adm-zip": "0.4.7",
     "ajv": "4.11.4",
-    "body-parser": "1.17.0",
+    "body-parser": "1.17.1",
     "cli-table2": "0.2.0",
     "colors": "1.1.2",
     "configstore": "3.0.0",
-    "express": "4.15.1",
+    "express": "4.15.2",
     "google-proto-files": "0.10.0",
     "googleapis": "17.1.0",
     "got": "6.7.1",
@@ -83,7 +83,7 @@
     "nyc": "10.1.2",
     "power-assert": "1.4.2",
     "proxyquire": "1.7.11",
-    "semistandard": "9.2.1",
+    "semistandard": "10.0.0",
     "semistandard-format": "3.0.0",
     "sinon": "1.17.7"
   },

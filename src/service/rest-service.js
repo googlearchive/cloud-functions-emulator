@@ -219,10 +219,7 @@ class RestService extends Service {
           })
           .catch((err) => {
             if (err && err.statusCode === 404) {
-              return Promise.reject({
-                code: Errors.status.NOT_FOUND,
-                message: 'Discovery document not found for API service.'
-              });
+              return Promise.reject(new Errors.NotFoundError('Discovery document not found for API service.'));
             }
             return Promise.reject(err);
           });

@@ -1,3 +1,8 @@
+##### 1.0.0-alpha.13 - 08 March 2017
+
+###### Breaking changes
+- [#69](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/69) - Move --debug and --inspect into their own commands. Debugging has changed, please see [Debugging-functions](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Debugging-functions) for details.
+
 ##### 1.0.0-alpha.12 - 06 March 2017
 
 ###### Bug fixes
