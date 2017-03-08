@@ -135,7 +135,7 @@ class Supervisor {
           target: `http://localhost:${worker.port}${req.url.replace(key, '') || '/'}`
         });
       })
-      .catch((err) => this._sendError(err, res));
+      .catch(next);
   }
 
   /**

@@ -1,3 +1,8 @@
+##### 1.0.0-alpha.14 - 08 March 2017
+
+###### Bug fixes
+- Fixes undefined method error when trying to invoke functions that don't exist.
+
 ##### 1.0.0-alpha.13 - 08 March 2017
 
 ###### Breaking changes
