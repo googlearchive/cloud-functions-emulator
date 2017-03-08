@@ -23,32 +23,43 @@ const Controller = require('../controller');
 const EXAMPLES = require('../examples');
 const OPTIONS = require('../../options');
 
-const COMMAND = `functions stop ${'[options]'.yellow}`;
-const DESCRIPTION = `Attempts to stop the Emulator gracefully.`;
+const COMMAND = `functions reset ${'<functionName>'.yellow} ${'[options]'.yellow}`;
+const DESCRIPTION = `Restarts the specified function by shutting down its worker(s), forcing a "cold start".`;
 const USAGE = `Usage:
   ${COMMAND.bold}
 
 Description:
-  ${DESCRIPTION}`;
+  ${DESCRIPTION}
+
+Positional arguments:
+  ${'functionName'.bold}
+    The name of the function to reset.`;
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
-exports.command = 'stop';
+exports.command = 'reset <functionName>';
 exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .options(_.pick(OPTIONS, ['timeout']));
+    .options(_.merge({
+      keep: {
+        alias: 'k',
+        default: false,
+        description: `If ${'true'.bold}, keep the function's debugging settings, if any.`,
+        type: 'boolean'
+      }
+    }, _.pick(OPTIONS, ['projectId', 'region'])))
+    .epilogue(`See ${'https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Debugging-functions'.bold}`);
 
-  EXAMPLES['stop'].forEach((e) => yargs.example(e[0], e[1]));
+  EXAMPLES['reset'].forEach((e) => yargs.example(e[0], e[1]));
 };
 exports.handler = (opts) => {
   const controller = new Controller(opts);
 
   return controller.doIfRunning()
-    .then(() => controller.log(`Stopping ${controller.name}...`))
-    .then(() => controller.stop())
-    .then(() => controller.log(`${controller.name} ${'STOPPED'.red}`))
+    .then(() => controller.reset(opts.functionName, opts))
+    .then(() => controller.log(`Function ${opts.functionName} reset.`))
     .catch((err) => controller.handleError(err));
 };

@@ -44,6 +44,7 @@ const AdmZip = require('adm-zip');
 const Configstore = require('configstore');
 const execSync = require('child_process').execSync;
 const fs = require('fs');
+const got = require('got');
 const path = require('path');
 const spawn = require('child_process').spawn;
 const Storage = require('@google-cloud/storage');
@@ -327,6 +328,34 @@ class Controller {
   }
 
   /**
+   * Enables debugging via --debug or --inspect for the specified function.
+   *
+   * @param {string} name The name of the function for which to enable debugging.
+   * @param {object} opts Configuration options.
+   */
+  debug (type, name, opts) {
+    return this.client.getFunction(name)
+      .then(([cloudfunction]) => {
+        if (opts.pause) {
+          console.log(`You paused execution. Connect to the debugger on port ${opts.port} to resume execution and begin debugging.`);
+        }
+
+        return got.post(`http://${this.config.supervisorHost}:${this.config.supervisorPort}/api/debug`, {
+          body: JSON.stringify({
+            type: type,
+            name: cloudfunction.name,
+            port: opts.port,
+            pause: opts.pause
+          }),
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          json: true
+        });
+      });
+  }
+
+  /**
    * Deploys a function.
    *
    * @param {string} name Intended name of the new function.
@@ -413,6 +442,13 @@ class Controller {
   }
 
   handleError (err) {
+    if (err && err.response && err.response.body) {
+      if (err.response.body.error) {
+        err = err.response.body.error;
+      } else {
+        err = err.response.body;
+      }
+    }
     if (Array.isArray(err.errors)) {
       err.errors.forEach((_err) => this.error(`${'ERROR'.red}: ${_err}`));
     } else if (Array.isArray(err.details)) {
@@ -482,6 +518,28 @@ class Controller {
         return Promise.all(tasks);
       })
       .then(() => tasks.length);
+  }
+
+  /**
+   * Resets a function's worker process.
+   *
+   * @param {string} name The name of the function to reset.
+   * @returns {Promise}
+   */
+  reset (name, opts) {
+    return this.client.getFunction(name)
+      .then(([cloudfunction]) => {
+        return got.post(`http://${this.config.supervisorHost}:${this.config.supervisorPort}/api/reset`, {
+          body: JSON.stringify({
+            name: cloudfunction.name,
+            keep: opts.keep
+          }),
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          json: true
+        });
+      });
   }
 
   /**

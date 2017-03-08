@@ -139,21 +139,24 @@ function main () {
       });
     });
 
-    if (!cloudfunction.serviceAccount) {
-      return;
+    // Only start watching for file changes if the funciton is not in debug mode
+    if (cloudfunction.serviceAccount && !message.debug) {
+      fs.watch(cloudfunction.serviceAccount, {
+        recursive: true
+      }, () => {
+        process.send({
+          close: true
+        });
+        server.close(() => {
+          console.log(`Worker for ${name} closed due to file changes.`);
+          process.exit();
+        });
+      });
     }
+  });
 
-    fs.watch(cloudfunction.serviceAccount, {
-      recursive: true
-    }, () => {
-      process.send({
-        close: true
-      });
-      server.close(() => {
-        console.log(`Worker for ${name} closed due to file changes.`);
-        process.exit();
-      });
-    });
+  process.send({
+    ready: true
   });
 }
 

@@ -37,12 +37,8 @@ Description:
   saved configuration settings.`;
 
 exports.options = [
-  'debug',
-  'debugPort',
   'grpcHost',
   'grpcPort',
-  'inspect',
-  'inspectPort',
   'logFile',
   'restHost',
   'restPort',
@@ -78,29 +74,13 @@ exports.handler = (opts) => {
   return controller.status()
     .then((status) => {
       if (status.state === controller.STATE.RUNNING) {
-        controller.write(controller.name);
-        controller.write(' RUNNING\n'.green);
+        controller.log(`${controller.name} ${'RUNNING'.green}`);
         return;
       }
 
       controller.log(`Starting ${controller.name}...`);
       return controller.start()
-        .then(() => {
-          let promise;
-
-          const config = controller.server.all;
-
-          controller.write(controller.name);
-          controller.write(' STARTED\n'.green);
-
-          if (config.inspect) {
-            console.log(`Inspect mode is enabled for the Supervisor. Check the logs for the workers' debugger ports.\n`);
-          } else if (config.debug) {
-            console.log(`Debug mode is enabled for the Supervisor. Check the logs for the workers' debugger ports.\n`);
-          }
-
-          return promise;
-        });
+        .then(() => controller.log(`${controller.name} ${'STARTED'.green}`));
     })
     .then(() => list(opts))
     .catch((err) => controller.handleError(err));

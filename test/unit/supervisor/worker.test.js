@@ -15,7 +15,11 @@
 
 'use strict';
 
-const Supervisor = require('./supervisor');
+const worker = require('../../../src/supervisor/worker');
 
-exports.Supervisor = Supervisor;
-exports.supervisor = (...args) => new Supervisor(...args);
+describe('unit/supervisor/worker', () => {
+  it('should export a main function', () => {
+    assert.equal(typeof worker, 'function');
+    assert.equal(worker.name, 'main');
+  });
+});
