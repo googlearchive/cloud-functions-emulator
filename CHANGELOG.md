@@ -1,3 +1,8 @@
+##### 1.0.0-alpha.15 - 10 March 2017
+
+###### Bug fixes
+- [#71](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/71) - "status" option produces bad 'HTTP Trigger' path
+
 ##### 1.0.0-alpha.14 - 08 March 2017
 
 ###### Bug fixes

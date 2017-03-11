@@ -595,6 +595,7 @@ class Controller {
           inspect: this.config.inspect,
           inspectPort: this.config.inspectPort,
           logFile: this.config.logFile,
+          projectId: this.config.projectId,
           region: this.config.region,
           restHost: this.config.restHost,
           restPort: this.config.restPort,

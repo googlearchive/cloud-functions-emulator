@@ -452,6 +452,7 @@ function makeTests (service, override) {
         assert(output.includes(`RUNNING`));
         assert(output.includes(`http://localhost:${REST_PORT}/`));
         assert(output.includes(`http://localhost:${GRPC_PORT}/`));
+        assert(output.includes(`http://localhost:${SUPERVISOR_PORT}/${PROJECT_ID}/${REGION}`));
 
         output = run(`${cmd} stop ${shortArgs}`, cwd);
         assert(output.includes(`STOPPED`));
