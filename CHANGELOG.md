@@ -1,3 +1,8 @@
+##### 1.0.0-alpha.16 - XX March 2017
+
+###### Backwards compatible changes
+- [#73](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/73) - Warn user when local version of Node is greater than 6.9.
+
 ##### 1.0.0-alpha.15 - 10 March 2017
 
 ###### Bug fixes
