@@ -136,9 +136,13 @@ function main (args) {
   process.on('SIGTERM', () => emulator.stop());
 
   process.on('exit', () => {
+    const pid = server.get('pid');
     try {
       server.delete('pid');
       server.set('stopped', Date.now());
+      if (pid) {
+        server.set('lastKnownPid', pid);
+      }
     } catch (err) {
 
     }

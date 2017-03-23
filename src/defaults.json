@@ -1,10 +1,6 @@
 {
-  "debug": false,
-  "debugPort": 5858,
   "grpcHost": "localhost",
   "grpcPort": 8009,
-  "inspect": false,
-  "inspectPort": 9229,
   "logFile": "logs/cloud-functions-emulator.log",
   "region": "us-central1",
   "restHost": "localhost",

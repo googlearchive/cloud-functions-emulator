@@ -25,11 +25,7 @@ class Emulator {
 
     const functions = Model.functions(opts);
     this.supervisor = Supervisor.supervisor(functions, {
-      debug: opts.debug,
-      debugPort: opts.debugPort,
       host: opts.supervisorHost,
-      inspect: opts.inspect,
-      inspectPort: opts.inspectPort,
       port: opts.supervisorPort,
       region: opts.region,
       useMocks: opts.useMocks

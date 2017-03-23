@@ -99,6 +99,8 @@ function makeTests (service, override) {
       if (override) {
         if (currentEndpoint) {
           spawnSync(`${GCLOUD} config set api_endpoint_overrides/cloudfunctions ${currentEndpoint}`, { shell: true, stdio: ['ignore', 'ignore', 'ignore'] });
+        } else {
+          spawnSync(`${GCLOUD} config unset api_endpoint_overrides/cloudfunctions`, { shell: true, stdio: ['ignore', 'ignore', 'ignore'] });
         }
       }
 
@@ -128,7 +130,7 @@ function makeTests (service, override) {
       before(() => {
         if (override) {
           deployArgs = `${overrideArgs} --stage-bucket=${bucketName}`;
-          const output = run(`${override} list`, cwd);
+          const output = run(`${override} list --region=${REGION}`, cwd);
           assert(output.includes(`Listed 0 items.`));
         } else {
           const output = run(`${cmd} list`, cwd);
@@ -241,7 +243,7 @@ function makeTests (service, override) {
 
     describe(`list`, () => {
       it(`should list functions`, () => {
-        const output = run(`${override || cmd} list ${override ? '' : shortArgs}`, cwd);
+        const output = run(`${override || cmd} list ${override ? `--region=${REGION}` : shortArgs}`, cwd);
         assert(output.includes(name));
         assert(output.includes(`helloData`));
         assert(output.includes(`helloGET`));

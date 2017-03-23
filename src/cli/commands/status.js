@@ -63,14 +63,8 @@ exports.handler = (opts) => {
         table.push(['REST Service', `http://${config.restHost}:${config.restPort}/`]);
         table.push(['gRPC Service', `http://${config.grpcHost}:${config.grpcPort}/`]);
         table.push(['HTTP Triggers', `http://${config.supervisorHost}:${config.supervisorPort}/${config.projectId}/${config.region}/:function`]);
-        if (config.inspect) {
-          table.push(['Debugger', 'ACTIVE (via --inspect)'.green]);
-          table.push(['Debugger Port', `${config.inspectPort}`]);
-        } else if (config.debug) {
-          table.push(['Debugger', 'ACTIVE (via --debug)'.green]);
-          table.push(['Debugger Port', `${config.debugPort}`]);
-        }
         table.push(['Log file', config.logFile]);
+        table.push(['Emulator Version', config.version]);
       } else {
         let time;
         if (config.stopped) {
@@ -91,9 +85,14 @@ exports.handler = (opts) => {
         if (config.logFile) {
           table.push(['Last log file', config.logFile]);
         }
+        if (config.lastKnownPid) {
+          table.push(['Last Known Process ID', config.lastKnownPid]);
+        }
+        table.push(['Emulator Version', config.version]);
       }
 
       controller.log(table.toString());
+      controller.log(`\nIf the Emulator becomes unresponsive, kill it will ${'functions kill'.bold} and then ensure that no other Emulator Node.js processes are running before restarting the Emulator.`);
     })
     .catch((err) => controller.handleError(err));
 };

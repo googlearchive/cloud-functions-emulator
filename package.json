@@ -1,7 +1,7 @@
 {
   "name": "@google-cloud/functions-emulator",
   "description": "Google Cloud Functions Emulator",
-  "version": "1.0.0-alpha.15",
+  "version": "1.0.0-alpha.16",
   "license": "Apache-2.0",
   "author": "Google Inc.",
   "engines": {
@@ -53,9 +53,9 @@
     "postinstall": "node scripts/upgrade-warning"
   },
   "dependencies": {
-    "@google-cloud/storage": "0.7.0",
+    "@google-cloud/storage": "0.8.0",
     "adm-zip": "0.4.7",
-    "ajv": "4.11.4",
+    "ajv": "4.11.5",
     "body-parser": "1.17.1",
     "cli-table2": "0.2.0",
     "colors": "1.1.2",
@@ -64,7 +64,7 @@
     "google-proto-files": "0.10.0",
     "googleapis": "18.0.0",
     "got": "6.7.1",
-    "grpc": "1.1.2",
+    "grpc": "1.2.0",
     "http-proxy": "1.16.2",
     "lodash": "4.17.4",
     "prompt": "1.0.0",
@@ -85,7 +85,7 @@
     "proxyquire": "1.7.11",
     "semistandard": "10.0.0",
     "semistandard-format": "3.0.0",
-    "sinon": "1.17.7"
+    "sinon": "2.1.0"
   },
   "repository": {
     "type": "git",

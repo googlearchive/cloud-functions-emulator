@@ -404,6 +404,7 @@ class Controller {
     console.error(...args);
   }
 
+  // TODO: Use this in the "inspect" CLI command
   getDebuggingUrl () {
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -467,9 +468,10 @@ class Controller {
   kill () {
     return Promise.resolve()
       .then(() => {
+        const pid = this.server.get('pid');
         try {
           // Attempt to forcefully end the Emulator process
-          process.kill(this.server.get('pid'), 'SIGKILL');
+          process.kill(pid, 'SIGKILL');
         } catch (err) {
           // Ignore any error
         }
@@ -477,6 +479,10 @@ class Controller {
         this.server.delete('pid');
         // Save the current timestamp
         this.server.set('stopped', Date.now());
+        if (pid) {
+          // Save last known PID
+          this.server.set('lastKnownPid', pid);
+        }
       });
   }
 
@@ -568,14 +574,6 @@ class Controller {
           `--supervisorPort=${this.config.supervisorPort}`
         ];
 
-        if (this.config.inspect) {
-          args.push(`--inspect=${this.config.inspect}`);
-          args.push(`--inspectPort=${this.config.inspectPort}`);
-        } else if (this.config.debug) {
-          args.push(`--debug=${this.config.debug}`);
-          args.push(`--debugPort=${this.config.debugPort}`);
-        }
-
         // Make sure the child is detached, otherwise it will be bound to the
         // lifecycle of the parent process. This means we should also ignore the
         // binding of stdout.
@@ -588,12 +586,8 @@ class Controller {
 
         // Update status of settings
         this.server.set({
-          debug: this.config.debug,
-          debugPort: this.config.debugPort,
           grpcHost: this.config.grpcHost,
           grpcPort: this.config.grpcPort,
-          inspect: this.config.inspect,
-          inspectPort: this.config.inspectPort,
           logFile: this.config.logFile,
           projectId: this.config.projectId,
           region: this.config.region,
