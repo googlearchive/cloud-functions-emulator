@@ -461,7 +461,7 @@ function makeTests (service, override) {
 
         output = run(`${cmd} status ${shortArgs}`, cwd);
         assert(output.includes(`STOPPED`));
-      }).timeout(20000);
+      }).timeout(120000);
     });
   });
 }

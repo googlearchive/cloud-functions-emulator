@@ -278,7 +278,7 @@ class Supervisor {
           }
         })
         .on('error', (err) => {
-          console.error('ERROR');
+          console.error(`ERROR: ${cloudfunction.name}`);
           console.error(err);
         });
 

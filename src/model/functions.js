@@ -160,7 +160,6 @@ class Functions {
           const parts = CloudFunction.parseName(name);
           const err = new Errors.ConflictError(`Function ${parts.name} in location ${parts.location} in project ${parts.project} already exists`);
           err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
-          console.error(err);
           return Promise.reject(err);
         }
       });
@@ -543,7 +542,6 @@ class Functions {
     const parts = CloudFunction.parseName(name);
     const err = new Errors.NotFoundError(`Function ${parts.name} in location ${parts.location} in project ${parts.project} does not exist`);
     err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
-    console.error(err);
     return Promise.reject(err);
   }
 
@@ -594,7 +592,6 @@ class Functions {
   _getOperationNotFoundError (name) {
     const err = new Errors.NotFoundError(`Operation ${name} does not exist`);
     err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.Operation), name));
-    console.error(err);
     return Promise.reject(err);
   }
 
