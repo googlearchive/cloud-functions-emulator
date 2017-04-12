@@ -60,6 +60,10 @@ exports.handler = (opts) => {
         table.push(['Status', 'RUNNING'.green]);
         table.push(['Uptime', time]);
         table.push(['Process ID', config.pid]);
+        const workerPids = Object.keys(config.workers || {});
+        if (workerPids.length) {
+          table.push(['Worker PIDs', workerPids.join(', ')]);
+        }
         table.push(['REST Service', `http://${config.restHost}:${config.restPort}/`]);
         table.push(['gRPC Service', `http://${config.grpcHost}:${config.grpcPort}/`]);
         table.push(['HTTP Triggers', `http://${config.supervisorHost}:${config.supervisorPort}/${config.projectId}/${config.region}/:function`]);
@@ -88,7 +92,9 @@ exports.handler = (opts) => {
         if (config.lastKnownPid) {
           table.push(['Last Known Process ID', config.lastKnownPid]);
         }
-        table.push(['Emulator Version', config.version]);
+        if (config.version) {
+          table.push(['Emulator Version', config.version]);
+        }
       }
 
       controller.log(table.toString());

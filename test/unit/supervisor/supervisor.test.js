@@ -299,7 +299,6 @@ describe('unit/supervisor/supervisor', () => {
 
   describe('Supervisor#start', () => {
     before(() => {
-      sinon.stub(process, 'on');
       console.debug = sinon.stub();
     });
 
@@ -318,7 +317,6 @@ describe('unit/supervisor/supervisor', () => {
         listen: sinon.stub().returns(serverMock)
       };
       supervisor.stop = sinon.stub();
-      process.on.yields();
 
       assert.strictEqual(supervisor.start(), supervisor);
 
@@ -338,14 +336,6 @@ describe('unit/supervisor/supervisor', () => {
       );
       assert.equal(serverMock.on.callCount, 1);
       assert.deepEqual(serverMock.on.getCall(0).args.slice(0, -1), ['listening']);
-      assert.equal(process.on.callCount, 1);
-      assert.deepEqual(process.on.getCall(0).args.slice(0, -1), ['exit']);
-      assert.equal(supervisor.stop.callCount, 1);
-      assert.deepEqual(supervisor.stop.getCall(0).args, []);
-    });
-
-    after(() => {
-      process.on.restore();
     });
   });
 

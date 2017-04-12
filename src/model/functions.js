@@ -19,6 +19,7 @@ const _ = require('lodash');
 const AdmZip = require('adm-zip');
 const Configstore = require('configstore');
 const fs = require('fs');
+const got = require('got');
 const os = require('os');
 const path = require('path');
 const rimraf = require('rimraf');
@@ -160,7 +161,8 @@ class Functions {
           const parts = CloudFunction.parseName(name);
           const err = new Errors.ConflictError(`Function ${parts.name} in location ${parts.location} in project ${parts.project} already exists`);
           err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
-          return Promise.reject(err);
+          console.error(err);
+          throw err;
         }
       });
   }
@@ -319,23 +321,12 @@ class Functions {
    * @private
    * @param {string} name The name of the CloudFunction to create.
    * @param {object} err The error.
-   * @param {Operation} operation The in-flight Operation, if any.
    * @returns {Promise}
    */
-  _createFunctionError (name, err, operation) {
+  _createFunctionError (name, err) {
+    console.error(err);
     err = new Errors.InternalError(err.message);
     err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
-
-    if (operation) {
-      operation.done = true;
-      operation.error = _.cloneDeep(err);
-
-      // Fire off the request to update the Operation
-      this.adapter.updateOperation(operation.name, operation)
-        .catch((err) => this._createFunctionError(name, err));
-    }
-
-    console.error(err);
     return Promise.reject(err);
   }
 
@@ -348,10 +339,12 @@ class Functions {
    * @returns {Promise}
    */
   createFunction (location, cloudfunction = {}) {
+    let operation, request;
     console.debug('Functions', 'createFunction', location, cloudfunction);
+
     return Promise.resolve()
       .then(() => {
-        const request = {
+        request = {
           location,
           function: _.cloneDeep(cloudfunction)
         };
@@ -360,68 +353,109 @@ class Functions {
           request.function.sourceArchiveUrl = request.function.gcsUrl;
           delete request.function.gcsUrl;
         }
+        for (let key in request.function) {
+          if (!request.function[key]) {
+            delete request.function[key];
+          }
+        }
 
         // TODO: Filter out fields that cannot be edited by the user
         cloudfunction = this.cloudfunction(cloudfunction.name, cloudfunction);
-
+      })
+      .catch((err) => this._createFunctionError(cloudfunction.name, err))
+      .then(() => this._assertFunctionDoesNotExist(cloudfunction.name))
+      .then(() => {
         const parts = CloudFunction.parseName(cloudfunction.name);
 
+        cloudfunction.status = 'DEPLOYING';
         if (cloudfunction.httpsTrigger) {
-          cloudfunction.httpsTrigger.url = `http://${this.config.supervisorHost}:${this.config.supervisorPort}/${parts.project}/${parts.location}/${cloudfunction.shortName}`;
+          cloudfunction.httpsTrigger.url = `${this.getSupervisorHost()}/${parts.project}/${parts.location}/${parts.name}`;
         }
 
-        _.merge(cloudfunction, {
-          // Just set status to READY because deployment is instant
-          status: protos.CloudFunctionStatus.READY
+        // Prepare the Operation
+        operation = this.operation(Operation.generateId(), {
+          done: false,
+          metadata: {
+            typeUrl: protos.getPath(protos.OperationMetadataV1Beta2),
+            value: {
+              target: cloudfunction.name,
+              type: protos.OperationType.CREATE_FUNCTION,
+              request: {
+                typeUrl: protos.getPath(protos.CreateFunctionRequest),
+                value: request
+              }
+            }
+          }
         });
 
-        return this._assertFunctionDoesNotExist(cloudfunction.name)
-          .then(() => {
-            const operationName = Operation.generateId();
+        return Promise.all([
+          this.adapter.createFunction(cloudfunction),
+          this.adapter.createOperation(operation)
+        ]);
+      })
+      .then(() => {
+        // Deploy the function out of band
+        setImmediate(() => {
+          cloudfunction.latestOperation = operation.name;
+          cloudfunction.availableMemoryMb = Math.floor(os.totalmem() / 1000000);
 
-            // Prepare the Operation
-            const operation = this.operation(operationName, {
-              done: false,
-              metadata: {
-                typeUrl: protos.getPath(protos.OperationMetadataV1Beta2),
-                value: {
-                  target: cloudfunction.name,
-                  type: protos.OperationType.CREATE_FUNCTION,
-                  request: {
-                    typeUrl: protos.getPath(protos.CreateFunctionRequest),
-                    value: request
-                  }
-                }
-              }
-            });
+          // Create the CloudFunction
+          this._unpackArchive(cloudfunction)
+            .then((_cloudfunction) => {
+              cloudfunction = _cloudfunction;
 
-            return this.adapter.createOperation(operation)
-              .then(() => {
-                // Asynchronously perform the creation of the CloudFunction
-                setImmediate(() => {
-                  cloudfunction.latestOperation = operation.name;
-                  cloudfunction.availableMemoryMb = Math.floor(os.totalmem() / 1000000);
+              return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                  got.post(`${this.getSupervisorHost()}/api/deploy`, {
+                    body: JSON.stringify({ name: cloudfunction.name }),
+                    headers: {
+                      'Content-Type': 'application/json'
+                    },
+                    json: true
+                  }).then(resolve, (err) => {
+                    if (err && err.response && err.response.body) {
+                      if (err.response.body.error) {
+                        err = err.response.body.error;
+                      } else {
+                        err = err.response.body;
+                      }
+                    }
+                    reject(err);
+                  });
+                }, 2000);
+              });
+            })
+            .then(() => {
+              cloudfunction.status = 'READY';
+              operation.done = true;
+              operation.response = {
+                typeUrl: protos.getPath(protos.CloudFunction),
+                value: _.cloneDeep(cloudfunction)
+              };
 
-                  // Create the CloudFunction
-                  this.adapter.createFunction(cloudfunction)
-                    .then(() => this._unpackArchive(cloudfunction))
-                    .then((cloudfunction) => {
-                      operation.done = true;
-                      operation.response = {
-                        typeUrl: protos.getPath(protos.CloudFunction),
-                        value: _.cloneDeep(cloudfunction)
-                      };
+              return Promise.all([
+                // Fire off the request to update the Operation
+                this.adapter.updateOperation(operation.name, operation),
+                this.adapter.createFunction(cloudfunction)
+              ]);
+            })
+            .catch((err) => this._createFunctionError(cloudfunction.name, err))
+            .catch((err) => {
+              cloudfunction.status = 'FAILED';
+              operation.done = true;
+              operation.error = JSON.parse(JSON.stringify(err));
 
-                      // Fire off the request to update the Operation
-                      this.adapter.updateOperation(operation.name, operation)
-                        .catch((err) => this._createFunctionError(cloudfunction.name, err));
-                    }, (err) => this._createFunctionError(cloudfunction.name, err, operation));
-                });
+              return Promise.all([
+                // Fire off the request to update the Operation
+                this.adapter.updateOperation(operation.name, operation),
+                this.adapter.createFunction(cloudfunction)
+              ]);
+            })
+            .catch(console.error);
+        });
 
-                // Synchronously return the Operation instance
-                return operation;
-              }, (err) => this._createFunctionError(cloudfunction.name, err));
-          });
+        // Return the operation to the caller
+        return operation;
       });
   }
 
@@ -512,6 +546,15 @@ class Functions {
               // Delete the CloudFunction
               this.adapter.deleteFunction(name)
                 .then(() => {
+                  return got.post(`${this.getSupervisorHost()}/api/delete`, {
+                    body: JSON.stringify({ name: cloudfunction.name }),
+                    headers: {
+                      'Content-Type': 'application/json'
+                    },
+                    json: true
+                  });
+                })
+                .then(() => {
                   operation.done = true;
                   operation.response = {
                     typeUrl: 'types.googleapis.com/google.protobuf.Empty',
@@ -570,7 +613,6 @@ class Functions {
    * @returns {Promise}
    */
   getFunction (name) {
-    console.debug('Functions', 'getFunction', name);
     return this.adapter.getFunction(name)
       .then((cloudfunction) => {
         if (!cloudfunction) {
@@ -579,6 +621,10 @@ class Functions {
 
         return this.cloudfunction(name, cloudfunction);
       }, (err) => this._getFunctionError(name, err));
+  }
+
+  getSupervisorHost () {
+    return `http://${this.config.supervisorHost}:${this.config.supervisorPort}`;
   }
 
   /**
@@ -620,11 +666,14 @@ class Functions {
    * @returns {Promise}
    */
   getOperation (name) {
-    console.debug('Functions', 'getOperation', name);
-    return this.adapter.getOperation(name).then(
-      (operation) => operation ? this.operation(name, operation) : this._getOperationNotFoundError(name),
-      (err) => this._getOperationError(err)
-    );
+    return this.adapter.getOperation(name)
+    .then((operation) => {
+      if (!operation) {
+        return this._getOperationNotFoundError(name);
+      }
+
+      return this.operation(name, operation);
+    }, (err) => this._getOperationError(err));
   }
 
   /**
@@ -645,7 +694,6 @@ class Functions {
    * @returns {Promise}
    */
   listFunctions (location, opts = {}) {
-    console.debug('Functions', 'listFunctions', location, opts);
     return Promise.resolve()
       .then(() => {
         // TODO: Convert these to the proper format

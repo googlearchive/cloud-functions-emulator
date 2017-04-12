@@ -44,40 +44,16 @@ exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .options(_.merge({
-      'entry-point': {
-        alias: 'e',
-        description: `${'Optional'.bold}. The name of the function exported in the source code that should be deployed.`,
-        requiresArg: true,
-        type: 'string'
-      },
+    .options(_.merge(_.pick(OPTIONS, ['projectId', 'region']), {
       'local-path': {
         alias: 'l',
         description: `Path to local directory with source code. ${'Default:'.bold} ${process.cwd().green} (the current working directory)`,
         requiresArg: true,
         type: 'string'
       },
-      'stage-bucket': {
-        alias: 's',
-        description: `${'Optional'.bold}. Name of Google Cloud Storage bucket in which source code will be stored.`,
-        requiresArg: true,
-        type: 'string'
-      },
-      timeout: {
-        alias: 't',
-        description: `${'Optional'.bold}. The function execution timeout, e.g. 30s for 30 seconds. Defaults to 60 seconds.`,
-        requiresArg: true,
-        type: 'string'
-      },
-      // 'trigger-event': {
-      //   choices: ['topic.publish', 'object.change', 'user.create', 'user.delete', 'data.write'],
-      //   description: 'Specifies which action should trigger the function. If omitted, a default EVENT_TYPE for --trigger-provider will be used. For a list of acceptable values, call functions event_types list. EVENT_TYPE must be one of: topic.publish, object.change, user.create, user.delete, data.write.',
-      //   requiresArg: true,
-      //   type: 'string'
-      // },
       'trigger-bucket': {
         alias: 'B',
-        description: `Google Cloud Storage bucket name. Every change in files in this bucket will trigger function execution.`,
+        description: `Google Cloud Storage bucket name. Every change in files in this bucket will trigger function execution. Short for --trigger-provider=cloud.storage --trigger-event=object.change --trigger-resource=<bucket>.`,
         requiresArg: true,
         type: 'string'
       },
@@ -88,22 +64,49 @@ exports.builder = (yargs) => {
       },
       'trigger-topic': {
         alias: 'T',
-        description: `Name of Pub/Sub topic. Every message published in this topic will trigger function execution with message contents passed as input data.`,
+        description: `Name of Pub/Sub topic. Every message published in this topic will trigger function execution with message contents passed as input data. Short for --trigger-provider=cloud.pubsub --trigger-event=topic.publish --trigger-resource=<topic>.`,
         requiresArg: true,
         type: 'string'
-      // },
-      // 'trigger-provider': {
-      //   choices: ['cloud.pubsub', 'cloud.storage', 'firebase.auth', 'firebase.database'],
-      //   description: 'Trigger this function in response to an event in another service. For a list of acceptable values, call gcloud functions event-types list. PROVIDER must be one of: cloud.pubsub, cloud.storage, firebase.auth, firebase.database.',
-      //   requiresArg: true,
-      //   type: 'string'
-      // },
-      // 'trigger-resource': {
-      //   description: 'Specifies which resource from --trigger-provider is being observed. E.g. if --trigger-provider is cloud.storage, --trigger-resource must be a bucket name. For a list of expected resources, call functions event_types list.',
-      //   requiresArg: true,
-      //   type: 'string'
+      },
+      'entry-point': {
+        alias: 'e',
+        description: `${'Optional'.bold}. The name of the function exported in the source code that should be deployed.`,
+        requiresArg: true,
+        type: 'string'
+      },
+      timeout: {
+        alias: 't',
+        description: `${'Optional'.bold}. The function execution timeout, e.g. 30s for 30 seconds. Defaults to 60 seconds.`,
+        requiresArg: true,
+        type: 'string'
+      },
+      'trigger-event': {
+        choices: ['topic.publish', 'object.change', 'user.create', 'user.delete', 'data.write', undefined],
+        description: 'Specifies which action should trigger the function. If omitted, a default EVENT_TYPE for --trigger-provider will be used. For a list of acceptable values, call functions event_types list. EVENT_TYPE must be one of: topic.publish, object.change, user.create, user.delete, data.write.',
+        requiresArg: true,
+        type: 'string',
+        required: false
+      },
+      'trigger-provider': {
+        choices: ['cloud.pubsub', 'cloud.storage', 'firebase.auth', 'firebase.database', undefined],
+        description: 'Trigger this function in response to an event in another service. For a list of acceptable values, call gcloud functions event-types list. PROVIDER must be one of: cloud.pubsub, cloud.storage, firebase.auth, firebase.database.',
+        requiresArg: true,
+        type: 'string',
+        required: false
+      },
+      'trigger-resource': {
+        description: 'Specifies which resource from --trigger-provider is being observed. E.g. if --trigger-provider is cloud.storage, --trigger-resource must be a bucket name. For a list of expected resources, call functions event_types list.',
+        requiresArg: true,
+        type: 'string',
+        required: false
+      },
+      'stage-bucket': {
+        alias: 's',
+        description: `${'Optional'.bold}. Name of Google Cloud Storage bucket in which source code will be stored.`,
+        requiresArg: true,
+        type: 'string'
       }
-    }, _.pick(OPTIONS, ['projectId', 'region'])))
+    }))
     .epilogue(`See ${'https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Deploying-functions'.bold}`);
 
   EXAMPLES['deploy'].forEach((e) => yargs.example(e[0]));
@@ -129,6 +132,34 @@ exports.handler = (opts) => {
   return controller.doIfRunning()
     // Deploy the function
     .then(() => controller.deploy(opts.functionName, opts))
+    .then(([operation, response]) => {
+      // Poll the operation
+      return new Promise((resolve, reject) => {
+        function poll () {
+          controller.write('.');
+          controller.client.getOperation(operation.name)
+            .then(([operation]) => {
+              if (!operation.done) {
+                setTimeout(poll, 500);
+              } else {
+                if (operation.response) {
+                  resolve(operation.response);
+                } else {
+                  reject(operation.error || new Error('Deployment failed'));
+                }
+              }
+            });
+        }
+
+        controller.write('Deploying function');
+        poll();
+      })
+      .then(() => controller.write('done.\n'))
+      .catch((err) => {
+        controller.write('failed.\n');
+        return Promise.reject(err);
+      });
+    })
     // Log the status
     .then(() => controller.log(`Function ${opts.functionName} deployed.`.green))
     // Print the function details

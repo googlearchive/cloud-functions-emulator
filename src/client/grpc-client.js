@@ -28,6 +28,10 @@ class GrpcClient extends Client {
   constructor (opts) {
     super(opts);
 
+    this._setup();
+  }
+
+  _setup () {
     this.functionsClient = new CloudFunctionsService(
       `${this.config.grpcHost}:${this.config.grpcPort}`,
       grpc.credentials.createInsecure()
@@ -94,7 +98,7 @@ class GrpcClient extends Client {
         if (err) {
           reject(this._processError(err));
         } else {
-          resolve(operation);
+          resolve([operation]);
         }
       });
     });
@@ -110,7 +114,7 @@ class GrpcClient extends Client {
         } else {
           operation.metadata = JSON.parse(Buffer.from(operation.metadata.value, 'base64').toString());
           operation.metadata.request = operation.metadata.request.value.toString('utf8');
-          resolve(operation);
+          resolve([operation]);
         }
       });
     });
@@ -125,6 +129,18 @@ class GrpcClient extends Client {
           reject(this._processError(err));
         } else {
           resolve([new CloudFunction(cloudfunction.name, cloudfunction)]);
+        }
+      });
+    });
+  }
+
+  getOperation (name) {
+    return new Promise((resolve, reject) => {
+      this.operationsClient.getOperation({ name }, (err, operation) => {
+        if (err) {
+          reject(this._processError(err));
+        } else {
+          resolve([operation]);
         }
       });
     });
@@ -157,6 +173,9 @@ class GrpcClient extends Client {
         location: 'heartbeat'
       }, { deadline }, (err, response) => {
         if (err) {
+          if (err.code === 4) {
+            this._setup();
+          }
           reject(this._processError(err));
         } else {
           resolve();

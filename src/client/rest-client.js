@@ -108,6 +108,10 @@ class RestClient extends Client {
     ).then(([body, response]) => [new CloudFunction(body.name, body), response]);
   }
 
+  getOperation (name) {
+    return this._action('operations.get', { name });
+  }
+
   listFunctions () {
     return this._action(
       'projects.locations.functions.list',

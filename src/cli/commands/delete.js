@@ -53,9 +53,35 @@ exports.handler = (opts) => {
 
   return controller.doIfRunning()
     .then(() => controller.undeploy(opts.functionName))
-    .then(() => {
-      controller.log(`Function ${opts.functionName} deleted.`.green);
-      list(opts);
+    .then(([operation, response]) => {
+      // Poll the operation
+      return new Promise((resolve, reject) => {
+        function poll () {
+          controller.write('.');
+          controller.client.getOperation(operation.name)
+            .then(([operation]) => {
+              if (!operation.done) {
+                setTimeout(poll, 500);
+              } else {
+                if (operation.response) {
+                  resolve(operation.response);
+                } else {
+                  reject(operation.error || new Error('Delete failed'));
+                }
+              }
+            });
+        }
+
+        controller.write('Deleting function');
+        poll();
+      })
+      .then(() => controller.write('done.\n'))
+      .catch((err) => {
+        controller.write('failed.\n');
+        return Promise.reject(err);
+      });
     })
+    .then(() => controller.log(`Function ${opts.functionName} deleted.`.green))
+    .then(() => list(opts))
     .catch((err) => controller.handleError(err));
 };

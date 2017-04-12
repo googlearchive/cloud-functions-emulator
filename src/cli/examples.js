@@ -79,6 +79,8 @@ exports['logs.read'] = [
   ['functions logs read --limit=10', 'Display the most recent 10 lines from the logs']
 ];
 
+exports['logs.clear'] = [];
+
 exports.config = exports['config.list'].concat(exports['config.set']);
 exports['event-types'] = exports['event-types.list'];
 exports.logs = exports['logs.read'];

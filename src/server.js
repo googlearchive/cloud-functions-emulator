@@ -15,21 +15,9 @@
 
 'use strict';
 
-const _ = require('lodash');
+const Configstore = require('configstore');
+const path = require('path');
 
-class Service {
-  constructor (functions, config) {
-    this.functions = functions;
-    this.config = _.cloneDeep(config);
-  }
+const pkg = require('../package.json');
 
-  start () {
-    console.debug(`Starting ${this.type} service at ${this.config.host}:${this.config.port}...`);
-  }
-
-  stop () {
-    console.debug(`${this.type} service stopped.`);
-  }
-}
-
-module.exports = Service;
+module.exports = new Configstore(path.join(pkg.name, '/.active-server'));

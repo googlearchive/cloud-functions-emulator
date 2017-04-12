@@ -17,33 +17,30 @@
 
 require('colors');
 
+const Controller = require('../../controller');
 const EXAMPLES = require('../../examples');
 
-const COMMAND = `functions logs ${'<command>'.yellow} ${'[options]'.yellow}`;
-const DESCRIPTION = 'Manages Emulator logs access.';
+const COMMAND = `functions logs clear`;
+const DESCRIPTION = `Clear the Emulator's logs.`;
 const USAGE = `Usage:
   ${COMMAND.bold}
 
 Description:
-  ${DESCRIPTION} Run ${('functions logs ' + '<command>'.yellow + ' --help').bold} to print additional help for a command.
-
-Positional arguments:
-  ${'command'.bold}
-    The ${'logs'.bold} command to execute.`;
+  ${DESCRIPTION}`;
 
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
-exports.command = 'logs <command>';
+exports.command = 'clear';
 exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
-    .usage(USAGE)
-    .demand(1)
-    .command(require('./clear'))
-    .command(require('./read'))
-    .epilogue('For more information, see https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Viewing-logs');
+    .usage(USAGE);
 
-  EXAMPLES['logs'].forEach((e) => yargs.example(e[0], e[1]));
+  EXAMPLES['logs.clear'].forEach((e) => yargs.example(e[0], e[1]));
 };
-exports.handler = () => {};
+exports.handler = (opts) => {
+  const controller = new Controller(opts);
+
+  controller.clearLogs();
+};

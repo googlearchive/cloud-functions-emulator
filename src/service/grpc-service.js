@@ -99,33 +99,26 @@ class RpcService extends Service {
 
         const parts = CloudFunction.parseName(call.request.name);
 
-        return got.post(`http://${this.supervisor.config.host}:${this.supervisor.config.port}/${parts.project}/${parts.location}/${parts.name}`, {
+        const opts = {
           body: JSON.stringify(cloudfunction.httpsTrigger ? event.data : event),
           headers: {
             'Content-Type': 'application/json'
-          },
-          json: true
-        });
+          }
+        };
+
+        return got.post(`${this.functions.getSupervisorHost()}/${parts.project}/${parts.location}/${parts.name}`, opts);
       })
       .then((response) => {
         const message = {
           executionId: eventId
         };
-        try {
-          message.result = JSON.stringify(response.body);
-        } catch (err) {
-
-        }
+        message.result = response.body;
         cb(null, message);
       }, (err) => {
         const message = {
           executionId: eventId
         };
-        try {
-          message.error = JSON.stringify(err.response.body);
-        } catch (err) {
-
-        }
+        message.error = err.response ? err.response.body : err.message;
         cb(null, message);
       });
   }
@@ -141,16 +134,7 @@ class RpcService extends Service {
    */
   createFunction (call, cb) {
     return this.functions.createFunction(call.request.location, call.request.function)
-      .then((operation) => cb(null, operation.toProtobuf()))
-      .then(() => {
-        return got.post(`http://${this.supervisor.config.host}:${this.supervisor.config.port}/api/deploy`, {
-          body: JSON.stringify({ name: call.request.function.name }),
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          json: true
-        });
-      });
+      .then((operation) => cb(null, operation.toProtobuf()));
   }
 
   /**
@@ -163,16 +147,7 @@ class RpcService extends Service {
    */
   deleteFunction (call, cb) {
     return this.functions.deleteFunction(call.request.name)
-      .then((operation) => cb(null, operation.toProtobuf()))
-      .then(() => {
-        return got.post(`http://${this.supervisor.config.host}:${this.supervisor.config.port}/api/delete`, {
-          body: JSON.stringify({ name: call.request.name }),
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          json: true
-        });
-      });
+      .then((operation) => cb(null, operation.toProtobuf()));
   }
 
   /**
@@ -198,13 +173,11 @@ class RpcService extends Service {
    */
   getOperation (call, cb) {
     return this.functions.getOperation(call.request.name)
-      .then((operation) => cb(null, operation.toProfobuf()));
+      .then((operation) => cb(null, operation.toProtobuf()));
   }
 
   handleError (err, cb) {
-    console.error('GrpcService', err);
-
-    err = err.toProtobuf();
+    err = err.toProtobuf ? err.toProtobuf() : err;
 
     const error = {
       code: err.code || status.INTERNAL,

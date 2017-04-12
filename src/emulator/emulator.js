@@ -30,11 +30,11 @@ class Emulator {
       region: opts.region,
       useMocks: opts.useMocks
     });
-    this.restService = Service.restService(functions, this.supervisor, {
+    this.restService = Service.restService(functions, {
       host: opts.restHost,
       port: opts.restPort
     });
-    this.grpcService = Service.grpcService(functions, this.supervisor, {
+    this.grpcService = Service.grpcService(functions, {
       host: opts.grpcHost,
       port: opts.grpcPort
     });
@@ -58,6 +58,10 @@ class Emulator {
       .start()
       .on('error', makeHandler('restPort'));
     this.grpcService.start();
+
+    process.on('exit', () => {
+      this.stop();
+    });
   }
 
   stop () {

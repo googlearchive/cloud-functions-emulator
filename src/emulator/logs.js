@@ -33,6 +33,14 @@ module.exports = {
     return logFile;
   },
 
+  clearLogs (filePath) {
+    try {
+      fs.truncateSync(filePath);
+    } catch (err) {
+      throw err;
+    }
+  },
+
   readLogLines (filePath, num, output) {
     try {
       var buf = fs.readFileSync(filePath);
@@ -62,13 +70,13 @@ module.exports = {
       }
 
       output(buf.toString('utf8', cursor, buf.length) + '\n');
-    } catch (e) {
-      if (e.code === 'ENOENT') {
+    } catch (err) {
+      if (err.code === 'ENOENT') {
         output('');
         return;
       }
 
-      throw e;
+      throw err;
     }
   }
 };

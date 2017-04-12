@@ -33,3 +33,57 @@ exports.run = (cmd, cwd) => {
 
   return output.stdout.toString().trim() + output.stderr.toString().trim();
 };
+
+class Try {
+  constructor (test) {
+    this._maxTries = 10;
+    this._maxDelay = 20000;
+    this._timeout = 60000;
+    this._iteration = 1;
+    this._multiplier = 1.3;
+    this._delay = 500;
+    this._test = test;
+  }
+
+  execute () {
+    if (this._iteration >= this._maxTries) {
+      this.reject(this._error || new Error('Reached maximum number of tries'));
+      return;
+    } else if ((Date.now() - this._start) >= this._timeout) {
+      this.reject(this._error || new Error('Test timed out'));
+      return;
+    }
+
+    try {
+      this._test();
+      this.resolve();
+    } catch (err) {
+      this._error = err;
+      this._iteration++;
+      this._delay = Math.min(this._delay * this._multiplier, this._maxDelay);
+      setTimeout(() => this.execute(), this._delay);
+    }
+  }
+
+  timeout (timeout) {
+    this._timeout = timeout;
+  }
+
+  tries (maxTries) {
+    this._maxTries = maxTries;
+  }
+
+  start () {
+    this._start = Date.now();
+    this.promise = new Promise((resolve, reject) => {
+      this.resolve = resolve;
+      this.reject = reject;
+      this.execute();
+    });
+    return this.promise;
+  }
+}
+
+exports.tryTest = (test) => {
+  return new Try(test);
+};

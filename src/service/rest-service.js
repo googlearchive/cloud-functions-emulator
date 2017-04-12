@@ -124,7 +124,7 @@ class RestService extends Service {
           data: req.body.data
         };
 
-        return got.post(`http://${this.supervisor.config.host}:${this.supervisor.config.port}/${req.params.project}/${req.params.location}/${req.params.name}`, {
+        return got.post(`${this.functions.getSupervisorHost()}/${req.params.project}/${req.params.location}/${req.params.name}`, {
           body: JSON.stringify(cloudfunction.httpsTrigger ? event.data : event),
           headers: {
             'Content-Type': 'application/json'
@@ -159,13 +159,6 @@ class RestService extends Service {
     return this.functions.createFunction(location, req.body)
       .then((operation) => {
         res.status(200).json(operation).end();
-        return got.post(`http://${this.supervisor.config.host}:${this.supervisor.config.port}/api/deploy`, {
-          body: JSON.stringify({ name: req.body.name }),
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          json: true
-        });
       });
   }
 
@@ -184,13 +177,6 @@ class RestService extends Service {
     return this.functions.deleteFunction(name)
       .then((operation) => {
         res.status(200).json(operation).end();
-        return got.post(`http://${this.supervisor.config.host}:${this.supervisor.config.port}/api/delete`, {
-          body: JSON.stringify({ name: req.body.name }),
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          json: true
-        });
       });
   }
 
@@ -250,6 +236,16 @@ class RestService extends Service {
     const name = CloudFunction.formatName(req.params.project, req.params.location, req.params.name);
     return this.functions.getFunction(name)
       .then((cloudfunction) => {
+        if (req.get('user-agent') &&
+            req.get('user-agent').includes('google-cloud-sdk') &&
+            cloudfunction.status === 'DEPLOYING') {
+          // For some reason the Cloud SDK doesn't wait for the operation to be
+          // done before printing the function to the user, instead it polls for
+          // the function. So here pretend the function doesn't exist until it's
+          // no longer deploying.
+          return Promise.reject(this.functions._getFunctionNotFoundError(name));
+        }
+
         res.status(200).json(cloudfunction).end();
       });
   }

@@ -23,11 +23,12 @@ process.env.XDG_CONFIG_HOME = path.join(__dirname, `../`);
 const Configstore = require(`configstore`);
 const spawnSync = require(`child_process`).spawnSync;
 const fs = require(`fs`);
+const rimraf = require(`rimraf`);
 const storage = require(`@google-cloud/storage`)();
 const uuid = require(`uuid`);
 
 const pkg = require(`../../../package.json`);
-const run = require(`./utils`).run;
+const { run, tryTest } = require(`./utils`);
 const detectProjectId = require('../../../src/utils/detectProjectId');
 
 const bucketName = `cloud-functions-emulator-${uuid.v4()}`;
@@ -88,11 +89,13 @@ function makeTests (service, override) {
 
       run(`${cmd} kill ${args}`, cwd);
 
-      let output = run(`${cmd} start ${args}`, cwd);
+      let output = run(`${cmd} restart ${args}`, cwd);
       assert(output.includes(`${prefix} STARTED`));
 
-      output = run(`${cmd} clear`, cwd);
-      assert(output.includes(`${prefix} CLEARED`));
+      return tryTest(() => {
+        output = run(`${cmd} clear`, cwd);
+        assert(output.includes(`${prefix} CLEARED`));
+      }).start();
     });
 
     after(() => {
@@ -107,11 +110,13 @@ function makeTests (service, override) {
       let output = run(`${cmd} restart ${args}`, cwd);
       assert(output.includes(`STARTED`));
 
-      output = run(`${cmd} clear`, cwd);
-      assert(output.includes(`${prefix} CLEARED`));
-
-      output = run(`${cmd} stop`, cwd);
-      assert(output.includes(`${prefix} STOPPED`));
+      return tryTest(() => {
+        output = run(`${cmd} clear`, cwd);
+        assert(output.includes(`${prefix} CLEARED`));
+      }).start().then(() => {
+        output = run(`${cmd} stop`, cwd);
+        assert(output.includes(`${prefix} STOPPED`));
+      });
     });
 
     describe(`config`, () => {
@@ -133,8 +138,10 @@ function makeTests (service, override) {
           const output = run(`${override} list --region=${REGION}`, cwd);
           assert(output.includes(`Listed 0 items.`));
         } else {
-          const output = run(`${cmd} list`, cwd);
-          assert(output.includes(`No functions deployed`));
+          return tryTest(() => {
+            const output = run(`${cmd} list`, cwd);
+            assert(output.includes(`No functions deployed`));
+          }).start();
         }
       });
 
@@ -467,7 +474,20 @@ function makeTests (service, override) {
 }
 
 describe(`system/cli`, () => {
-  before(() => storage.createBucket(bucketName));
+  before(() => {
+    try {
+      // Try to remove the existing file if it's there
+      fs.unlinkSync(logFile);
+    } catch (err) {
+
+    }
+    try {
+      rimraf.sync(path.parse(config.path).dir);
+    } catch (err) {
+
+    }
+    return storage.createBucket(bucketName);
+  });
 
   after(() => {
     return storage.bucket(bucketName).deleteFiles({ force: true })
@@ -475,7 +495,7 @@ describe(`system/cli`, () => {
       .then(() => storage.bucket(bucketName).delete());
   });
 
+  makeTests(`grpc`);
   makeTests(`rest`);
   makeTests(`rest`, `${GCLOUD} beta functions`);
-  makeTests(`grpc`);
 });

@@ -27,6 +27,7 @@ const url = require('url');
 
 const Errors = require('../utils/errors');
 const Model = require('../model');
+const server = require('../server');
 
 const DEFAULT_MAX_IDLE = 5 * 60 * 1000;
 const DEFAULT_IDLE_PRUNE_INTERVAL = 60 * 1000;
@@ -172,12 +173,11 @@ class Supervisor {
    * @returns Promise
    */
   closeWorker (name) {
-    return new Promise((resolve) => {
-      if (!this._workerPool.has(name)) {
-        resolve({ status: 'NOT_FOUND', code: null, signal: null, worker: null });
-        return;
-      }
+    if (!this._workerPool.has(name)) {
+      return Promise.resolve({ status: 'NOT_FOUND', code: null, signal: null, worker: null });
+    }
 
+    return new Promise((resolve) => {
       let timeoutId;
       const worker = this._workerPool.get(name);
       this._workerPool.delete(name);
@@ -188,6 +188,9 @@ class Supervisor {
       worker.process.on('exit', (code, signal) => {
         console.debug(`${name} worker closed.`);
         clearTimeout(timeoutId);
+        const savedWorkers = server.get('workers');
+        delete savedWorkers[pid];
+        server.set('workers', savedWorkers);
         resolve({ status: 'CLOSED', code, signal, worker });
       });
 
@@ -216,14 +219,27 @@ class Supervisor {
     opts || (opts = {});
     return new Promise((resolve, reject) => {
       const worker = {};
+      let error, stderr;
+      let resolved = false;
       let rejected = false;
+
+      const timeout = setInterval(() => {
+        if (rejected) {
+          clearInterval(timeout);
+          reject(error);
+        } else if (resolved) {
+          clearInterval(timeout);
+          resolve(worker);
+        }
+      }, 200);
 
       const execArgv = [];
       if (opts.inspect) {
         execArgv.push(`--inspect=${opts.port}`);
         worker.inspect = true;
         if (!this.debugPortIsAvailable(opts.port)) {
-          reject(new Errors.ConflictError(`Debug/Inspect port ${opts.port} already in use. Are you already debugging another function on this port? Specify a different port or reset the function that's using your desired port.`));
+          error = new Errors.ConflictError(`Debug/Inspect port ${opts.port} already in use. Are you already debugging another function on this port? Specify a different port or reset the function that's using your desired port.`);
+          rejected = true;
           return;
         }
         worker.inspectPort = opts.port;
@@ -235,7 +251,8 @@ class Supervisor {
         execArgv.push(`--debug=${opts.port}`);
         worker.debug = true;
         if (!this.debugPortIsAvailable(opts.port)) {
-          reject(new Errors.ConflictError(`Debug/Inspect port ${opts.port} already in use. Are you already debugging another function on this port? Specify a different port or reset the function that's using your desired port.`));
+          error = new Errors.ConflictError(`Debug/Inspect port ${opts.port} already in use. Are you already debugging another function on this port? Specify a different port or reset the function that's using your desired port.`);
+          rejected = true;
           return;
         }
         worker.debugPort = opts.port;
@@ -253,7 +270,7 @@ class Supervisor {
       // TODO: Forcefully exit worker process after maximum timeout
       const workerProcess = worker.process = fork(path.join(__dirname, 'worker.js'), [], {
         // Execute the process in the context of the user's code
-        cwd: cloudfunction.localPath,
+        cwd: cloudfunction.serviceAccount,
         // Emulate the environment variables of the production service
         env: _.merge({}, process.env, {
           FUNCTION_NAME: cloudfunction.shortName,
@@ -267,13 +284,41 @@ class Supervisor {
         silent: true
       });
 
+      const savedWorkers = server.get('workers') || {};
+      savedWorkers[workerProcess.pid] = 'STARTED';
+      server.set('workers', savedWorkers);
+
       workerProcess
         // Handle when the worker process closes
         .on('exit', (code, signal) => {
-          console.debug(`${cloudfunction.name} worker closed.`);
-          // Debug/Inspect port is already in use
+          let msg = `${cloudfunction.name} worker closed.`;
+          console.debug(msg);
+          const workerPids = server.get('workers') || {};
+          delete workerPids[workerProcess.pid];
+          server.set('workers', workerPids);
+
           if (code === 12) {
-            reject(new Errors.ConflictError(`Debug/Inspect port ${worker.debugPort || worker.inspectPort} already in use. Are you already debugging another function on this port? Specify a different port or reset the function that's using your desired port.`));
+            msg = `Debug/Inspect port ${worker.debugPort || worker.inspectPort} already in use. Are you already debugging another function on this port? Specify a different port or reset the function that's using your desired port.`;
+            error = new Errors.ConflictError(msg);
+            rejected = true;
+            console.error(msg);
+          } else if (code) {
+            msg = `Function worker closed with exit code: ${code}`;
+            console.error(msg);
+            if (stderr) {
+              msg += `\n${stderr.trim()}`;
+            }
+            error = new Errors.InternalError(msg);
+            rejected = true;
+          } else if (signal) {
+            msg = `Function worker closed by signal: ${signal}`;
+            if (stderr) {
+              console.error(msg);
+              msg += `\n${stderr.trim()}`;
+            } else {
+              console.debug(msg);
+            }
+            error = new Errors.InternalError(msg);
             rejected = true;
           }
         })
@@ -297,6 +342,7 @@ class Supervisor {
         if (str.charAt(str.length - 1) === '\n') {
           str = str.substring(0, str.length - 1);
         }
+        stderr += str;
         console.error(str);
       });
 
@@ -311,7 +357,7 @@ class Supervisor {
           }
           if (!rejected) {
             this._workerPool.set(cloudfunction.name, worker);
-            resolve(worker);
+            resolved = true;
           }
         } else if (message.close) {
           this.closeWorker(cloudfunction.name);
@@ -486,10 +532,6 @@ class Supervisor {
       console.debug(`Supervisor listening at ${this._server.address().address}:${this._server.address().port}.`);
     });
 
-    process.on('exit', () => {
-      this.stop();
-    });
-
     return this;
   }
 
@@ -509,6 +551,20 @@ class Supervisor {
     this._server.close(() => {
       console.debug('Supervisor stopped.');
     });
+
+    // Synchronously kill workers in case there isn't time to do the async work
+    // in this.clear();
+    const workerPids = Object.keys(server.get('workers') || {});
+    workerPids.forEach((pid) => {
+      console.debug(`Killing process: ${pid}`);
+      try {
+        process.kill(pid, 'SIGKILL');
+      } catch (err) {
+        // Ignore error
+      }
+      delete workerPids[pid];
+    });
+    server.delete('workers');
 
     return this;
   }

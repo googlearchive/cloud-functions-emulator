@@ -41,6 +41,19 @@ function pathExists (p) {
   }
 }
 
+const CloudFunctionStatus = {
+  '0': 'STATUS_UNSPECIFIED',
+  '1': 'READY'.green,
+  '2': 'FAILED'.red,
+  '3': 'DEPLOYING',
+  '4': 'DELETING',
+  'STATUS_UNSPECIFIED': 'STATUS_UNSPECIFIED',
+  'READY': 'READY'.green,
+  'FAILED': 'FAILED'.red,
+  'DEPLOYING': 'DEPLOYING',
+  'DELETING': 'DELETING'
+};
+
 /**
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
@@ -61,7 +74,7 @@ exports.handler = (opts) => {
         controller.log(`No functions deployed ¯\\_(ツ)_/¯. Run ${'functions deploy --help'.bold} for how to deploy a function.`);
       } else {
         const table = new Table({
-          head: ['Name'.bold, 'Trigger'.bold, 'Resource'.bold]
+          head: ['Status'.bold, 'Name'.bold, 'Trigger'.bold, 'Resource'.bold]
         });
 
         cloudfunctions.forEach((cloudfunction) => {
@@ -81,12 +94,14 @@ exports.handler = (opts) => {
           }
           if (pathExists(cloudfunction.serviceAccount)) {
             table.push([
+              CloudFunctionStatus[cloudfunction.status] || CloudFunctionStatus['0'],
               cloudfunction.shortName,
               trigger,
               resource
             ]);
           } else {
             table.push([
+              (CloudFunctionStatus[cloudfunction.status] || CloudFunctionStatus['0']).red,
               cloudfunction.shortName.red,
               trigger.red,
               resource.red

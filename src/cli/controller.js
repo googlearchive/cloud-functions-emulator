@@ -41,8 +41,7 @@ require('colors');
 
 const _ = require('lodash');
 const AdmZip = require('adm-zip');
-const Configstore = require('configstore');
-const execSync = require('child_process').execSync;
+const exec = require('child_process').exec;
 const fs = require('fs');
 const got = require('got');
 const path = require('path');
@@ -51,10 +50,12 @@ const Storage = require('@google-cloud/storage');
 const tmp = require('tmp');
 
 const Client = require('../client');
+const config = require('../config');
 const Model = require('../model');
 const defaults = require('../defaults.json');
 const logs = require('../emulator/logs');
 const pkg = require('../../package.json');
+const server = require('../server');
 
 const { CloudFunction } = Model;
 
@@ -73,10 +74,10 @@ class Controller {
     this.name = 'Google Cloud Functions Emulator';
     this.STATE = STATE;
     // Prepare the file that will store the Emulator's current status
-    this.server = new Configstore(path.join(pkg.name, '/.active-server'));
+    this.server = server;
 
     // Load and apply defaults to the user's Emulator configuration
-    this._config = new Configstore(path.join(pkg.name, '/config'), defaults);
+    this._config = config;
     // Merge the user's configuration with command-line options
     this.config = _.merge({}, defaults, this._config.all, opts);
 
@@ -110,89 +111,104 @@ class Controller {
    * @returns {Promise}
    */
   _createArchive (name, opts) {
+    let sourceArchiveUrl;
+
+    opts.localPath = path.resolve(opts.localPath);
+
+    let pathForCmd = opts.localPath;
+
+    if (process.platform === 'win32') {
+      // See https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/34
+      pathForCmd = opts.localPath.replace(/\\/g, '/');
+    }
+
+    if (!fs.existsSync(opts.localPath)) {
+      throw new Error('Provided directory does not exist.');
+    }
+
     return new Promise((resolve, reject) => {
-      let sourceArchiveUrl;
-
-      opts.localPath = path.resolve(opts.localPath);
-
-      let pathForCmd = opts.localPath;
-
-      if (process.platform === 'win32') {
-        // See https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/34
-        pathForCmd = opts.localPath.replace(/\\/g, '/');
-      }
-
-      if (!fs.existsSync(opts.localPath)) {
-        throw new Error('Provided directory does not exist.');
-      } else {
-        // Parse the user's code to find the names of the exported functions
-        const exportedKeys = execSync(`node -e "console.log(Object.keys(require('${pathForCmd}') || {}))"`)
-          .toString()
-          .trim();
-
+      // Parse the user's code to find the names of the exported functions
+      exec(`node -e "console.log(Object.keys(require('${pathForCmd}') || {}))"`, (err, stdout, stderr) => {
+        if (err) {
+          this.error(`${'ERROR'.red}: Function load error: Code could not be loaded.`);
+          this.error(`${'ERROR'.red}: Does the file exists? Is there a syntax error in your code?`);
+          this.error(`${'ERROR'.red}: Detailed stack trace: ${stderr || err.stack}`);
+          reject(new Error('Failed to deploy function.'));
+        } else {
+          resolve(stdout.toString().trim());
+        }
+      });
+    })
+      .then((exportedKeys) => {
         // TODO: Move this check to the Emulator during unpacking
         // TODO: Make "index.js" dynamic
         if (!exportedKeys.includes(opts.entryPoint) && !exportedKeys.includes(name)) {
           throw new Error(`Node.js module defined by file index.js is expected to export function named ${opts.entryPoint || name}`);
         }
-      }
 
-      const tmpName = tmp.tmpNameSync({
-        prefix: `${opts.region}-${name}-`,
-        postfix: '.zip'
-      });
+        const tmpName = tmp.tmpNameSync({
+          prefix: `${opts.region}-${name}-`,
+          postfix: '.zip'
+        });
 
-      const zip = new AdmZip();
+        const zip = new AdmZip();
 
-      const files = fs.readdirSync(opts.localPath);
-      files.forEach((entry) => {
-        if (entry === 'node_modules') {
-          return false;
-        }
-        const entryPath = path.join(opts.localPath, entry);
-        const stats = fs.statSync(entryPath);
+        const files = fs.readdirSync(opts.localPath);
+        files.forEach((entry) => {
+          if (entry === 'node_modules') {
+            return false;
+          }
+          const entryPath = path.join(opts.localPath, entry);
+          const stats = fs.statSync(entryPath);
 
-        if (stats.isDirectory()) {
-          zip.addLocalFolder(entryPath);
-        } else if (stats.isFile()) {
-          zip.addLocalFile(entryPath);
-        }
-      });
-
-      // Copy the function code to a temp directory on the local file system
-      zip.writeZip(tmpName);
-
-      if (opts.stageBucket) {
-        // Upload the function code to a Google Cloud Storage bucket
-        const storage = Storage({ projectId: this.config.projectId });
-
-        const file = storage.bucket(opts.stageBucket).file(path.parse(tmpName).base);
-        // The GCS Uri where the .zip will be saved
-        sourceArchiveUrl = `gs://${file.bucket.name}/${file.name}`;
-        // Stream the file up to Cloud Storage
-        const remoteStream = file.createWriteStream({
-          metadata: {
-            contentType: 'application/zip'
+          if (stats.isDirectory()) {
+            zip.addLocalFolder(entryPath);
+          } else if (stats.isFile()) {
+            zip.addLocalFile(entryPath);
           }
         });
-        const localStream = fs.createReadStream(tmpName);
-        localStream.pipe(remoteStream);
 
-        remoteStream
-          .on('error', reject);
+        // Copy the function code to a temp directory on the local file system
+        this.log(`Copying file://${tmpName}...`);
+        process.stdout.write('Waiting for operation to finish...');
+        zip.writeZip(tmpName);
 
-        localStream
-          .on('error', reject)
-          .on('finish', () => {
+        return new Promise((resolve, reject) => {
+          if (opts.stageBucket) {
+            // Upload the function code to a Google Cloud Storage bucket
+            const storage = Storage({ projectId: this.config.projectId });
+
+            const file = storage.bucket(opts.stageBucket).file(path.parse(tmpName).base);
+            // The GCS Uri where the .zip will be saved
+            sourceArchiveUrl = `gs://${file.bucket.name}/${file.name}`;
+
+            // Stream the file up to Cloud Storage
+            const remoteStream = file.createWriteStream({
+              metadata: {
+                contentType: 'application/zip'
+              }
+            });
+            const localStream = fs.createReadStream(tmpName);
+            localStream.pipe(remoteStream);
+
+            remoteStream
+              .on('error', reject);
+
+            localStream
+              .on('error', reject)
+              .on('finish', () => {
+                this.log('done.');
+                resolve(sourceArchiveUrl);
+              });
+          } else {
+            // Technically, this needs to be a GCS Uri, but the emulator will know
+            // how to interpret a path on the local file system
+            sourceArchiveUrl = `file://${tmpName}`;
+            this.log('done.');
             resolve(sourceArchiveUrl);
-          });
-      } else {
-        // Technically, this needs to be a GCS Uri, but the emulator will know
-        // how to interpret a path on the local file system
-        sourceArchiveUrl = `file://${tmpName}`;
-        resolve(sourceArchiveUrl);
-      }
-    });
+          }
+        });
+      });
   }
 
   /**
@@ -269,6 +285,10 @@ class Controller {
       .then((cloudfunctions) => Promise.all(cloudfunctions.map((cloudfunction) => this.undeploy(cloudfunction.shortName))));
   }
 
+  clearLogs () {
+    logs.clearLogs(this.config.logFile);
+  }
+
   _create (name, opts) {
     return new Promise((resolve, reject) => {
       const cloudfunction = new CloudFunction(CloudFunction.formatName(this.config.projectId, this.config.region, name));
@@ -337,7 +357,7 @@ class Controller {
     return this.client.getFunction(name)
       .then(([cloudfunction]) => {
         if (opts.pause) {
-          console.log(`You paused execution. Connect to the debugger on port ${opts.port} to resume execution and begin debugging.`);
+          this.log(`You paused execution. Connect to the debugger on port ${opts.port} to resume execution and begin debugging.`);
         }
 
         return got.post(`http://${this.config.supervisorHost}:${this.config.supervisorPort}/api/debug`, {
@@ -453,10 +473,12 @@ class Controller {
     if (Array.isArray(err.errors)) {
       err.errors.forEach((_err) => this.error(`${'ERROR'.red}: ${_err}`));
     } else if (Array.isArray(err.details)) {
-      this.error(`${'ERROR'.red}: ${err.message}`);
-      this.error(`${'ERROR'.red}: ${JSON.stringify(err, null, 2)}`);
+      this.error(`${'ERROR'.red}: ${err.stack || err.message}`);
+      if (this.config.verbose) {
+        this.error(`${'ERROR'.red}: ${JSON.stringify(err, null, 2)}`);
+      }
     } else {
-      this.error(`${'ERROR'.red}: ${err.message}`);
+      this.error(`${'ERROR'.red}: ${err.stack || err.message}`);
     }
   }
 
