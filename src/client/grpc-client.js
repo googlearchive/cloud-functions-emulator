@@ -166,16 +166,13 @@ class GrpcClient extends Client {
   testConnection () {
     return new Promise((resolve, reject) => {
       const deadline = new Date();
-      deadline.setSeconds(deadline.getSeconds() + 1);
+      deadline.setSeconds(deadline.getSeconds() + 3);
       // There's got to be a better way to get a "heartbeat" from the gRPC server
       this.functionsClient.listFunctions({
         pageSize: 1,
         location: 'heartbeat'
       }, { deadline }, (err, response) => {
         if (err) {
-          if (err.code === 4) {
-            this._setup();
-          }
           reject(this._processError(err));
         } else {
           resolve();

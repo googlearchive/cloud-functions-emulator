@@ -9,7 +9,7 @@
   "storage": "configstore",
   "supervisorHost": "localhost",
   "supervisorPort": 8010,
-  "timeout": 60000,
+  "timeout": 20000,
   "useMocks": false,
   "verbose": false
 }

@@ -230,6 +230,10 @@ class Controller {
           throw new Error('Timeout waiting for emulator start'.red);
         }
 
+        if (this.config.service === 'grpc') {
+          this.client._setup();
+        }
+
         return new Promise((resolve, reject) => {
           setTimeout(() => {
             this._waitForStart(i).then(resolve, reject);
@@ -255,6 +259,10 @@ class Controller {
 
         if (i <= 0) {
           throw new Error('Timeout waiting for emulator stop');
+        }
+
+        if (this.config.service === 'grpc') {
+          this.client._setup();
         }
 
         return new Promise((resolve, reject) => {
