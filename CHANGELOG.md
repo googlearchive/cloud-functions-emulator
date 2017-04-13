@@ -1,7 +1,19 @@
-##### 1.0.0-alpha.16 - 23 March 2017
+##### 1.0.0-alpha.16 - 13 April 2017
 
 ###### Backwards compatible changes
 - [#73](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/73) - Warn user when local version of Node is greater than 6.9.
+- When calling `Controller#start` programmatically, you can now pass an options object to configure the child process, and you'll receive the handle to the child process when the promise resolves.
+- Add a `getOperation` method to the clients
+- Added more debug logging
+- [#84](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/84) - Support for testing a database trigger
+
+###### Bug fixes
+- Function timeouts now work
+- Fixed gRPC client request deadlines
+- Hopefully fixed the following (they're hard to reproduce):
+  - [#76](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/76) - Progress bar for deploying functions?
+  - [#77](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/77) - Emulator fails to start
+  - [#80](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/80) - NotFoundError
 
 ##### 1.0.0-alpha.15 - 10 March 2017
 

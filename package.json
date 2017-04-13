@@ -64,7 +64,7 @@
     "google-proto-files": "0.11.0",
     "googleapis": "19.0.0",
     "got": "6.7.1",
-    "grpc": "1.2.3",
+    "grpc": "1.2.4",
     "http-proxy": "1.16.2",
     "lodash": "4.17.4",
     "prompt": "1.0.0",
@@ -75,7 +75,7 @@
     "tmp": "0.0.31",
     "uuid": "3.0.1",
     "winston": "2.3.1",
-    "yargs": "7.0.2"
+    "yargs": "7.1.0"
   },
   "devDependencies": {
     "intelli-espower-loader": "1.0.1",
