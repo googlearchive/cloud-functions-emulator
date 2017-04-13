@@ -84,14 +84,14 @@ function main (args) {
   process.on('uncaughtException', function (err) {
     console.error(err.stack);
 
-    // HACK:  An uncaught exception may leave the process in an incomplete state
+    // HACK: An uncaught exception may leave the process in an incomplete state
     // however exiting the process prematurely may result in the above log call
-    // to not complete.  This we're just going to wait for an arbitrary amount
+    // to not complete. Thus we're just going to wait for an arbitrary amount
     // of time for the log entry to complete.
     // Possible future solution here: https://github.com/winstonjs/winston/issues/228
     setTimeout(function () {
       process.exit(1);
-    }, 1000);
+    }, 2000);
   });
 
   // Setup the winston logger.  We're going to write to a file which will
@@ -104,6 +104,10 @@ function main (args) {
 
   const logger = new winston.Logger({
     transports: [
+      new winston.transports.Console({
+        json: false,
+        level: 'error'
+      }),
       new winston.transports.File({
         json: false,
         filename: opts.logFile,
@@ -127,6 +131,8 @@ function main (args) {
   console.info = console.log;
   console.error = (...args) => logger.error(...args);
   console.debug = (...args) => logger.debug(...args);
+
+  console.debug('main', opts);
 
   const emulator = new Emulator(opts);
 

@@ -28,7 +28,7 @@ exports.run = (cmd, cwd) => {
     cwd,
     env,
     shell: true,
-    timeout: 60000
+    timeout: 10000
   });
 
   return output.stdout.toString().trim() + output.stderr.toString().trim();
@@ -37,8 +37,8 @@ exports.run = (cmd, cwd) => {
 class Try {
   constructor (test) {
     this._maxTries = 10;
-    this._maxDelay = 20000;
-    this._timeout = 60000;
+    this._maxDelay = 10000;
+    this._timeout = 30000;
     this._iteration = 1;
     this._multiplier = 1.3;
     this._delay = 500;

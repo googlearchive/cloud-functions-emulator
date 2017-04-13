@@ -20,12 +20,11 @@
 machine:
   node:
     version: 6.9.1
-  environment:
-    YARN_VERSION: 0.18.1
-    PATH: "${PATH}:${HOME}/.yarn/bin:${HOME}/${CIRCLE_PROJECT_REPONAME}/node_modules/.bin"
 
 # Use for broader build-related configuration
 general:
+  artifacts:
+    - "test/system/test-log.txt"
   branches:
     ignore:
       - gh-pages
@@ -33,15 +32,10 @@ general:
 # Install your project's language-specific dependencies
 dependencies:
   pre:
-    - |
-      if [[ ! -e ~/.yarn/bin/yarn || $(yarn --version) != "${YARN_VERSION}" ]]; then
-        curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version $YARN_VERSION
-      fi
     - yarn global add nyc codecov
   override:
-    - yarn install
+    - yarn
   cache_directories:
-    - ~/.yarn
     - ~/.cache/yarn
 
 # Run your tests

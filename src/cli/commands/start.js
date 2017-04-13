@@ -80,7 +80,18 @@ exports.handler = (opts) => {
 
       controller.log(`Starting ${controller.name}...`);
       return controller.start()
-        .then(() => controller.log(`${controller.name} ${'STARTED'.green}`));
+        .then((child) => {
+          // Ensure the parent doesn't wait for the child to exit
+          // This should be used in combination with the 'detached' property
+          // of the spawn() options.  The node documentation is unclear about
+          // the behavior of detached & unref on different platforms.  'detached'
+          // on Windows seems to do the same thing as unref() on non-Windows
+          // platforms.  Doing both seems like the safest approach.
+          // TODO: Test on Windows
+          child.unref();
+
+          controller.log(`${controller.name} ${'STARTED'.green}`);
+        });
     })
     .then(() => list(opts))
     .catch((err) => controller.handleError(err));

@@ -41,6 +41,7 @@ class Emulator {
   }
 
   start () {
+    console.debug('Emulator#start');
     const makeHandler = (name) => {
       return (err) => {
         if (err.code === 'EADDRINUSE') {
@@ -66,6 +67,7 @@ class Emulator {
   }
 
   stop () {
+    console.debug('Emulator#stop');
     this.supervisor.stop();
     this.restService.stop();
     this.grpcService.stop();

@@ -155,6 +155,7 @@ class Functions {
    * @returns {Promise}
    */
   _assertFunctionDoesNotExist (name) {
+    console.debug('Functions#_assertFunctionDoesNotExist', name);
     return this.adapter.getFunction(name)
       .then((cloudfunction) => {
         if (cloudfunction) {
@@ -168,6 +169,7 @@ class Functions {
   }
 
   _checkForPackageJson (dirName) {
+    console.debug('Functions#_checkForPackageJson', dirName);
     return new Promise((resolve, reject) => {
       fs.access(path.join(dirName, 'package.json'), (err) => {
         if (err) {
@@ -180,6 +182,7 @@ class Functions {
   }
 
   _checkForYarn (dirName) {
+    console.debug('Functions#_checkForYarn', dirName);
     return new Promise((resolve, reject) => {
       fs.access(path.join(dirName, 'yarn.lock'), (err) => {
         if (err) {
@@ -192,7 +195,7 @@ class Functions {
   }
 
   _installNpm (dirName) {
-    console.debug('Functions', '_installNpm', dirName);
+    console.debug('Functions#_installNpm', dirName);
     return new Promise((resolve, reject) => {
       spawn('npm', ['install'], {
         cwd: dirName
@@ -208,7 +211,7 @@ class Functions {
   }
 
   _installYarn (dirName) {
-    console.debug('Functions', '_installYarn', dirName);
+    console.debug('Functions#_installYarn', dirName);
     return new Promise((resolve, reject) => {
       spawn('yarn', ['install'], {
         cwd: dirName
@@ -224,13 +227,12 @@ class Functions {
   }
 
   _unpackArchive (cloudfunction) {
-    console.debug('Functions', '_unpackArchive', cloudfunction);
+    console.debug('Functions#_unpackArchive', cloudfunction);
     return Promise.resolve()
       .then(() => {
         if (!cloudfunction.serviceAccount) {
           if (cloudfunction.gcsUrl || cloudfunction.sourceArchiveUrl) {
             const archiveUrl = cloudfunction.gcsUrl || cloudfunction.sourceArchiveUrl;
-            console.debug('Functions', '_unpackArchive', archiveUrl);
 
             if (archiveUrl.startsWith('file://')) {
               // TODO
@@ -253,7 +255,6 @@ class Functions {
               if (!zipName.endsWith('.zip')) {
                 zipName = `${zipName}.zip`;
               }
-              console.debug('Functions', '_unpackArchive', zipName);
 
               return file.download({
                 destination: zipName
@@ -262,7 +263,6 @@ class Functions {
                   const zip = new AdmZip(zipName);
                   const parts = path.parse(zipName);
                   const dirName = path.join(parts.dir, parts.name);
-                  console.debug('Functions', '_unpackArchive', dirName);
 
                   cloudfunction.serviceAccount = dirName;
                   zip.extractAllTo(dirName);
@@ -340,7 +340,7 @@ class Functions {
    */
   createFunction (location, cloudfunction = {}) {
     let operation, request;
-    console.debug('Functions', 'createFunction', location, cloudfunction);
+    console.debug('Functions#createFunction', location, cloudfunction);
 
     return Promise.resolve()
       .then(() => {
@@ -495,7 +495,7 @@ class Functions {
    * @returns {Promise}
    */
   deleteFunction (name) {
-    console.debug('Functions', 'deleteFunction', name);
+    console.debug('Functions#deleteFunction', name);
     return this.getFunction(name)
       .then((cloudfunction) => {
         const operationName = Operation.generateId();
@@ -613,6 +613,7 @@ class Functions {
    * @returns {Promise}
    */
   getFunction (name) {
+    console.debug('Functions#getFunction', name);
     return this.adapter.getFunction(name)
       .then((cloudfunction) => {
         if (!cloudfunction) {
@@ -666,6 +667,7 @@ class Functions {
    * @returns {Promise}
    */
   getOperation (name) {
+    console.debug('Functions#getOperation', name);
     return this.adapter.getOperation(name)
     .then((operation) => {
       if (!operation) {

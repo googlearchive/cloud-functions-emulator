@@ -572,7 +572,22 @@ class Controller {
    *
    * @returns {Promise}
    */
-  start () {
+  start (opts = {}) {
+    const CWD = path.join(__dirname, '../..');
+
+    let child;
+
+    if (!opts.hasOwnProperty('cwd')) {
+      opts.cwd = CWD;
+    }
+    if (!opts.hasOwnProperty('detached')) {
+      opts.detached = true;
+    }
+    if (!opts.hasOwnProperty('stdio')) {
+      const out = fs.openSync(this.config.logFile, 'a');
+      opts.stdio = ['ignore', out, out];
+    }
+
     return Promise.resolve()
       .then(() => {
         // Starting the Emulator amounts to spawning a child node process.
@@ -580,7 +595,7 @@ class Controller {
         // in the console. The detached process runs an HTTP server (ExpressJS).
         // Communication to the detached process is then done via HTTP
         const args = [
-          '.',
+          CWD,
           `--grpcHost=${this.config.grpcHost}`,
           `--grpcPort=${this.config.grpcPort}`,
           `--timeout=${this.config.timeout}`,
@@ -596,11 +611,11 @@ class Controller {
         // Make sure the child is detached, otherwise it will be bound to the
         // lifecycle of the parent process. This means we should also ignore the
         // binding of stdout.
-        const out = fs.openSync(this.config.logFile, 'a');
-        const child = spawn('node', args, {
-          cwd: path.join(__dirname, '../..'),
-          detached: true,
-          stdio: ['ignore', out, out]
+
+        child = spawn('node', args, {
+          cwd: opts.CWD,
+          detached: opts.detached,
+          stdio: opts.stdio
         });
 
         // Update status of settings
@@ -626,18 +641,10 @@ class Controller {
         // This can be done by the user in the 'kill' command
         this.server.set('pid', child.pid);
 
-        // Ensure the parent doesn't wait for the child to exit
-        // This should be used in combination with the 'detached' property
-        // of the spawn() options.  The node documentation is unclear about
-        // the behavior of detached & unref on different platforms.  'detached'
-        // on Windows seems to do the same thing as unref() on non-Windows
-        // platforms.  Doing both seems like the safest approach.
-        // TODO: Test on Windows
-        child.unref();
-
         // Ensure the service has started before we notify the caller.
         return this._waitForStart();
-      });
+      })
+      .then(() => child);
   }
 
   /**

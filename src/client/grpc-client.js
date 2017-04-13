@@ -164,6 +164,7 @@ class GrpcClient extends Client {
   }
 
   testConnection () {
+    console.log('testConnection');
     return new Promise((resolve, reject) => {
       const deadline = new Date();
       deadline.setSeconds(deadline.getSeconds() + 1);
@@ -172,6 +173,7 @@ class GrpcClient extends Client {
         pageSize: 1,
         location: 'heartbeat'
       }, { deadline }, (err, response) => {
+        console.error(err);
         if (err) {
           if (err.code === 4) {
             this._setup();
