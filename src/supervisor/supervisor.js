@@ -85,18 +85,39 @@ class Supervisor {
       // We will manually set the path when we pass the request to the worker
       ignorePath: true
     });
-    this._proxy.on('proxyReq', (proxyReq, req, res, options) => {
-      // This allows use to rewrite the url from:
-      //   /:project/:location/:function/*
-      // to
-      //   /*
-      proxyReq.url = req.workerUrl;
-    });
+    this._proxy
+      .on('error', (err, req, res) => {
+        // The function failed to respond to the request or crashed
+        this.closeWorker(req.functionName);
+        console.log(`Execution took ${Date.now() - req.functionStart} ms, finished with status: 'crash'`);
+
+        res
+          .status(500)
+          .json({
+            error: {
+              code: 500,
+              status: 'INTERNAL',
+              message: 'function crashed',
+              errors: [err.message]
+            }
+          })
+          .end();
+      })
+      .on('proxyReq', (proxyReq, req, res, options) => {
+        // This allows us to rewrite the url from:
+        //   /:project/:location/:function/*
+        // to just
+        //   /*
+        proxyReq.url = req.workerUrl;
+      })
+      .on('proxyRes', (proxyRes, req, res) => {
+        clearTimeout(req.functionTimeout);
+      });
 
     // This map tracks the running function workers
     this._workerPool = new Map();
 
-    // Periodicall check for and close idle workers
+    // Periodically check for and close idle workers
     this.pruneIntervalId = setInterval(() => this.prune(), this.config.idlePruneInterval);
   }
 
@@ -106,6 +127,32 @@ class Supervisor {
 
   static get DEFAULT_IDLE_PRUNE_INTERVAL () {
     return DEFAULT_IDLE_PRUNE_INTERVAL;
+  }
+
+  calculateTimeout (duration) {
+    // The default is 60 seconds
+    const DEFAULT = 60 * 1000;
+    const MAX = 9 * 60 * 1000;
+
+    try {
+      if (!duration || !duration.seconds) {
+        return DEFAULT;
+      }
+
+      const seconds = parseFloat(duration.seconds);
+
+      if (isNaN(seconds)) {
+        return DEFAULT;
+      }
+
+      const milliseconds = seconds * 1000;
+      if (milliseconds > MAX) {
+        return MAX;
+      }
+      return milliseconds;
+    } catch (err) {
+      return DEFAULT;
+    }
   }
 
   /**
@@ -130,8 +177,27 @@ class Supervisor {
     const formattedName = CloudFunction.formatName(project, location, name);
     const key = `/${project}/${location}/${name}`;
 
+    req.functionName = formattedName;
+    req.functionStart = Date.now();
+
     return this.getOrCreateWorker(formattedName)
       .then((worker) => {
+        req.functionTimeout = setTimeout(() => {
+          this.closeWorker(req.functionName);
+          console.log(`Execution took ${Date.now() - req.functionStart} ms, finished with status: 'timeout'`);
+
+          res
+            .status(500)
+            .json({
+              error: {
+                code: 500,
+                status: 'INTERNAL',
+                message: 'function execution attempt timed out'
+              }
+            })
+            .end();
+        }, worker.functionTimeout);
+
         this._proxy.web(req, res, {
           target: `http://localhost:${worker.port}${req.url.replace(key, '') || '/'}`
         });
@@ -178,7 +244,7 @@ class Supervisor {
     }
 
     return new Promise((resolve) => {
-      let timeoutId;
+      let timeout;
       const worker = this._workerPool.get(name);
       this._workerPool.delete(name);
       console.debug(`Stopping worker ${name}...`);
@@ -187,7 +253,7 @@ class Supervisor {
       worker.process.kill();
       worker.process.on('exit', (code, signal) => {
         console.debug(`${name} worker closed.`);
-        clearTimeout(timeoutId);
+        clearTimeout(timeout);
         const savedWorkers = server.get('workers');
         delete savedWorkers[pid];
         server.set('workers', savedWorkers);
@@ -195,7 +261,7 @@ class Supervisor {
       });
 
       // Give the worker 5 seconds to shutdown before killing it forcibly
-      timeoutId = setTimeout(() => {
+      timeout = setTimeout(() => {
         try {
           process.kill(pid, 'SIGKILL');
         } catch (err) {
@@ -232,6 +298,8 @@ class Supervisor {
           resolve(worker);
         }
       }, 200);
+
+      worker.functionTimeout = this.calculateTimeout(cloudfunction.timeout);
 
       const execArgv = [];
       if (opts.inspect) {
@@ -303,7 +371,7 @@ class Supervisor {
             rejected = true;
             console.error(msg);
           } else if (code) {
-            msg = `Function worker closed with exit code: ${code}`;
+            msg = `Function worker crashed with exit code: ${code}`;
             console.error(msg);
             if (stderr) {
               msg += `\n${stderr.trim()}`;
@@ -311,7 +379,7 @@ class Supervisor {
             error = new Errors.InternalError(msg);
             rejected = true;
           } else if (signal) {
-            msg = `Function worker closed by signal: ${signal}`;
+            msg = `Function worker killed by signal: ${signal}`;
             if (stderr) {
               console.error(msg);
               msg += `\n${stderr.trim()}`;
@@ -528,9 +596,16 @@ class Supervisor {
   start () {
     console.debug(`Starting supervisor at ${this.config.host}:${this.config.port}...`);
     this._server = this.app.listen(this.config.port, this.config.host);
-    this._server.on('listening', () => {
-      console.debug(`Supervisor listening at ${this._server.address().address}:${this._server.address().port}.`);
-    });
+    this._server
+      .on('listening', () => {
+        console.debug(`Supervisor listening at ${this._server.address().address}:${this._server.address().port}.`);
+      })
+      .on('error', (err) => {
+        console.error('SUPERVISOR error', err);
+      })
+      .on('clientError', (err, socket) => {
+        console.error('SUPERVISOR clientError', err, socket);
+      });
 
     return this;
   }

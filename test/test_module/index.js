@@ -35,6 +35,16 @@ module.exports = {
       message: 'Hello World'
     });
   },
+  helloSlow (req, res) {
+    setTimeout(() => {
+      res.status(200).send('too slow').end();
+    }, 10000);
+  },
+  helloNoResponse (req, res) {
+    setTimeout(() => {
+      res.send(var_does_not_exist_this_will_fail).end(); // eslint-disable-line
+    }, 1000);
+  },
   helloGET (req, res) {
     res.send({
       method: req.method,

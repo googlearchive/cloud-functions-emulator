@@ -76,6 +76,7 @@ exports.builder = (yargs) => {
       },
       timeout: {
         alias: 't',
+        default: '60s',
         description: `${'Optional'.bold}. The function execution timeout, e.g. 30s for 30 seconds. Defaults to 60 seconds.`,
         requiresArg: true,
         type: 'string'
@@ -127,6 +128,7 @@ exports.handler = (opts) => {
   const controller = new Controller(opts);
 
   opts.region || (opts.region = controller.config.region);
+  opts.timeout = calculateTimeout(opts.timeout);
 
   // Only deploy if the Emulator is running
   return controller.doIfRunning()
@@ -166,3 +168,39 @@ exports.handler = (opts) => {
     .then(() => describe(opts))
     .catch((err) => controller.handleError(err));
 };
+
+function calculateTimeout (timeout) {
+  // The default is 60 seconds
+  const DEFAULT = { seconds: 60 * 1000 };
+  const MAX = { seconds: 9 * 60 * 1000 };
+
+  if (!timeout) {
+    return DEFAULT;
+  }
+
+  if (typeof timeout === 'string') {
+    let matches;
+    if (matches = timeout.match(/^(\d+)s$/)) { // eslint-disable-line
+      const timeout = parseFloat(matches[1]);
+      if (!isNaN(timeout)) {
+        if (timeout > MAX.seconds) {
+          console.error(`Maximum allowed timeout is 9 minutes.`);
+          return MAX;
+        }
+        return { seconds: timeout };
+      }
+    } else if (matches = timeout.match(/^(\d+)ms$/)) { // eslint-disable-line
+      const timeout = parseFloat(matches[1]) / 1000;
+      if (!isNaN(timeout)) {
+        if (timeout > MAX.seconds) {
+          console.error(`Maximum allowed timeout is 9 minutes.`);
+          return MAX;
+        }
+        return { seconds: timeout };
+      }
+    }
+  }
+
+  console.error(`Function configured with invalid timeout: ${timeout}. Reverting to default of 60 seconds.`);
+  return DEFAULT;
+}

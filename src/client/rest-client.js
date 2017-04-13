@@ -49,7 +49,22 @@ class RestClient extends Client {
         name: CloudFunction.formatName(this.config.projectId, this.config.region, name),
         resource: { data }
       }
-    );
+    ).then(([body, response]) => {
+      if (body.result && typeof body.result === 'string') {
+        try {
+          body.result = JSON.parse(body.result);
+        } catch (err) {
+
+        }
+      } else if (body.error && typeof body.error === 'string') {
+        try {
+          body.error = JSON.parse(body.error);
+        } catch (err) {
+
+        }
+      }
+      return [body, response];
+    });
   }
 
   createFunction (cloudfunction) {

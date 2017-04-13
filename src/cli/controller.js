@@ -294,7 +294,7 @@ class Controller {
       const cloudfunction = new CloudFunction(CloudFunction.formatName(this.config.projectId, this.config.region, name));
 
       if (opts.timeout) {
-        cloudfunction.setTimeout(opts.timeout);
+        cloudfunction.timeout = opts.timeout;
       }
 
       if (opts.entryPoint) {
@@ -335,9 +335,6 @@ class Controller {
           };
           if (opts.triggerResource) {
             cloudfunction.eventTrigger.resource = opts.triggerResource;
-          }
-          if (opts.triggerParams) {
-            cloudfunction.eventTrigger.resource = opts.triggerParams;
           }
         } else {
           throw new Error('You must specify a trigger provider!');

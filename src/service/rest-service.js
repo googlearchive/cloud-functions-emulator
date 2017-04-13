@@ -128,8 +128,7 @@ class RestService extends Service {
           body: JSON.stringify(cloudfunction.httpsTrigger ? event.data : event),
           headers: {
             'Content-Type': 'application/json'
-          },
-          json: true
+          }
         });
       })
       .then((response) => {
@@ -145,7 +144,7 @@ class RestService extends Service {
           .status(200)
           .send({
             executionId: eventId,
-            error: err.response ? err.response.body : err
+            error: err.response ? err.response.body : err.message
           })
           .end();
       });

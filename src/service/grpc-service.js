@@ -99,27 +99,23 @@ class RpcService extends Service {
 
         const parts = CloudFunction.parseName(call.request.name);
 
-        const opts = {
+        return got.post(`${this.functions.getSupervisorHost()}/${parts.project}/${parts.location}/${parts.name}`, {
           body: JSON.stringify(cloudfunction.httpsTrigger ? event.data : event),
           headers: {
             'Content-Type': 'application/json'
           }
-        };
-
-        return got.post(`${this.functions.getSupervisorHost()}/${parts.project}/${parts.location}/${parts.name}`, opts);
+        });
       })
       .then((response) => {
-        const message = {
-          executionId: eventId
-        };
-        message.result = response.body;
-        cb(null, message);
+        cb(null, {
+          executionId: eventId,
+          result: response.body
+        });
       }, (err) => {
-        const message = {
-          executionId: eventId
-        };
-        message.error = err.response ? err.response.body : err.message;
-        cb(null, message);
+        cb(null, {
+          executionId: eventId,
+          error: err.response ? err.response.body : err.message
+        });
       });
   }
 

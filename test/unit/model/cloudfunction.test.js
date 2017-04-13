@@ -225,27 +225,6 @@ describe(`unit/model/cloudfunction`, () => {
     });
   });
 
-  describe(`CloudFunction#setTimeout`, () => {
-    it(`should set timeout`, () => {
-      const cloudfunction = new CloudFunction(TEST_NAME);
-      const timeout = `30s`;
-
-      assert.throws(
-        () => {
-          cloudfunction.setTimeout();
-        }
-      );
-      assert.throws(
-        () => {
-          cloudfunction.setTimeout(1234);
-        }
-      );
-
-      cloudfunction.setTimeout(timeout);
-      assert(cloudfunction.timeout === timeout);
-    });
-  });
-
   describe(`CloudFunction#toProtobuf`, () => {
     it(`should return a representation suitable for serialization to a protobuf`, () => {
       sinon.spy(CloudFunction, `decode`);

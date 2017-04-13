@@ -58,14 +58,13 @@ exports.handler = (opts) => {
         head: ['Property'.bold, 'Value'.bold]
       });
 
-      let trigger, resource, params;
+      let trigger, resource;
       if (cloudfunction.httpsTrigger) {
         trigger = 'HTTP';
         resource = cloudfunction.httpsTrigger.url;
       } else if (cloudfunction.eventTrigger) {
         trigger = cloudfunction.eventTrigger.eventType;
         resource = cloudfunction.eventTrigger.resource;
-        params = cloudfunction.eventTrigger.path;
       } else {
         trigger = 'Unknown';
       }
@@ -78,8 +77,10 @@ exports.handler = (opts) => {
       if (resource) {
         table.push(['Resource', resource]);
       }
-      if (params) {
-        table.push(['Params', params]);
+      if (cloudfunction.timeout && cloudfunction.timeout.seconds) {
+        table.push(['Timeout', `${cloudfunction.timeout.seconds} seconds`]);
+      } else {
+        table.push(['Timeout', `60 seconds`]);
       }
       if (cloudfunction.serviceAccount) {
         table.push(['Local path', cloudfunction.serviceAccount]);

@@ -59,7 +59,8 @@ class Emulator {
       .on('error', makeHandler('restPort'));
     this.grpcService.start();
 
-    process.on('exit', () => {
+    process.on('exit', (code) => {
+      console.debug(`Emulator exiting with code: ${code}`);
       this.stop();
     });
   }

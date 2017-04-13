@@ -243,13 +243,6 @@ class CloudFunction {
     this.sourceArchiveUrl = sourceArchiveUrl;
   }
 
-  setTimeout (timeout) {
-    if (!timeout || typeof timeout !== 'string') {
-      throw new Error('"timeout" must be a Google Duration string!');
-    }
-    this.timeout = timeout;
-  }
-
   /**
    * Convert this CloudFunction instance into a gRPC CloudFunction message.
    *

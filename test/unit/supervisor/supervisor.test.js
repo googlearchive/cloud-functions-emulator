@@ -310,9 +310,9 @@ describe('unit/supervisor/supervisor', () => {
       };
       const supervisor = new Supervisor(null, opts);
       const serverMock = {
-        address: sinon.stub().returns(opts),
-        on: sinon.stub().yields()
+        address: sinon.stub().returns(opts)
       };
+      serverMock.on = sinon.stub().returns(serverMock).yields();
       supervisor.app = {
         listen: sinon.stub().returns(serverMock)
       };
@@ -334,8 +334,10 @@ describe('unit/supervisor/supervisor', () => {
         supervisor.app.listen.getCall(0).args,
         [opts.port, opts.host]
       );
-      assert.equal(serverMock.on.callCount, 1);
+      assert.equal(serverMock.on.callCount, 3);
       assert.deepEqual(serverMock.on.getCall(0).args.slice(0, -1), ['listening']);
+      assert.deepEqual(serverMock.on.getCall(1).args.slice(0, -1), ['error']);
+      assert.deepEqual(serverMock.on.getCall(2).args.slice(0, -1), ['clientError']);
     });
   });
 

@@ -190,6 +190,24 @@ function makeTests (service, override) {
         }
       });
 
+      it(`should deploy a function with a timeout`, () => {
+        const output = run(`${override || cmd} deploy helloSlow --local-path=test/test_module/ --trigger-http --timeout=2s ${deployArgs}`, cwd);
+        if (override) {
+          assert(output.includes(`/functions/helloSlow`));
+        } else {
+          assert(output.includes(`Function helloSlow deployed.`));
+        }
+      });
+
+      it(`should deploy an HTTP function that fails to respond (crashes asynchronously)`, () => {
+        const output = run(`${override || cmd} deploy helloNoResponse --local-path=test/test_module/ --trigger-http ${deployArgs}`, cwd);
+        if (override) {
+          assert(output.includes(`/functions/helloNoResponse`));
+        } else {
+          assert(output.includes(`Function helloNoResponse deployed.`));
+        }
+      });
+
       it(`should deploy an HTTP function`, () => {
         const output = run(`${override || cmd} deploy helloGET --local-path=test/test_module/ --trigger-http ${deployArgs}`, cwd);
         if (override) {
@@ -300,7 +318,7 @@ function makeTests (service, override) {
         assert(output.includes(`bar`));
       });
 
-      it(`should call a function returns JSON`, () => {
+      it(`should call a function that returns JSON`, () => {
         const output = run(`${override || cmd} call helloJSON --data '{}' ${overrideArgs || shortArgs}`, cwd);
         assert(output.includes(`{ message: 'Hello World' }`));
       });
@@ -317,6 +335,51 @@ function makeTests (service, override) {
       it(`should call the re-deployed function`, () => {
         const output = run(`${override || cmd} call helloJSON --data '{"foo":"bar"}' ${overrideArgs || shortArgs}`, cwd);
         assert(output.includes(`bar`));
+      });
+
+      it(`should call (via CLI) an HTTP function that exceeds its timeout`, () => {
+        const output = run(`${override || cmd} call helloSlow ${overrideArgs || shortArgs}`, cwd);
+        assert(output.includes(`function execution attempt timed out`));
+      });
+
+      it(`should call (via request) an HTTP function that exceeds its timeout`, () => {
+        return got(`http://localhost:${SUPERVISOR_PORT}/${PROJECT_ID}/${REGION}/helloSlow`, {
+          json: true
+        }).then((response) => {
+          assert.fail(`should have failed`);
+        }).catch((err) => {
+          assert.equal(err.response.statusCode, 500);
+          assert.deepEqual(err.response.body, {
+            error: {
+              code: 500,
+              status: 'INTERNAL',
+              message: 'function execution attempt timed out'
+            }
+          });
+        });
+      });
+
+      it(`should call (via CLI) an HTTP function that fails to respond (crashes asynchronously)`, () => {
+        const output = run(`${override || cmd} call helloNoResponse ${overrideArgs || shortArgs}`, cwd);
+        assert(output.includes(`function crashed`));
+      });
+
+      it(`should call (via request) an HTTP function that fails to respond (crashes asynchronously)`, () => {
+        return got(`http://localhost:${SUPERVISOR_PORT}/${PROJECT_ID}/${REGION}/helloNoResponse`, {
+          json: true
+        }).then((response) => {
+          assert.fail(`should have failed`);
+        }).catch((err) => {
+          assert.equal(err.response.statusCode, 500);
+          assert.deepEqual(err.response.body, {
+            error: {
+              code: 500,
+              status: 'INTERNAL',
+              message: 'function crashed',
+              errors: err.response.body.error.errors
+            }
+          });
+        });
       });
 
       it(`should call an HTTP function`, () => {
