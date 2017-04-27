@@ -11,5 +11,6 @@
   "supervisorPort": 8010,
   "timeout": 20000,
   "useMocks": false,
-  "verbose": false
+  "verbose": false, 
+  "tailing": false
 }

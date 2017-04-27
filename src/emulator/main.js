@@ -72,10 +72,13 @@ function main (args) {
     .strict()
     .argv;
 
+  console.log('opts at start', opts)
   if (opts.config) {
     _.merge(opts, require(path.resolve(opts.config)));
   }
+  console.log('opts before defaults merge', opts)
   opts = _.merge(defaults, opts);
+  console.log('opts after defaults merge', opts)
 
   opts.logFile = opts.logFile ? logs.assertLogsPath(opts.logFile) : opts.logFile;
 
@@ -101,20 +104,33 @@ function main (args) {
   if (opts.verbose === true) {
     logLevel = 'debug';
   }
-
-  const logger = new winston.Logger({
-    transports: [
+  console.log('opts is: ', opts)
+  var transports;
+  if (opts.tailing == true) {
+    transports = [
       new winston.transports.Console({
         json: false,
-        level: 'error'
-      }),
+        level: logLevel
+      })
+    ];
+  } else {
+    transports = [
       new winston.transports.File({
         json: false,
         filename: opts.logFile,
         maxsize: 1048576,
         level: logLevel
+      }),
+      new winston.transports.Console({
+        json: false,
+        level: 'error'
       })
-    ],
+    ];
+  }
+  console.log('transports: ', transports)
+
+  const logger = new winston.Logger({
+    transports: transports,
     exitOnError: false
   });
 

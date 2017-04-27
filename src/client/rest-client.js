@@ -27,6 +27,7 @@ const Model = require('../model');
 const { CloudFunction } = Model;
 
 class RestClient extends Client {
+  // console.log('inside RestClient constructor')
   _action (method, params) {
     return this.getService()
       .then((functionsService) => {
