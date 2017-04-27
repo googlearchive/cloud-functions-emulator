@@ -85,10 +85,9 @@ class Controller {
     this.config.logFile = logs.assertLogsPath(this.config.logFile);
 
     const clientConfig = _.merge(this.config, {
-      grpcHost: this.server.get('grpcHost') || this.config.grpcHost,
-      grpcPort: this.server.get('grpcPort') || this.config.grpcPort,
-      restHost: this.server.get('restHost') || this.config.restHost,
-      restPort: this.server.get('restPort') || this.config.restPort
+      grpcPort: opts.grpcPort || this.server.get('grpcPort') || this.config.grpcPort,
+      host: opts.host || (!this.server.get('stopped') && this.server.get('host')) || this.config.host,
+      restPort: opts.restPort || this.server.get('restPort') || this.config.restPort
     });
 
     // Initialize the client that will communicate with the Emulator
@@ -365,7 +364,7 @@ class Controller {
           this.log(`You paused execution. Connect to the debugger on port ${opts.port} to resume execution and begin debugging.`);
         }
 
-        return got.post(`http://${this.config.supervisorHost}:${this.config.supervisorPort}/api/debug`, {
+        return got.post(`http://${this.config.host}:${this.config.supervisorPort}/api/debug`, {
           body: JSON.stringify({
             type: type,
             name: cloudfunction.name,
@@ -562,7 +561,7 @@ class Controller {
   reset (name, opts) {
     return this.client.getFunction(name)
       .then(([cloudfunction]) => {
-        return got.post(`http://${this.config.supervisorHost}:${this.config.supervisorPort}/api/reset`, {
+        return got.post(`http://${this.config.host}:${this.config.supervisorPort}/api/reset`, {
           body: JSON.stringify({
             name: cloudfunction.name,
             keep: opts.keep
@@ -604,15 +603,14 @@ class Controller {
         // Communication to the detached process is then done via HTTP
         const args = [
           CWD,
-          `--grpcHost=${this.config.grpcHost}`,
+          `--bindHost=${this.config.bindHost}`,
           `--grpcPort=${this.config.grpcPort}`,
+          `--host=${this.config.host}`,
           `--timeout=${this.config.timeout}`,
           `--verbose=${this.config.verbose}`,
           `--useMocks=${this.config.useMocks}`,
           `--logFile=${this.config.logFile}`,
-          `--restHost=${this.config.restHost}`,
           `--restPort=${this.config.restPort}`,
-          `--supervisorHost=${this.config.supervisorHost}`,
           `--supervisorPort=${this.config.supervisorPort}`
         ];
 
@@ -628,16 +626,14 @@ class Controller {
 
         // Update status of settings
         this.server.set({
-          grpcHost: this.config.grpcHost,
           grpcPort: this.config.grpcPort,
+          host: this.config.host,
           logFile: this.config.logFile,
           projectId: this.config.projectId,
           region: this.config.region,
-          restHost: this.config.restHost,
           restPort: this.config.restPort,
           started: Date.now(),
           storage: this.config.storage,
-          supervisorHost: this.config.supervisorHost,
           supervisorPort: this.config.supervisorPort,
           useMocks: this.config.useMocks,
           verbose: this.config.verbose,

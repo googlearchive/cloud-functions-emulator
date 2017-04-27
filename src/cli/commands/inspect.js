@@ -55,7 +55,7 @@ exports.builder = (yargs) => {
         requiresArg: true,
         type: 'number'
       }
-    }, _.pick(OPTIONS, ['projectId', 'region'])))
+    }, _.pick(OPTIONS, ['projectId', 'region', 'host', 'restPort'])))
     .epilogue(`See ${'https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Debugging-functions'.bold}`);
 
   EXAMPLES['inspect'].forEach((e) => yargs.example(e[0], e[1]));

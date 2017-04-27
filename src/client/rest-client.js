@@ -108,7 +108,7 @@ class RestClient extends Client {
   getUrl (pathname) {
     return url.format({
       protocol: 'http:',
-      hostname: this.config.restHost,
+      hostname: this.config.host,
       port: this.config.restPort,
       pathname: path.join('v1beta2', pathname)
     });
@@ -139,7 +139,7 @@ class RestClient extends Client {
 
   testConnection () {
     return new Promise((resolve, reject) => {
-      const client = net.connect(this.config.restPort, this.config.restHost, () => {
+      const client = net.connect(this.config.restPort, this.config.host, () => {
         client.end();
         resolve();
       });

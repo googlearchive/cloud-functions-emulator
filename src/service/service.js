@@ -24,7 +24,7 @@ class Service {
   }
 
   start () {
-    console.debug(`Starting ${this.type} service at ${this.config.host}:${this.config.port}...`);
+    console.debug(`Starting ${this.type} service at ${this.config.bindHost}:${this.config.port}...`);
   }
 
   stop () {

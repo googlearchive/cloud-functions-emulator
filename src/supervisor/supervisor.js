@@ -594,8 +594,8 @@ class Supervisor {
    * @method Supervisor#start
    */
   start () {
-    console.debug(`Starting supervisor at ${this.config.host}:${this.config.port}...`);
-    this._server = this.app.listen(this.config.port, this.config.host);
+    console.debug(`Starting supervisor at ${this.config.bindHost}:${this.config.port}...`);
+    this._server = this.app.listen(this.config.port, this.config.bindHost);
     this._server
       .on('listening', () => {
         console.debug(`Supervisor listening at ${this._server.address().address}:${this._server.address().port}.`);

@@ -105,14 +105,14 @@ const FunctionsConfigSchema = {
       type: 'string',
       enum: ['configstore']
     },
-    supervisorHost: {
+    host: {
       type: 'string'
     },
     supervisorPort: {
       type: 'number'
     }
   },
-  required: ['storage', 'supervisorHost', 'supervisorPort']
+  required: ['storage', 'host', 'supervisorPort']
 };
 
 /**
@@ -406,7 +406,7 @@ class Functions {
 
               return new Promise((resolve, reject) => {
                 setTimeout(() => {
-                  got.post(`${this.getSupervisorHost()}/api/deploy`, {
+                  got.post(`http://localhost:${this.config.supervisorPort}/api/deploy`, {
                     body: JSON.stringify({ name: cloudfunction.name }),
                     headers: {
                       'Content-Type': 'application/json'
@@ -546,7 +546,7 @@ class Functions {
               // Delete the CloudFunction
               this.adapter.deleteFunction(name)
                 .then(() => {
-                  return got.post(`${this.getSupervisorHost()}/api/delete`, {
+                  return got.post(`http://localhost:${this.config.supervisorPort}/api/delete`, {
                     body: JSON.stringify({ name: cloudfunction.name }),
                     headers: {
                       'Content-Type': 'application/json'
@@ -625,7 +625,7 @@ class Functions {
   }
 
   getSupervisorHost () {
-    return `http://${this.config.supervisorHost}:${this.config.supervisorPort}`;
+    return `http://${this.config.host}:${this.config.supervisorPort}`;
   }
 
   /**

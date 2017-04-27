@@ -57,8 +57,8 @@ module.exports = {
   /**
    * Emulator settings
    */
-  grpcHost: {
-    description: `The host of the Cloud Functions Emulator gRPC API. ${'Default:'.bold} ${defaults.grpcHost.toString().green}`,
+  bindHost: {
+    description: `The address to bind the listener to. ${'Default:'.bold} ${defaults.bindHost.toString().green}`,
     requiresArg: true,
     type: 'string'
   },
@@ -67,13 +67,13 @@ module.exports = {
     requiresArg: true,
     type: 'number'
   },
-  logFile: {
-    description: `The path to the logs file to which function logs will be written. ${'Default:'.bold} ${defaults.logFile.toString().green}`,
+  host: {
+    description: `The host of the Cloud Functions Emulator. ${'Default:'.bold} ${defaults.host.toString().green}`,
     requiresArg: true,
     type: 'string'
   },
-  restHost: {
-    description: `The host of the Cloud Functions Emulator REST API. ${'Default:'.bold} ${defaults.restHost.toString().green}`,
+  logFile: {
+    description: `The path to the logs file to which function logs will be written. ${'Default:'.bold} ${defaults.logFile.toString().green}`,
     requiresArg: true,
     type: 'string'
   },
@@ -81,11 +81,6 @@ module.exports = {
     description: `The port of the Cloud Functions Emulator REST API. ${'Default:'.bold} ${defaults.restPort.toString().green}`,
     requiresArg: true,
     type: 'number'
-  },
-  supervisorHost: {
-    description: `The host of the Supervisor, which hosts HTTP functions. ${'Default:'.bold} ${defaults.supervisorHost.toString().green}`,
-    requiresArg: true,
-    type: 'string'
   },
   supervisorPort: {
     description: `The port of the Supervisor, which hosts HTTP functions. ${'Default:'.bold} ${defaults.supervisorPort.toString().green}`,

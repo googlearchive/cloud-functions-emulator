@@ -64,9 +64,9 @@ exports.handler = (opts) => {
         if (workerPids.length) {
           table.push(['Worker PIDs', workerPids.join(', ')]);
         }
-        table.push(['REST Service', `http://${config.restHost}:${config.restPort}/`]);
-        table.push(['gRPC Service', `http://${config.grpcHost}:${config.grpcPort}/`]);
-        table.push(['HTTP Triggers', `http://${config.supervisorHost}:${config.supervisorPort}/${config.projectId}/${config.region}/:function`]);
+        table.push(['REST Service', `http://${config.host}:${config.restPort}/`]);
+        table.push(['gRPC Service', `http://${config.host}:${config.grpcPort}/`]);
+        table.push(['HTTP Triggers', `http://${config.host}:${config.supervisorPort}/${config.projectId}/${config.region}/:function`]);
         table.push(['Log file', config.logFile]);
         table.push(['Emulator Version', config.version]);
       } else {
