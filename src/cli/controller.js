@@ -67,10 +67,7 @@ const STATE = {
 
 class Controller {
   constructor (opts = {}) {
-    console.log('opts', opts)
-
     if (!(this instanceof Controller)) {
-      // console.log('calling constructor with', opts)
       return new Controller(opts);
     }
 
@@ -81,12 +78,8 @@ class Controller {
 
     // Load and apply defaults to the user's Emulator configuration
     this._config = config;
-    // console.log('this._config', this._config);
     // Merge the user's configuration with command-line options
     this.config = _.merge({}, defaults, this._config.all, opts);
-    // console.log('defaults', defaults)
-    // console.log('opts', opts)
-    // console.log('this.config', this.config)
 
     // We will pipe stdout from the child process to the emulator log file
     this.config.logFile = logs.assertLogsPath(this.config.logFile);
@@ -97,8 +90,6 @@ class Controller {
       restHost: this.server.get('restHost') || this.config.restHost,
       restPort: this.server.get('restPort') || this.config.restPort
     });
-
-    console.log('clientConfig', clientConfig)
 
     // Initialize the client that will communicate with the Emulator
     if (this.config.service === 'rest') {

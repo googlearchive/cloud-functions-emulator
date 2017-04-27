@@ -17,7 +17,6 @@
 
 class Client {
   constructor (opts) {
-  	console.log('inside client constructor, opts is', opts)
     this.config = opts;
   }
 }

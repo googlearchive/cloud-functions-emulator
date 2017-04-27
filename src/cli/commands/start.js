@@ -47,7 +47,8 @@ exports.options = [
   'supervisorPort',
   'timeout',
   'useMocks',
-  'verbose'
+  'verbose',
+  'tailing'
 ];
 
 /**
