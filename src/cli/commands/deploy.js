@@ -44,7 +44,7 @@ exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .options(_.merge(_.pick(OPTIONS, ['projectId', 'region', 'host', 'restPort']), {
+    .options(_.merge(_.pick(OPTIONS, ['grpcPort', 'host', 'projectId', 'region', 'restPort', 'service']), {
       'local-path': {
         alias: 'l',
         description: `Path to local directory with source code. ${'Default:'.bold} ${process.cwd().green} (the current working directory)`,
