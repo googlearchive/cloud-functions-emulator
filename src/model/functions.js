@@ -369,7 +369,7 @@ class Functions {
 
         cloudfunction.status = 'DEPLOYING';
         if (cloudfunction.httpsTrigger) {
-          cloudfunction.httpsTrigger.url = `${this.getSupervisorHost()}/${parts.project}/${parts.location}/${parts.name}`;
+          cloudfunction.httpsTrigger.url = `http://${this.config.host}:${this.config.supervisorPort}/${parts.project}/${parts.location}/${parts.name}`;
         }
 
         // Prepare the Operation
@@ -406,7 +406,7 @@ class Functions {
 
               return new Promise((resolve, reject) => {
                 setTimeout(() => {
-                  got.post(`http://localhost:${this.config.supervisorPort}/api/deploy`, {
+                  got.post(`${this.getSupervisorHost()}/api/deploy`, {
                     body: JSON.stringify({ name: cloudfunction.name }),
                     headers: {
                       'Content-Type': 'application/json'
@@ -546,7 +546,7 @@ class Functions {
               // Delete the CloudFunction
               this.adapter.deleteFunction(name)
                 .then(() => {
-                  return got.post(`http://localhost:${this.config.supervisorPort}/api/delete`, {
+                  return got.post(`${this.getSupervisorHost()}/api/delete`, {
                     body: JSON.stringify({ name: cloudfunction.name }),
                     headers: {
                       'Content-Type': 'application/json'
@@ -625,7 +625,7 @@ class Functions {
   }
 
   getSupervisorHost () {
-    return `http://${this.config.host}:${this.config.supervisorPort}`;
+    return `http://localhost:${this.config.supervisorPort}`;
   }
 
   /**
