@@ -64,8 +64,8 @@ const EPILOGUE = `Available configuration options:
     ${'verbose'.bold}
       ${OPTIONS.verbose.description}
 
-    ${'tailing'.bold}
-      ${OPTIONS.tailing.description}
+    ${'tail'.bold}
+      ${OPTIONS.tail.description}
 
     See ${'https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Configuring-the-Emulator'.bold}
 `;

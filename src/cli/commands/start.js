@@ -48,7 +48,7 @@ exports.options = [
   'timeout',
   'useMocks',
   'verbose',
-  'tailing'
+  'tail'
 ];
 
 /**

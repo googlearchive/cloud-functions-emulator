@@ -12,5 +12,5 @@
   "timeout": 20000,
   "useMocks": false,
   "verbose": false, 
-  "tailing": false
+  "tail": false
 }

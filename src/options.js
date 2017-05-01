@@ -92,8 +92,8 @@ module.exports = {
     requiresArg: true,
     type: 'number'
   },
-  tailing: {
-    description: `When set to true, logs will be streamed to the console. When set to false, logs will be saved in a log file location determine by the logFile config value. ${'Default:'.bold} ${defaults.tailing.toString().green}`,
+  tail: {
+    description: `When set to true, logs will be streamed to the console. When set to false, logs will be saved in a log file location determine by the logFile config value. ${'Default:'.bold} ${defaults.tail.toString().green}`,
     requiresArg: false,
     type: 'boolean'
   },

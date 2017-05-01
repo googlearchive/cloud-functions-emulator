@@ -103,7 +103,7 @@ function main (args) {
   }
 
   var transports;
-  if (opts.tailing === true) {
+  if (opts.tail === true) {
     transports = [
       new winston.transports.Console({
         json: false,
