@@ -19,3 +19,4 @@ test/system/configstore
 test/system/*.log
 .idea/
 test/firebase/
+test/system/test-log.txt
