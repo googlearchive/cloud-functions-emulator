@@ -29,6 +29,7 @@ const logs = require('./logs');
 const OPTIONS = require('../options');
 const pkg = require('../../package.json');
 const server = new Configstore(path.join(pkg.name, '/.active-server'));
+const logger = require('../utils/logger');
 
 const COMMAND = `./bin/emulator ${'[options]'.yellow}`;
 const DESCRIPTION = `The Google Cloud Functions Emulator service. The service implements both the REST and gRPC versions of the Google
@@ -105,6 +106,12 @@ function main (args) {
   var transports;
   if (opts.tail === true) {
     transports = [
+      new winston.transports.File({
+        json: false,
+        filename: opts.logFile,
+        maxsize: 1048576,
+        level: logLevel
+      }),
       new winston.transports.Console({
         json: false,
         level: logLevel
@@ -117,33 +124,13 @@ function main (args) {
         filename: opts.logFile,
         maxsize: 1048576,
         level: logLevel
-      }),
-      new winston.transports.Console({
-        json: false,
-        level: 'error'
       })
     ];
   }
 
-  const logger = new winston.Logger({
-    transports: transports,
-    exitOnError: false
-  });
-
-  // Override default console log calls to redirect them to winston.
-  // This is required because when the server is run as a spawned process
-  // from the CLI, stdout and stderr will be written to /dev/null.  In order
-  // to capture logs emitted from user functions we need to globally redirect
-  // console logs for this process.  Note that this will also redirect logs
-  // from the emulator itself, so all emulator logs should be written at the
-  // DEBUG level.  We've made an exception for error logs in the emulator, just
-  // to make it easier for developers to recognize failures in the emulator.
-
-  console.log = (...args) => logger.info(...args);
-  console.info = console.log;
-  console.error = (...args) => logger.error(...args);
-  console.debug = (...args) => logger.debug(...args);
-
+  logger.transports = transports;
+  // temporary, will remove when logger.debug is used instead of console.debug in rest of code
+  console.debug = logger.debug;
   console.debug('main', opts);
 
   const emulator = new Emulator(opts);

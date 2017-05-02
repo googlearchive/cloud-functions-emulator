@@ -614,7 +614,7 @@ class Controller {
           `--restPort=${this.config.restPort}`,
           `--supervisorHost=${this.config.supervisorHost}`,
           `--supervisorPort=${this.config.supervisorPort}`,
-          `--tailing=${this.config.tailing}`
+          `--tail=${this.config.tail}`
         ];
 
         // Make sure the child is detached, otherwise it will be bound to the
