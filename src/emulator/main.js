@@ -129,8 +129,13 @@ function main (args) {
   }
 
   logger.transports = transports;
-  // temporary, will remove when logger.debug is used instead of console.debug in rest of code
+  // temporary, will remove when logger methods are used instead of console methods in rest of code
   console.debug = logger.debug;
+  console.error = logger.error;
+  console.info = logger.info;
+  console.log = logger.info;
+  // end of temporary block
+
   console.debug('main', opts);
 
   const emulator = new Emulator(opts);
