@@ -20,8 +20,10 @@ require('colors');
 const _ = require('lodash');
 const cli = require('yargs');
 const Configstore = require('configstore');
+const fs = require('fs');
 const path = require('path');
 const winston = require('winston');
+const logger = winston;
 
 const defaults = require('../defaults.json');
 const Emulator = require('./emulator');
@@ -77,12 +79,31 @@ function main (args) {
   }
   opts = _.merge(defaults, opts);
 
+  const logLevel = opts.verbose ? 'debug' : 'info';
   opts.logFile = opts.logFile ? logs.assertLogsPath(opts.logFile) : opts.logFile;
+  winston.configure({
+    transports: [
+      new (winston.transports.File)({
+        json: false,
+        filename: opts.logFile,
+        maxsize: 10485760,
+        level: logLevel,
+        handleExceptions: true,
+        humanReadableUnhandledException: true
+      }),
+      new (winston.transports.Console)({
+        json: false,
+        level: logLevel,
+        colorize: true
+      })
+    ]
+  });
 
   // Add a global error handler to catch all unexpected exceptions in the process
   // Note that this will not include any unexpected system errors (syscall failures)
   process.on('uncaughtException', function (err) {
     console.error(err.stack);
+    fs.appendFileSync(opts.logFile, `\n${err.stack}`);
 
     // HACK: An uncaught exception may leave the process in an incomplete state
     // however exiting the process prematurely may result in the above log call
@@ -94,45 +115,7 @@ function main (args) {
     }, 2000);
   });
 
-  // Setup the winston logger.  We're going to write to a file which will
-  // automatically roll when it exceeds ~1MB.
-  let logLevel = 'info';
-
-  if (opts.verbose === true) {
-    logLevel = 'debug';
-  }
-
-  const logger = new winston.Logger({
-    transports: [
-      new winston.transports.Console({
-        json: false,
-        level: 'error'
-      }),
-      new winston.transports.File({
-        json: false,
-        filename: opts.logFile,
-        maxsize: 1048576,
-        level: logLevel
-      })
-    ],
-    exitOnError: false
-  });
-
-  // Override default console log calls to redirect them to winston.
-  // This is required because when the server is run as a spawned process
-  // from the CLI, stdout and stderr will be written to /dev/null.  In order
-  // to capture logs emitted from user functions we need to globally redirect
-  // console logs for this process.  Note that this will also redirect logs
-  // from the emulator itself, so all emulator logs should be written at the
-  // DEBUG level.  We've made an exception for error logs in the emulator, just
-  // to make it easier for developers to recognize failures in the emulator.
-
-  console.log = (...args) => logger.info(...args);
-  console.info = console.log;
-  console.error = (...args) => logger.error(...args);
-  console.debug = (...args) => logger.debug(...args);
-
-  console.debug('main', opts);
+  logger.debug('main', opts);
 
   const emulator = new Emulator(opts);
 

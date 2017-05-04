@@ -16,19 +16,20 @@
 'use strict';
 
 const _ = require('lodash');
+const logger = require('winston');
 
 class Service {
-  constructor (functions, config) {
+  constructor (functions, config = {}) {
     this.functions = functions;
     this.config = _.cloneDeep(config);
   }
 
   start () {
-    console.debug(`Starting ${this.type} service at ${this.config.host}:${this.config.port}...`);
+    logger.debug(`Starting ${this.type} service at ${this.config.host}:${this.config.port}...`);
   }
 
   stop () {
-    console.debug(`${this.type} service stopped.`);
+    logger.debug(`${this.type} service stopped.`);
   }
 }
 
