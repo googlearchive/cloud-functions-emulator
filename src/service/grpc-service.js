@@ -18,6 +18,7 @@
 const got = require('got');
 const grpc = require('grpc');
 const http = require('http');
+const logger = require('winston');
 const uuid = require('uuid');
 
 const Model = require('../model');
@@ -73,7 +74,7 @@ class RpcService extends Service {
    * @param {function} The callback function.
    */
   callFunction (call, cb) {
-    console.debug('RpcService#callFunction', call.request.name);
+    logger.debug('RpcService#callFunction', call.request.name);
     const eventId = uuid.v4();
     return this.functions.getFunction(call.request.name)
       .then((cloudfunction) => {
@@ -130,7 +131,7 @@ class RpcService extends Service {
    * @param {function} The callback function.
    */
   createFunction (call, cb) {
-    console.debug('RpcService#createFunction', call.request.location, call.request.function);
+    logger.debug('RpcService#createFunction', call.request.location, call.request.function);
     return this.functions.createFunction(call.request.location, call.request.function)
       .then((operation) => cb(null, operation.toProtobuf()));
   }
@@ -144,7 +145,7 @@ class RpcService extends Service {
    * @param {function} The callback function.
    */
   deleteFunction (call, cb) {
-    console.debug('RpcService#deleteFunction', call.request.name);
+    logger.debug('RpcService#deleteFunction', call.request.name);
     return this.functions.deleteFunction(call.request.name)
       .then((operation) => cb(null, operation.toProtobuf()));
   }
@@ -158,7 +159,7 @@ class RpcService extends Service {
    * @param {function} The callback function.
    */
   getFunction (call, cb) {
-    console.debug('RpcService#getFunction', call.request.name);
+    logger.debug('RpcService#getFunction', call.request.name);
     return this.functions.getFunction(call.request.name)
       .then((cloudfunction) => cb(null, cloudfunction.toProtobuf()));
   }
@@ -172,13 +173,13 @@ class RpcService extends Service {
    * @param {function} The callback function.
    */
   getOperation (call, cb) {
-    console.debug('RpcService#getOperation', call.request.name);
+    logger.debug('RpcService#getOperation', call.request.name);
     return this.functions.getOperation(call.request.name)
       .then((operation) => cb(null, operation.toProtobuf()));
   }
 
   handleError (err, cb) {
-    console.debug('RpcService#handleError', err);
+    logger.debug('RpcService#handleError', err);
     err = err.toProtobuf ? err.toProtobuf() : err;
 
     const error = {
@@ -220,7 +221,7 @@ class RpcService extends Service {
    * @param {function} The callback function.
    */
   listFunctions (call, cb) {
-    console.debug('RpcService#listFunctions', call.request.location);
+    logger.debug('RpcService#listFunctions', call.request.location);
     const request = call.request;
 
     // This is used by the CLI to get a heartbeat from the gRPC Service
@@ -243,17 +244,17 @@ class RpcService extends Service {
 
   start () {
     super.start();
-    console.debug('RpcService#start');
+    logger.debug('RpcService#start');
 
     this.server.bind(`${this.config.host}:${this.config.port}`, ServerCredentials.createInsecure());
     this.server.start();
-    console.debug(`${this.type} service listening at ${this.config.host}:${this.config.port}.`);
+    logger.debug(`${this.type} service listening at ${this.config.host}:${this.config.port}.`);
 
     return this;
   }
 
   stop () {
-    console.debug('RpcService#stop');
+    logger.debug('RpcService#stop');
     this.server.tryShutdown(() => super.stop());
 
     return this;

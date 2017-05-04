@@ -71,7 +71,6 @@ exports.builder = (yargs) => {
 };
 exports.handler = (opts) => {
   const controller = new Controller(opts);
-  var childProcess;
 
   return controller.status()
     .then((status) => {
@@ -83,31 +82,33 @@ exports.handler = (opts) => {
       controller.log(`Starting ${controller.name}...`);
       return controller.start()
         .then((child) => {
-          childProcess = child;
           controller.log(`${controller.name} ${'STARTED'.green}`);
-          if (!opts.tail) {
-          // Ensure the parent doesn't wait for the child to exit
-          // This should be used in combination with the 'detached' property
-          // of the spawn() options.  The node documentation is unclear about
-          // the behavior of detached & unref on different platforms.  'detached'
-          // on Windows seems to do the same thing as unref() on non-Windows
-          // platforms.  Doing both seems like the safest approach.
-          // TODO: Test on Windows
+
+          const cleanup = () => {
+            try {
+              child.kill();
+              process.exit();
+            } catch (err) {
+              // Ignore error
+            }
+          };
+
+          if (opts.tail) {
+            // Exit on Ctrl + C
+            process.on('SIGINT', cleanup);
+            process.on('SIGTERM', cleanup);
+          } else {
+            // Ensure the parent doesn't wait for the child to exit
+            // This should be used in combination with the 'detached' property
+            // of the spawn() options.  The node documentation is unclear about
+            // the behavior of detached & unref on different platforms.  'detached'
+            // on Windows seems to do the same thing as unref() on non-Windows
+            // platforms.  Doing both seems like the safest approach.
+            // TODO: Test on Windows
             child.unref();
           }
         });
     })
     .then(() => list(opts))
-    .then(() => {
-      // Exit on Ctrl + C
-      process.on('SIGINT', function () {
-        childProcess.kill();
-        process.exit();
-      });
-      process.on('SIGTERM', function () {
-        childProcess.kill();
-        process.exit();
-      });
-    })
     .catch((err) => controller.handleError(err));
 };
