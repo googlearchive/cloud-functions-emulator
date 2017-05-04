@@ -39,7 +39,7 @@
     ]
   },
   "scripts": {
-    "lint": "semistandard \"**/*.js\"",
+    "lint": "semistandard",
     "mocha": "mocha test/_setup test/ --recursive -t 20000 -S -R spec --require intelli-espower-loader",
     "unit-test": "npm run mocha -- --grep \"unit/\"",
     "system-test": "npm run mocha -- --grep \"system/\"",

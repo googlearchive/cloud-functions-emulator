@@ -271,6 +271,42 @@ function makeTests (service, override) {
         }
       });
 
+      it(`should deploy a function that needs "npm install"`, () => {
+        let _cmd = `${override || cmd} deploy helloUuidNpm --local-path=test/test_module_2/ --trigger-http ${deployArgs}`;
+        if (!_cmd.includes(`--stage-bucket=${bucketName}`)) {
+          _cmd = `${_cmd} --stage-bucket=${bucketName}`;
+        }
+        const output = run(_cmd, cwd);
+        if (override) {
+          try {
+            assert(output.includes(`/functions/helloUuidNpm`));
+          } catch (err) {
+            console.error('flaky', err);
+          }
+          assert(output.includes(`done`));
+        } else {
+          assert(output.includes(`Function helloUuidNpm deployed.`));
+        }
+      });
+
+      it(`should deploy a function that needs "yarn install"`, () => {
+        let _cmd = `${override || cmd} deploy helloUuidYarn --local-path=test/test_module_3/ --trigger-http ${deployArgs}`;
+        if (!_cmd.includes(`--stage-bucket=${bucketName}`)) {
+          _cmd = `${_cmd} --stage-bucket=${bucketName}`;
+        }
+        const output = run(_cmd, cwd);
+        if (override) {
+          try {
+            assert(output.includes(`/functions/helloUuidYarn`));
+          } catch (err) {
+            console.error('flaky', err);
+          }
+          assert(output.includes(`done`));
+        } else {
+          assert(output.includes(`Function helloUuidYarn deployed.`));
+        }
+      });
+
       it(`should fail when the module does not exist`, () => {
         const output = run(`${override || cmd} deploy fail --local-path=test/test_module/foo/bar --trigger-http ${deployArgs}`, cwd);
         assert(output.includes(`Provided directory does not exist.`));
@@ -430,6 +466,16 @@ function makeTests (service, override) {
       it(`should call an HTTP function`, () => {
         const output = run(`${override || cmd} call helloGET --data '{}' ${overrideArgs || shortArgs}`, cwd);
         assert(output.includes(`method: 'POST'`));
+      });
+
+      it(`should call a function that needed "npm install"`, () => {
+        const output = run(`${override || cmd} call helloUuidNpm ${overrideArgs || shortArgs}`, cwd);
+        assert(/[a-z0-9]+-[a-z0-9]+-[a-z0-9]+-[a-z0-9]+-[a-z0-9]+/.test(output));
+      });
+
+      it(`should call a function that needed "yarn install"`, () => {
+        const output = run(`${override || cmd} call helloUuidYarn ${overrideArgs || shortArgs}`, cwd);
+        assert(/[a-z0-9]+-[a-z0-9]+-[a-z0-9]+-[a-z0-9]+-[a-z0-9]+/.test(output));
       });
 
       it(`should call an HTTP function via trigger URL`, () => {
