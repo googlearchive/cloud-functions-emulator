@@ -169,7 +169,11 @@ class Controller {
         });
 
         // Copy the function code to a temp directory on the local file system
-        this.log(`Copying file://${tmpName}...`);
+        let logStr = `file://${tmpName}`;
+        if (opts.stageBucket) {
+          logStr += ' [Content-Type=application/zip]';
+        }
+        this.log(`Copying ${logStr}...`);
         if (!this.config.tail) {
           process.stdout.write('Waiting for operation to finish...');
         }
@@ -186,21 +190,21 @@ class Controller {
             sourceArchiveUrl = `gs://${file.bucket.name}/${file.name}`;
 
             // Stream the file up to Cloud Storage
-            const remoteStream = file.createWriteStream({
+            const options = {
               metadata: {
                 contentType: 'application/zip'
               }
-            });
-            const localStream = fs.createReadStream(tmpName);
-            localStream.pipe(remoteStream);
-
-            remoteStream
-              .on('error', reject);
-
-            localStream
+            };
+            fs.createReadStream(tmpName)
+              .pipe(file.createWriteStream(options))
               .on('error', reject)
               .on('finish', () => {
                 this.log('done.');
+                try {
+                  fs.unlinkSync(tmpName);
+                } catch (err) {
+                  // Ignore error
+                }
                 resolve(sourceArchiveUrl);
               });
           } else {

@@ -172,26 +172,14 @@ class Functions {
   _checkForPackageJson (dirName) {
     logger.debug('Functions#_checkForPackageJson', dirName);
     return new Promise((resolve, reject) => {
-      fs.access(path.join(dirName, 'package.json'), (err) => {
-        if (err) {
-          resolve(false);
-          return;
-        }
-        resolve(true);
-      });
+      fs.open(path.join(dirName, 'package.json'), 'r', (err) => resolve(!err));
     });
   }
 
   _checkForYarn (dirName) {
     logger.debug('Functions#_checkForYarn', dirName);
     return new Promise((resolve, reject) => {
-      fs.access(path.join(dirName, 'yarn.lock'), (err) => {
-        if (err) {
-          resolve(false);
-          return;
-        }
-        resolve(true);
-      });
+      fs.open(path.join(dirName, 'yarn.lock'), 'r', (err) => resolve(!err));
     });
   }
 
@@ -200,13 +188,12 @@ class Functions {
     return new Promise((resolve, reject) => {
       spawn('npm', ['install'], {
         cwd: dirName
-      }, (err) => {
-        if (err) {
-          reject(err);
-          return;
+      }).on('exit', (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error('Failed to install dependencies!'));
         }
-        // TODO: Print output?
-        resolve();
       });
     });
   }
@@ -215,14 +202,14 @@ class Functions {
     logger.debug('Functions#_installYarn', dirName);
     return new Promise((resolve, reject) => {
       spawn('yarn', ['install'], {
-        cwd: dirName
-      }, (err) => {
-        if (err) {
-          reject(err);
-          return;
+        cwd: dirName,
+        stdio: 'inherit'
+      }).on('exit', (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error('Failed to install dependencies!'));
         }
-        // TODO: Print output?
-        resolve();
       });
     });
   }
@@ -231,14 +218,15 @@ class Functions {
     logger.debug('Functions#_unpackArchive', cloudfunction);
     return Promise.resolve()
       .then(() => {
-        if (!cloudfunction.serviceAccount) {
-          if (cloudfunction.gcsUrl || cloudfunction.sourceArchiveUrl) {
-            const archiveUrl = cloudfunction.gcsUrl || cloudfunction.sourceArchiveUrl;
-
+        const archiveUrl = cloudfunction.gcsUrl || cloudfunction.sourceArchiveUrl || '';
+        if (!cloudfunction.serviceAccount || archiveUrl.startsWith('gs://')) {
+          if (archiveUrl) {
             if (archiveUrl.startsWith('file://')) {
+              logger.debug('Functions#_unpackArchive', 'Function will be loaded from local file system.');
               // TODO
               return cloudfunction;
             } else if (archiveUrl.startsWith('gs://')) {
+              logger.debug('Functions#_unpackArchive', 'Function will be downloaded from Cloud Storage.');
               const matches = archiveUrl.match(GCS_URL);
               if (!matches) {
                 throw new Error(`Unsupported archive url: ${archiveUrl}`);
@@ -272,13 +260,7 @@ class Functions {
                     .then((hasPackageJson) => {
                       if (hasPackageJson) {
                         return this._checkForYarn(dirName)
-                          .then((hasYarn) => {
-                            if (hasYarn) {
-                              return this._installNpm(dirName);
-                            } else {
-                              return this._installYarn(dirName);
-                            }
-                          });
+                          .then((hasYarn) => hasYarn ? this._installYarn(dirName) : this._installNpm(dirName));
                       }
                     });
                 })
@@ -539,6 +521,12 @@ class Functions {
                 try {
                   fs.unlinkSync(`${cloudfunction.serviceAccount}.zip`);
                   rimraf.sync(cloudfunction.serviceAccount);
+                } catch (err) {
+                  logger.error(err);
+                }
+              } else if (cloudfunction.sourceArchiveUrl.startsWith('file:///')) {
+                try {
+                  fs.unlinkSync(cloudfunction.sourceArchiveUrl);
                 } catch (err) {
                   logger.error(err);
                 }
