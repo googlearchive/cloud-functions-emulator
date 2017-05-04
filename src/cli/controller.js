@@ -613,7 +613,8 @@ class Controller {
           `--restHost=${this.config.restHost}`,
           `--restPort=${this.config.restPort}`,
           `--supervisorHost=${this.config.supervisorHost}`,
-          `--supervisorPort=${this.config.supervisorPort}`
+          `--supervisorPort=${this.config.supervisorPort}`,
+          `--projectId=${this.config.projectId}`
         ];
 
         // Make sure the child is detached, otherwise it will be bound to the
