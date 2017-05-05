@@ -1,3 +1,22 @@
+##### 1.0.0-alpha.17 - 04 May 2017
+
+###### Breaking changes
+- [#92](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/92) - Switch to `host` and `bindHost` options, by @kpruden
+  - Fixes [#91](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/91) (Support connecting to an emulator behind a NAT)
+
+###### Backwards compatible changes
+- [#89](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/89) - Refactor how the logs work, by @laurenlong
+  - Added a `--tail` option to `functions start`. If `true`, `functions start`
+    will not exit right away. Instead the Emulator's logs will be streamed to
+    the terminal. Pressing Ctrl+C would stop the Emulator.
+
+###### Bug fixes
+- [#90](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/90) - JSON payload not being parsed correctly on Windows Shell
+- [#97](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/97) - Improve --stage-bucket support
+
+###### Other
+- Upgraded dependencies
+
 ##### 1.0.0-alpha.16 - 13 April 2017
 
 ###### Backwards compatible changes
