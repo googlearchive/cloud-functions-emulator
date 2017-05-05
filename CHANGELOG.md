@@ -1,3 +1,8 @@
+##### 1.0.0-alpha.18 - xx May 2017
+
+###### Backwards compatible changes
+- Hid some annoying warning messages
+
 ##### 1.0.0-alpha.17 - 04 May 2017
 
 ###### Breaking changes

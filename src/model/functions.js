@@ -508,7 +508,7 @@ class Functions {
                 try {
                   fs.unlinkSync(cloudfunction.sourceArchiveUrl.replace('file://', ''));
                 } catch (err) {
-                  logger.error(err);
+                  // Ignore error
                 }
               }
 
@@ -522,13 +522,13 @@ class Functions {
                   fs.unlinkSync(`${cloudfunction.serviceAccount}.zip`);
                   rimraf.sync(cloudfunction.serviceAccount);
                 } catch (err) {
-                  logger.error(err);
+                  // Ignore error
                 }
               } else if (cloudfunction.sourceArchiveUrl.startsWith('file:///')) {
                 try {
                   fs.unlinkSync(cloudfunction.sourceArchiveUrl);
                 } catch (err) {
-                  logger.error(err);
+                  // Ignore error
                 }
               }
 
