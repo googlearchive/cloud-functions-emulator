@@ -26,17 +26,20 @@ class Emulator {
 
     const functions = Model.functions(opts);
     this.supervisor = Supervisor.supervisor(functions, {
-      host: opts.supervisorHost,
+      bindHost: opts.bindHost,
+      host: opts.host,
       port: opts.supervisorPort,
       region: opts.region,
       useMocks: opts.useMocks
     });
     this.restService = Service.restService(functions, {
-      host: opts.restHost,
+      bindHost: opts.bindHost,
+      host: opts.host,
       port: opts.restPort
     });
     this.grpcService = Service.grpcService(functions, {
-      host: opts.grpcHost,
+      bindHost: opts.bindHost,
+      host: opts.host,
       port: opts.grpcPort
     });
   }

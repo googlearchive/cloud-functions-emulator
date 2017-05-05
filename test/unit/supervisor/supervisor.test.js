@@ -300,7 +300,7 @@ describe('unit/supervisor/supervisor', () => {
   describe('Supervisor#start', () => {
     it('should start the supervisor', () => {
       const opts = {
-        host: 'localhost',
+        bindHost: 'localhost',
         address: 'localhost',
         port: 8010
       };
@@ -319,7 +319,7 @@ describe('unit/supervisor/supervisor', () => {
       assert.equal(supervisor.app.listen.callCount, 1);
       assert.deepEqual(
         supervisor.app.listen.getCall(0).args,
-        [opts.port, opts.host]
+        [opts.port, opts.bindHost]
       );
       assert.equal(serverMock.on.callCount, 3);
       assert.deepEqual(serverMock.on.getCall(0).args.slice(0, -1), ['listening']);

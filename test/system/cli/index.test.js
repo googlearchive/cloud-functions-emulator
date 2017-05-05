@@ -51,7 +51,7 @@ const PROJECT_ID = detectProjectId(null, false);
 
 function makeTests (service, override) {
   const shortArgs = ``;
-  const args = `--logFile=${logFile} --supervisorHost=localhost --supervisorPort=${SUPERVISOR_PORT} --verbose`;
+  const args = `--logFile=${logFile} --host=localhost --supervisorPort=${SUPERVISOR_PORT} --verbose`;
   let overrideArgs = ``;
   let currentEndpoint;
 
@@ -122,9 +122,8 @@ function makeTests (service, override) {
     describe(`config`, () => {
       it(`should list configuration`, () => {
         let output = run(`${cmd} config list`, cwd);
-        assert(output.includes(`grpcHost`));
+        assert(output.includes(`host`));
         assert(output.includes(`grpcPort`));
-        assert(output.includes(`restHost`));
         assert(output.includes(`restPort`));
       });
     });

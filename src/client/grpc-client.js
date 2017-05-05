@@ -33,11 +33,11 @@ class GrpcClient extends Client {
 
   _setup () {
     this.functionsClient = new CloudFunctionsService(
-      `${this.config.grpcHost}:${this.config.grpcPort}`,
+      `${this.config.host}:${this.config.grpcPort}`,
       grpc.credentials.createInsecure()
     );
     this.operationsClient = new Operations(
-      `${this.config.grpcHost}:${this.config.grpcPort}`,
+      `${this.config.host}:${this.config.grpcPort}`,
       grpc.credentials.createInsecure()
     );
   }

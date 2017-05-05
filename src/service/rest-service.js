@@ -316,7 +316,7 @@ class RestService extends Service {
     super.start();
     logger.debug('RestService#start');
 
-    this._server = this.server.listen(this.config.port, this.config.host, () => {
+    this._server = this.server.listen(this.config.port, this.config.bindHost, () => {
       logger.debug(`${this.type} service listening at ${this._server.address().address}:${this._server.address().port}.`);
     });
 

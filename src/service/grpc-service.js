@@ -246,9 +246,9 @@ class RpcService extends Service {
     super.start();
     logger.debug('RpcService#start');
 
-    this.server.bind(`${this.config.host}:${this.config.port}`, ServerCredentials.createInsecure());
+    this.server.bind(`${this.config.bindHost}:${this.config.port}`, ServerCredentials.createInsecure());
     this.server.start();
-    logger.debug(`${this.type} service listening at ${this.config.host}:${this.config.port}.`);
+    logger.debug(`${this.type} service listening at ${this.config.bindHost}:${this.config.port}.`);
 
     return this;
   }

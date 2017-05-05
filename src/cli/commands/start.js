@@ -37,13 +37,12 @@ Description:
   saved configuration settings.`;
 
 exports.options = [
-  'grpcHost',
+  'bindHost',
   'grpcPort',
+  'host',
   'logFile',
-  'restHost',
   'restPort',
   'storage',
-  'supervisorHost',
   'supervisorPort',
   'timeout',
   'useMocks',

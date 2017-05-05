@@ -106,14 +106,14 @@ const FunctionsConfigSchema = {
       type: 'string',
       enum: ['configstore']
     },
-    supervisorHost: {
+    host: {
       type: 'string'
     },
     supervisorPort: {
       type: 'number'
     }
   },
-  required: ['storage', 'supervisorHost', 'supervisorPort']
+  required: ['storage', 'host', 'supervisorPort']
 };
 
 /**
@@ -352,7 +352,7 @@ class Functions {
 
         cloudfunction.status = 'DEPLOYING';
         if (cloudfunction.httpsTrigger) {
-          cloudfunction.httpsTrigger.url = `${this.getSupervisorHost()}/${parts.project}/${parts.location}/${parts.name}`;
+          cloudfunction.httpsTrigger.url = `http://${this.config.host}:${this.config.supervisorPort}/${parts.project}/${parts.location}/${parts.name}`;
         }
 
         // Prepare the Operation
@@ -614,7 +614,7 @@ class Functions {
   }
 
   getSupervisorHost () {
-    return `http://${this.config.supervisorHost}:${this.config.supervisorPort}`;
+    return `http://localhost:${this.config.supervisorPort}`;
   }
 
   /**
