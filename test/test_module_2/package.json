@@ -1,0 +1,7 @@
+{
+  "name": "test_module_2",
+  "version": "0.0.1",
+  "dependencies": {
+    "uuid": "^3.0.1"
+  }
+}

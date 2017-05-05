@@ -168,8 +168,15 @@ class Controller {
         });
 
         // Copy the function code to a temp directory on the local file system
-        this.log(`Copying file://${tmpName}...`);
-        process.stdout.write('Waiting for operation to finish...');
+        let logStr = `file://${tmpName}`;
+        if (opts.stageBucket) {
+          logStr += ' [Content-Type=application/zip]';
+        }
+        this.log(`Copying ${logStr}...`);
+        if (!this.config.tail) {
+          process.stdout.write('Waiting for operation to finish...');
+        }
+
         zip.writeZip(tmpName);
 
         return new Promise((resolve, reject) => {
@@ -182,21 +189,21 @@ class Controller {
             sourceArchiveUrl = `gs://${file.bucket.name}/${file.name}`;
 
             // Stream the file up to Cloud Storage
-            const remoteStream = file.createWriteStream({
+            const options = {
               metadata: {
                 contentType: 'application/zip'
               }
-            });
-            const localStream = fs.createReadStream(tmpName);
-            localStream.pipe(remoteStream);
-
-            remoteStream
-              .on('error', reject);
-
-            localStream
+            };
+            fs.createReadStream(tmpName)
+              .pipe(file.createWriteStream(options))
               .on('error', reject)
               .on('finish', () => {
                 this.log('done.');
+                try {
+                  fs.unlinkSync(tmpName);
+                } catch (err) {
+                  // Ignore error
+                }
                 resolve(sourceArchiveUrl);
               });
           } else {
@@ -234,7 +241,7 @@ class Controller {
         }
 
         return new Promise((resolve, reject) => {
-          setTimeout(() => {
+          this._timeout = setTimeout(() => {
             this._waitForStart(i).then(resolve, reject);
           }, TIMEOUT_POLL_DECREMENT);
         });
@@ -525,7 +532,9 @@ class Controller {
    * Writes to console.log.
    */
   log (...args) {
-    console.log(...args);
+    if (!this.config.tail) {
+      console.log(...args);
+    }
   }
 
   /**
@@ -584,15 +593,17 @@ class Controller {
 
     let child;
 
-    if (!opts.hasOwnProperty('cwd')) {
+    if (opts.tail === undefined) {
+      opts.tail = this.config.tail;
+    }
+    if (opts.stdio === undefined) {
+      opts.stdio = opts.tail ? 'inherit' : 'ignore';
+    }
+    if (opts.detached === undefined) {
+      opts.detached = !opts.tail;
+    }
+    if (opts.cwd === undefined) {
       opts.cwd = CWD;
-    }
-    if (!opts.hasOwnProperty('detached')) {
-      opts.detached = true;
-    }
-    if (!opts.hasOwnProperty('stdio')) {
-      const out = fs.openSync(this.config.logFile, 'a');
-      opts.stdio = ['ignore', out, out];
     }
 
     return Promise.resolve()
@@ -611,7 +622,8 @@ class Controller {
           `--useMocks=${this.config.useMocks}`,
           `--logFile=${this.config.logFile}`,
           `--restPort=${this.config.restPort}`,
-          `--supervisorPort=${this.config.supervisorPort}`
+          `--supervisorPort=${this.config.supervisorPort}`,
+          `--tail=${this.config.tail}`
         ];
 
         // Make sure the child is detached, otherwise it will be bound to the
@@ -619,7 +631,7 @@ class Controller {
         // binding of stdout.
 
         child = spawn('node', args, {
-          cwd: opts.CWD,
+          cwd: opts.cwd,
           detached: opts.detached,
           stdio: opts.stdio
         });
@@ -635,18 +647,52 @@ class Controller {
           started: Date.now(),
           storage: this.config.storage,
           supervisorPort: this.config.supervisorPort,
+          tail: opts.tail,
           useMocks: this.config.useMocks,
           verbose: this.config.verbose,
           version: pkg.version
         });
-        this.server.delete('stopped');
 
-        // Write the pid to the file system in case we need to kill it later
-        // This can be done by the user in the 'kill' command
-        this.server.set('pid', child.pid);
+        return new Promise((resolve, reject) => {
+          let done = false;
 
-        // Ensure the service has started before we notify the caller.
-        return this._waitForStart();
+          child
+            .on('exit', (code) => {
+              if (!done) {
+                done = true;
+                clearTimeout(this._timeout);
+                reject(new Error('Emulator crashed! Check the log file...'));
+              }
+            })
+            .on('error', (err) => {
+              if (!done) {
+                done = true;
+                console.error('Emulator crashed! Check the log file...');
+                clearTimeout(this._timeout);
+                reject(err);
+              }
+            });
+
+          this._waitForStart()
+            .then(() => {
+              this.server.delete('stopped');
+              // Write the pid to the file system in case we need to kill it later
+              // This can be done by the user in the 'kill' command
+              this.server.set('pid', child.pid);
+              if (!done) {
+                done = true;
+                clearTimeout(this._timeout);
+                resolve();
+              }
+            })
+            .catch((err) => {
+              if (!done) {
+                done = true;
+                clearTimeout(this._timeout);
+                reject(err);
+              }
+            });
+        });
       })
       .then(() => child);
   }

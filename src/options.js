@@ -87,6 +87,11 @@ module.exports = {
     requiresArg: true,
     type: 'number'
   },
+  tail: {
+    description: `When ${'true'.bold}, the Emulator will capture the terminal and logs will be streamed to the console in addition to being streamed to the log file. ${'Default:'.bold} ${defaults.tail.toString().green}`,
+    requiresArg: false,
+    type: 'boolean'
+  },
   useMocks: {
     description: `When ${'true'.bold}, ${'mocks.js'.green} will be loaded at startup. ${'Default:'.bold} ${defaults.useMocks.toString().green}`,
     requiresArg: false,

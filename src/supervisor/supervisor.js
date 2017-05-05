@@ -22,6 +22,7 @@ const bodyParser = require('body-parser');
 const express = require('express');
 const fork = require('child_process').fork;
 const httpProxy = require('http-proxy');
+const logger = require('winston');
 const path = require('path');
 const url = require('url');
 
@@ -89,7 +90,7 @@ class Supervisor {
       .on('error', (err, req, res) => {
         // The function failed to respond to the request or crashed
         this.closeWorker(req.functionName);
-        console.log(`Execution took ${Date.now() - req.functionStart} ms, finished with status: 'crash'`);
+        logger.info(`Execution took ${Date.now() - req.functionStart} ms, finished with status: 'crash'`);
 
         res
           .status(500)
@@ -164,7 +165,7 @@ class Supervisor {
    * @returns Promise
    */
   callHandler (req, res, next) {
-    console.debug('Supervisor#callHandler', req.url);
+    logger.debug('Supervisor#callHandler', req.url);
     const parts = url.parse(req.url);
     const matches = parts.pathname.match(NAME_REG_EXP);
 
@@ -184,7 +185,7 @@ class Supervisor {
       .then((worker) => {
         req.functionTimeout = setTimeout(() => {
           this.closeWorker(req.functionName);
-          console.log(`Execution took ${Date.now() - req.functionStart} ms, finished with status: 'timeout'`);
+          logger.info(`Execution took ${Date.now() - req.functionStart} ms, finished with status: 'timeout'`);
 
           res
             .status(500)
@@ -247,12 +248,12 @@ class Supervisor {
       let timeout;
       const worker = this._workerPool.get(name);
       this._workerPool.delete(name);
-      console.debug(`Stopping worker ${name}...`);
+      logger.debug(`Stopping worker ${name}...`);
       const pid = worker.process.pid;
 
       worker.process.kill();
       worker.process.on('exit', (code, signal) => {
-        console.debug(`${name} worker closed.`);
+        logger.debug(`${name} worker closed.`);
         clearTimeout(timeout);
         const savedWorkers = server.get('workers');
         delete savedWorkers[pid];
@@ -281,7 +282,7 @@ class Supervisor {
    * @returns Promise
    */
   createWorker (cloudfunction, opts) {
-    console.debug('createWorker', cloudfunction.name, opts);
+    logger.debug('createWorker', cloudfunction.name, opts);
     opts || (opts = {});
     return new Promise((resolve, reject) => {
       const worker = {};
@@ -360,7 +361,7 @@ class Supervisor {
         // Handle when the worker process closes
         .on('exit', (code, signal) => {
           let msg = `${cloudfunction.name} worker closed.`;
-          console.debug(msg);
+          logger.debug(msg);
           const workerPids = server.get('workers') || {};
           delete workerPids[workerProcess.pid];
           server.set('workers', workerPids);
@@ -369,10 +370,10 @@ class Supervisor {
             msg = `Debug/Inspect port ${worker.debugPort || worker.inspectPort} already in use. Are you already debugging another function on this port? Specify a different port or reset the function that's using your desired port.`;
             error = new Errors.ConflictError(msg);
             rejected = true;
-            console.error(msg);
+            logger.error(msg);
           } else if (code) {
             msg = `Function worker crashed with exit code: ${code}`;
-            console.error(msg);
+            logger.error(msg);
             if (stderr) {
               msg += `\n${stderr.trim()}`;
             }
@@ -381,18 +382,18 @@ class Supervisor {
           } else if (signal) {
             msg = `Function worker killed by signal: ${signal}`;
             if (stderr) {
-              console.error(msg);
+              logger.error(msg);
               msg += `\n${stderr.trim()}`;
             } else {
-              console.debug(msg);
+              logger.debug(msg);
             }
             error = new Errors.InternalError(msg);
             rejected = true;
           }
         })
         .on('error', (err) => {
-          console.error(`ERROR: ${cloudfunction.name}`);
-          console.error(err);
+          logger.error(`ERROR: ${cloudfunction.name}`);
+          logger.error(err);
         });
 
       // Anything the user logs will be logged at the Debug level
@@ -401,7 +402,7 @@ class Supervisor {
         if (str.charAt(str.length - 1) === '\n') {
           str = str.substring(0, str.length - 1);
         }
-        console.log(str);
+        logger.info(str);
       });
 
       // Any errors logged by the user will be logged at the Error level
@@ -411,7 +412,7 @@ class Supervisor {
           str = str.substring(0, str.length - 1);
         }
         stderr += str;
-        console.error(str);
+        logger.error(str);
       });
 
       workerProcess.on('message', (message) => {
@@ -419,9 +420,9 @@ class Supervisor {
           // The worker now has a ported and is receiving connections
           worker.port = message.port;
           if (opts.inspect) {
-            console.log(`Debugger (via --inspect) for ${cloudfunction.name} listening on port ${opts.port}.`);
+            logger.info(`Debugger (via --inspect) for ${cloudfunction.name} listening on port ${opts.port}.`);
           } else if (opts.debug) {
-            console.log(`Debugger (via --debug) for ${cloudfunction.name} listening on port ${opts.port}.`);
+            logger.info(`Debugger (via --debug) for ${cloudfunction.name} listening on port ${opts.port}.`);
           }
           if (!rejected) {
             this._workerPool.set(cloudfunction.name, worker);
@@ -594,17 +595,17 @@ class Supervisor {
    * @method Supervisor#start
    */
   start () {
-    console.debug(`Starting supervisor at ${this.config.bindHost}:${this.config.port}...`);
+    logger.debug(`Starting supervisor at ${this.config.bindHost}:${this.config.port}...`);
     this._server = this.app.listen(this.config.port, this.config.bindHost);
     this._server
       .on('listening', () => {
-        console.debug(`Supervisor listening at ${this._server.address().address}:${this._server.address().port}.`);
+        logger.debug(`Supervisor listening at ${this._server.address().address}:${this._server.address().port}.`);
       })
       .on('error', (err) => {
-        console.error('SUPERVISOR error', err);
+        logger.error('SUPERVISOR error', err);
       })
       .on('clientError', (err, socket) => {
-        console.error('SUPERVISOR clientError', err, socket);
+        logger.error('SUPERVISOR clientError', err, socket);
       });
 
     return this;
@@ -617,21 +618,21 @@ class Supervisor {
    * @method Supervisor#stop
    */
   stop () {
-    console.debug('Stopping supervisor...');
+    logger.debug('Stopping supervisor...');
 
     clearInterval(this.pruneIntervalId);
 
     this.clear();
 
     this._server.close(() => {
-      console.debug('Supervisor stopped.');
+      logger.debug('Supervisor stopped.');
     });
 
     // Synchronously kill workers in case there isn't time to do the async work
     // in this.clear();
     const workerPids = Object.keys(server.get('workers') || {});
     workerPids.forEach((pid) => {
-      console.debug(`Killing process: ${pid}`);
+      logger.debug(`Killing process: ${pid}`);
       try {
         process.kill(pid, 'SIGKILL');
       } catch (err) {

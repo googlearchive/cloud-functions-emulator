@@ -15,12 +15,13 @@
 
 'use strict';
 
+const logger = require('winston');
 const Model = require('../model');
 const Service = require('../service');
 const Supervisor = require('../supervisor');
 
 class Emulator {
-  constructor (opts) {
+  constructor (opts = {}) {
     this.config = opts;
 
     const functions = Model.functions(opts);
@@ -44,13 +45,13 @@ class Emulator {
   }
 
   start () {
-    console.debug('Emulator#start');
+    logger.debug('Emulator#start');
     const makeHandler = (name) => {
       return (err) => {
         if (err.code === 'EADDRINUSE') {
-          console.error(`${name} (${this.config[name]}) is already in use`);
+          logger.error(`${name} (${this.config[name]}) is already in use`);
         } else {
-          console.error(err);
+          logger.error(err);
         }
       };
     };
@@ -64,13 +65,13 @@ class Emulator {
     this.grpcService.start();
 
     process.on('exit', (code) => {
-      console.debug(`Emulator exiting with code: ${code}`);
+      logger.debug(`Emulator exiting with code: ${code}`);
       this.stop();
     });
   }
 
   stop () {
-    console.debug('Emulator#stop');
+    logger.debug('Emulator#stop');
     this.supervisor.stop();
     this.restService.stop();
     this.grpcService.stop();

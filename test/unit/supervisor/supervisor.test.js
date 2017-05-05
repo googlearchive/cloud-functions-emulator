@@ -298,10 +298,6 @@ describe('unit/supervisor/supervisor', () => {
   });
 
   describe('Supervisor#start', () => {
-    before(() => {
-      console.debug = sinon.stub();
-    });
-
     it('should start the supervisor', () => {
       const opts = {
         bindHost: 'localhost',
@@ -320,15 +316,6 @@ describe('unit/supervisor/supervisor', () => {
 
       assert.strictEqual(supervisor.start(), supervisor);
 
-      assert.equal(console.debug.callCount, 2);
-      assert.deepEqual(
-        console.debug.getCall(0).args,
-        [`Starting supervisor at ${opts.bindHost}:${opts.port}...`]
-      );
-      assert.deepEqual(
-        console.debug.getCall(1).args,
-        [`Supervisor listening at ${opts.address}:${opts.port}.`]
-      );
       assert.equal(supervisor.app.listen.callCount, 1);
       assert.deepEqual(
         supervisor.app.listen.getCall(0).args,
@@ -344,7 +331,6 @@ describe('unit/supervisor/supervisor', () => {
   describe('Supervisor#stop', () => {
     before(() => {
       sinon.spy(global, 'clearInterval');
-      console.debug = sinon.stub();
     });
 
     it('should stop the supervisor', () => {
@@ -357,15 +343,6 @@ describe('unit/supervisor/supervisor', () => {
 
       assert.strictEqual(supervisor.stop(), supervisor);
 
-      assert.equal(console.debug.callCount, 2);
-      assert.deepEqual(
-        console.debug.getCall(0).args,
-        ['Stopping supervisor...']
-      );
-      assert.deepEqual(
-        console.debug.getCall(1).args,
-        ['Supervisor stopped.']
-      );
       assert.equal(serverMock.close.callCount, 1);
       assert.equal(supervisor.clear.callCount, 1);
     });

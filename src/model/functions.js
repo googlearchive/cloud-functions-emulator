@@ -20,6 +20,7 @@ const AdmZip = require('adm-zip');
 const Configstore = require('configstore');
 const fs = require('fs');
 const got = require('got');
+const logger = require('winston');
 const os = require('os');
 const path = require('path');
 const rimraf = require('rimraf');
@@ -155,89 +156,77 @@ class Functions {
    * @returns {Promise}
    */
   _assertFunctionDoesNotExist (name) {
-    console.debug('Functions#_assertFunctionDoesNotExist', name);
+    logger.debug('Functions#_assertFunctionDoesNotExist', name);
     return this.adapter.getFunction(name)
       .then((cloudfunction) => {
         if (cloudfunction) {
           const parts = CloudFunction.parseName(name);
           const err = new Errors.ConflictError(`Function ${parts.name} in location ${parts.location} in project ${parts.project} already exists`);
           err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
-          console.error(err);
+          logger.error(err);
           throw err;
         }
       });
   }
 
   _checkForPackageJson (dirName) {
-    console.debug('Functions#_checkForPackageJson', dirName);
+    logger.debug('Functions#_checkForPackageJson', dirName);
     return new Promise((resolve, reject) => {
-      fs.access(path.join(dirName, 'package.json'), (err) => {
-        if (err) {
-          resolve(false);
-          return;
-        }
-        resolve(true);
-      });
+      fs.open(path.join(dirName, 'package.json'), 'r', (err) => resolve(!err));
     });
   }
 
   _checkForYarn (dirName) {
-    console.debug('Functions#_checkForYarn', dirName);
+    logger.debug('Functions#_checkForYarn', dirName);
     return new Promise((resolve, reject) => {
-      fs.access(path.join(dirName, 'yarn.lock'), (err) => {
-        if (err) {
-          resolve(false);
-          return;
-        }
-        resolve(true);
-      });
+      fs.open(path.join(dirName, 'yarn.lock'), 'r', (err) => resolve(!err));
     });
   }
 
   _installNpm (dirName) {
-    console.debug('Functions#_installNpm', dirName);
+    logger.debug('Functions#_installNpm', dirName);
     return new Promise((resolve, reject) => {
       spawn('npm', ['install'], {
         cwd: dirName
-      }, (err) => {
-        if (err) {
-          reject(err);
-          return;
+      }).on('exit', (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error('Failed to install dependencies!'));
         }
-        // TODO: Print output?
-        resolve();
       });
     });
   }
 
   _installYarn (dirName) {
-    console.debug('Functions#_installYarn', dirName);
+    logger.debug('Functions#_installYarn', dirName);
     return new Promise((resolve, reject) => {
       spawn('yarn', ['install'], {
-        cwd: dirName
-      }, (err) => {
-        if (err) {
-          reject(err);
-          return;
+        cwd: dirName,
+        stdio: 'inherit'
+      }).on('exit', (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error('Failed to install dependencies!'));
         }
-        // TODO: Print output?
-        resolve();
       });
     });
   }
 
   _unpackArchive (cloudfunction) {
-    console.debug('Functions#_unpackArchive', cloudfunction);
+    logger.debug('Functions#_unpackArchive', cloudfunction);
     return Promise.resolve()
       .then(() => {
-        if (!cloudfunction.serviceAccount) {
-          if (cloudfunction.gcsUrl || cloudfunction.sourceArchiveUrl) {
-            const archiveUrl = cloudfunction.gcsUrl || cloudfunction.sourceArchiveUrl;
-
+        const archiveUrl = cloudfunction.gcsUrl || cloudfunction.sourceArchiveUrl || '';
+        if (!cloudfunction.serviceAccount || archiveUrl.startsWith('gs://')) {
+          if (archiveUrl) {
             if (archiveUrl.startsWith('file://')) {
+              logger.debug('Functions#_unpackArchive', 'Function will be loaded from local file system.');
               // TODO
               return cloudfunction;
             } else if (archiveUrl.startsWith('gs://')) {
+              logger.debug('Functions#_unpackArchive', 'Function will be downloaded from Cloud Storage.');
               const matches = archiveUrl.match(GCS_URL);
               if (!matches) {
                 throw new Error(`Unsupported archive url: ${archiveUrl}`);
@@ -271,13 +260,7 @@ class Functions {
                     .then((hasPackageJson) => {
                       if (hasPackageJson) {
                         return this._checkForYarn(dirName)
-                          .then((hasYarn) => {
-                            if (hasYarn) {
-                              return this._installNpm(dirName);
-                            } else {
-                              return this._installYarn(dirName);
-                            }
-                          });
+                          .then((hasYarn) => hasYarn ? this._installYarn(dirName) : this._installNpm(dirName));
                       }
                     });
                 })
@@ -324,7 +307,7 @@ class Functions {
    * @returns {Promise}
    */
   _createFunctionError (name, err) {
-    console.error(err);
+    logger.error(err);
     err = new Errors.InternalError(err.message);
     err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
     return Promise.reject(err);
@@ -340,7 +323,7 @@ class Functions {
    */
   createFunction (location, cloudfunction = {}) {
     let operation, request;
-    console.debug('Functions#createFunction', location, cloudfunction);
+    logger.debug('Functions#createFunction', location, cloudfunction);
 
     return Promise.resolve()
       .then(() => {
@@ -451,7 +434,7 @@ class Functions {
                 this.adapter.createFunction(cloudfunction)
               ]);
             })
-            .catch(console.error);
+            .catch(logger.error);
         });
 
         // Return the operation to the caller
@@ -483,7 +466,7 @@ class Functions {
         .catch((err) => this._deleteFunctionError(name, err));
     }
 
-    console.error(err);
+    logger.error(err);
     return Promise.reject(err);
   }
 
@@ -495,7 +478,7 @@ class Functions {
    * @returns {Promise}
    */
   deleteFunction (name) {
-    console.debug('Functions#deleteFunction', name);
+    logger.debug('Functions#deleteFunction', name);
     return this.getFunction(name)
       .then((cloudfunction) => {
         const operationName = Operation.generateId();
@@ -525,7 +508,7 @@ class Functions {
                 try {
                   fs.unlinkSync(cloudfunction.sourceArchiveUrl.replace('file://', ''));
                 } catch (err) {
-                  console.error(err);
+                  logger.error(err);
                 }
               }
 
@@ -539,7 +522,13 @@ class Functions {
                   fs.unlinkSync(`${cloudfunction.serviceAccount}.zip`);
                   rimraf.sync(cloudfunction.serviceAccount);
                 } catch (err) {
-                  console.error(err);
+                  logger.error(err);
+                }
+              } else if (cloudfunction.sourceArchiveUrl.startsWith('file:///')) {
+                try {
+                  fs.unlinkSync(cloudfunction.sourceArchiveUrl);
+                } catch (err) {
+                  logger.error(err);
                 }
               }
 
@@ -601,7 +590,7 @@ class Functions {
   _getFunctionError (name, err) {
     err = new Errors.InternalError(err.message);
     err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
-    console.error(err);
+    logger.error(err);
     return Promise.reject(err);
   }
 
@@ -613,7 +602,7 @@ class Functions {
    * @returns {Promise}
    */
   getFunction (name) {
-    console.debug('Functions#getFunction', name);
+    logger.debug('Functions#getFunction', name);
     return this.adapter.getFunction(name)
       .then((cloudfunction) => {
         if (!cloudfunction) {
@@ -655,7 +644,7 @@ class Functions {
   _getOperationError (name, err) {
     err = new Errors.InternalError(err.message);
     err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.Operation), name));
-    console.error(err);
+    logger.error(err);
     return Promise.reject(err);
   }
 
@@ -667,7 +656,7 @@ class Functions {
    * @returns {Promise}
    */
   getOperation (name) {
-    console.debug('Functions#getOperation', name);
+    logger.debug('Functions#getOperation', name);
     return this.adapter.getOperation(name)
     .then((operation) => {
       if (!operation) {

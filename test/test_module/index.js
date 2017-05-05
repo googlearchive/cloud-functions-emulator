@@ -64,6 +64,21 @@ module.exports = {
     const path = require('path');
     res.send(path.join('foo', 'bar')).end();
   },
+  helloPubSub (event) {
+    const pubsubMessage = event.data;
+    if (pubsubMessage.data) {
+      // Decode
+      pubsubMessage.data = Buffer.from(pubsubMessage.data, 'base64').toString();
+      try {
+        // Maybe the data is JSON
+        pubsubMessage.data = JSON.parse(pubsubMessage.data);
+      } catch (err) {
+
+      }
+    }
+    console.log('attributes', pubsubMessage.attributes);
+    console.log('data', pubsubMessage.data);
+  },
   helloThrow (event, callback) {
     throw new Error('uncaught exception!');
   },

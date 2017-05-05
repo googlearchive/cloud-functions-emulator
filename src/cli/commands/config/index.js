@@ -58,6 +58,9 @@ const EPILOGUE = `Available configuration options:
     ${'verbose'.bold}
       ${OPTIONS.verbose.description}
 
+    ${'tail'.bold}
+      ${OPTIONS.tail.description}
+
     See ${'https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Configuring-the-Emulator'.bold}
 `;
 const COMMAND = `functions config ${'<command>'.yellow} ${'[options]'.yellow}`;

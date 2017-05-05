@@ -19,6 +19,7 @@ const bodyParser = require('body-parser');
 const Configstore = require('configstore');
 const express = require('express');
 const got = require('got');
+const logger = require('winston');
 const path = require('path');
 const url = require('url');
 const uuid = require('uuid');
@@ -108,7 +109,7 @@ class RestService extends Service {
       }
     }
     const name = CloudFunction.formatName(req.params.project, req.params.location, req.params.name);
-    console.debug('RestService#callFunction', name);
+    logger.debug('RestService#callFunction', name);
     const eventId = uuid.v4();
     return this.functions.getFunction(name)
       .then((cloudfunction) => {
@@ -156,7 +157,7 @@ class RestService extends Service {
    */
   createFunction (req, res) {
     const location = CloudFunction.formatLocation(req.params.project, req.params.location);
-    console.debug('RestService#createFunction', location, req.body);
+    logger.debug('RestService#createFunction', location, req.body);
     return this.functions.createFunction(location, req.body)
       .then((operation) => {
         res.status(200).json(operation).end();
@@ -175,7 +176,7 @@ class RestService extends Service {
    */
   deleteFunction (req, res) {
     const name = CloudFunction.formatName(req.params.project, req.params.location, req.params.name);
-    console.debug('RestService#deleteFunction', name);
+    logger.debug('RestService#deleteFunction', name);
     return this.functions.deleteFunction(name)
       .then((operation) => {
         res.status(200).json(operation).end();
@@ -236,7 +237,7 @@ class RestService extends Service {
    */
   getFunction (req, res) {
     const name = CloudFunction.formatName(req.params.project, req.params.location, req.params.name);
-    console.debug('RestService#getFunction', name);
+    logger.debug('RestService#getFunction', name);
     return this.functions.getFunction(name)
       .then((cloudfunction) => {
         if (req.get('user-agent') &&
@@ -263,7 +264,7 @@ class RestService extends Service {
    */
   getOperation (req, res) {
     const name = Operation.formatName(req.params.operation);
-    console.debug('RestService#getOperation', name);
+    logger.debug('RestService#getOperation', name);
     return this.functions.getOperation(name)
       .then((operation) => {
         if (!operation) {
@@ -296,7 +297,7 @@ class RestService extends Service {
    */
   listFunctions (req, res) {
     const location = CloudFunction.formatLocation(req.params.project, req.params.location);
-    console.debug('RestService#listFunctions', location);
+    logger.debug('RestService#listFunctions', location);
     return this.functions.listFunctions(location, {
       pageSize: req.query.pageSize,
       pageToken: req.query.pageToken
@@ -313,17 +314,17 @@ class RestService extends Service {
 
   start () {
     super.start();
-    console.debug('RestService#start');
+    logger.debug('RestService#start');
 
     this._server = this.server.listen(this.config.port, this.config.bindHost, () => {
-      console.debug(`${this.type} service listening at ${this._server.address().address}:${this._server.address().port}.`);
+      logger.debug(`${this.type} service listening at ${this._server.address().address}:${this._server.address().port}.`);
     });
 
     return this;
   }
 
   stop () {
-    console.debug('RestService#stop');
+    logger.debug('RestService#stop');
     this._server.close(() => super.stop());
     return this;
   }
