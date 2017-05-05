@@ -34,10 +34,12 @@ const {
 const { CloudFunction, protos } = Model;
 
 function notImplemented (call, cb) {
+  /* eslint-disable */
   cb({
     code: status.UNIMPLEMENTED,
     details: http.STATUS_CODES['501']
   });
+  /* eslint-enable */
 }
 
 class RpcService extends Service {
