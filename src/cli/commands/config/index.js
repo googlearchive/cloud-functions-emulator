@@ -37,6 +37,9 @@ const EPILOGUE = `Available configuration options:
       ${OPTIONS.timeout.description}
 
   ${'EMULATOR'.underline} - Emulates the Cloud Functions API.
+    ${'bindHost'.bold}
+      ${OPTIONS.bindHost.description}
+
     ${'grpcPort'.bold}
       ${OPTIONS.grpcPort.description}
 
