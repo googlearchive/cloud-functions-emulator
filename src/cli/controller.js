@@ -630,11 +630,7 @@ class Controller {
         // lifecycle of the parent process. This means we should also ignore the
         // binding of stdout.
 
-        child = spawn('node', args, {
-          cwd: opts.cwd,
-          detached: opts.detached,
-          stdio: opts.stdio
-        });
+        child = spawn('node', args, opts);
 
         // Update status of settings
         this.server.set({
