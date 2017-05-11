@@ -127,7 +127,7 @@ class Controller {
 
     return new Promise((resolve, reject) => {
       // Parse the user's code to find the names of the exported functions
-      exec(`node -e "console.log(Object.keys(require('${pathForCmd}') || {}))"`, (err, stdout, stderr) => {
+      exec(`node -e "console.log(Object.keys(require('${pathForCmd}') || {})); setTimeout(function() { process.exit(0); }, 100);"`, (err, stdout, stderr) => {
         if (err) {
           this.error(`${'ERROR'.red}: Function load error: Code could not be loaded.`);
           this.error(`${'ERROR'.red}: Does the file exists? Is there a syntax error in your code?`);
