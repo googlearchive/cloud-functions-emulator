@@ -1,3 +1,11 @@
+##### 1.0.0-alpha.19 - 11 May 2017
+
+###### Bug fixes
+- [#103](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/103) - Prevent emulator from hanging from requiring user code that doesn't exit., by @laurenlong
+
+###### Other
+- Upgraded dependencies
+
 ##### 1.0.0-alpha.18 - 08 May 2017
 
 ###### Backwards compatible changes
