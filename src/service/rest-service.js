@@ -104,6 +104,12 @@ class RestService extends Service {
     if (req.headers['user-agent'].includes('google-cloud-sdk') && typeof req.body.data === 'string') {
       try {
         req.body.data = JSON.parse(req.body.data);
+        if (req.body.params) {
+          req.body.params = JSON.parse(req.body.params);
+        }
+        if (req.body.auth) {
+          req.body.auth = JSON.parse(req.body.auth);
+        }
       } catch (err) {
 
       }
@@ -118,13 +124,16 @@ class RestService extends Service {
           eventId,
           // The current ISO 8601 timestamp
           timestamp: (new Date()).toISOString(),
-          // TODO: The event type
-          eventType: 'TODO',
-          // TODO: The resource that triggered the event
-          resource: 'TODO',
+          eventType: cloudfunction.eventTrigger.eventType,
+          resource: req.body.resource || cloudfunction.eventTrigger.resource,
+          params: req.body.params || {},
           // The event payload
           data: req.body.data
         };
+
+        if (new RegExp('providers/firebase.database').test(event.eventType)) {
+          event.auth = req.body.auth || { admin: true };
+        }
 
         return got.post(`${this.functions.getSupervisorHost()}/${req.params.project}/${req.params.location}/${req.params.name}`, {
           body: JSON.stringify(cloudfunction.httpsTrigger ? event.data : event),

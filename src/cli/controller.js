@@ -285,8 +285,8 @@ class Controller {
    * @param {string} name The name of the function to call.
    * @param {object} data The data to send to the function.
    */
-  call (name, data) {
-    return this.client.callFunction(name, data);
+  call (name, data, resource, params, auth) {
+    return this.client.callFunction(name, data, resource, params, auth);
   }
 
   /**
@@ -337,9 +337,9 @@ class Controller {
             opts.triggerEvent || (opts.triggerEvent = 'topic.publish');
           } else if (opts.triggerProvider === 'cloud.storage') {
             opts.triggerEvent || (opts.triggerEvent = 'object.change');
-          } else if (opts.triggerProvider === 'firebase.database') {
-            opts.triggerEvent || (opts.triggerEvent = 'data.write');
-          } else if (opts.triggerProvider === 'firebase.auth') {
+          } else if (opts.triggerProvider === 'google.firebase.database') {
+            opts.triggerEvent || (opts.triggerEvent = 'ref.write');
+          } else if (opts.triggerProvider === 'google.firebase.auth') {
             if (!opts.triggerEvent) {
               throw new Error('Provider firebase.auth requires trigger event user.create or user.delete!');
             }

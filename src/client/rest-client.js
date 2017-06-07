@@ -42,12 +42,17 @@ class RestClient extends Client {
       });
   }
 
-  callFunction (name, data) {
+  callFunction (name, data, resource, params, auth) {
     return this._action(
       'projects.locations.functions.call',
       {
         name: CloudFunction.formatName(this.config.projectId, this.config.region, name),
-        resource: { data }
+        resource: {
+          data: data,
+          resource: resource,
+          params: params,
+          auth: auth
+        }
       }
     ).then(([body, response]) => {
       if (body.result && typeof body.result === 'string') {
