@@ -372,14 +372,11 @@ class Controller {
         }
 
         return got.post(`http://${this.config.host}:${this.config.supervisorPort}/api/debug`, {
-          body: JSON.stringify({
+          body: {
             type: type,
             name: cloudfunction.name,
             port: opts.port,
             pause: opts.pause
-          }),
-          headers: {
-            'Content-Type': 'application/json'
           },
           json: true
         });
@@ -571,12 +568,9 @@ class Controller {
     return this.client.getFunction(name)
       .then(([cloudfunction]) => {
         return got.post(`http://${this.config.host}:${this.config.supervisorPort}/api/reset`, {
-          body: JSON.stringify({
+          body: {
             name: cloudfunction.name,
             keep: opts.keep
-          }),
-          headers: {
-            'Content-Type': 'application/json'
           },
           json: true
         });
