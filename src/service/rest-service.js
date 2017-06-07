@@ -124,12 +124,15 @@ class RestService extends Service {
           eventId,
           // The current ISO 8601 timestamp
           timestamp: (new Date()).toISOString(),
-          eventType: cloudfunction.eventTrigger.eventType,
           resource: req.body.resource || cloudfunction.eventTrigger.resource,
           params: req.body.params || {},
           // The event payload
           data: req.body.data
         };
+
+        if (cloudfunction.eventTrigger) {
+          event.eventType = cloudfunction.eventTrigger.eventType;
+        }
 
         if (new RegExp('providers/firebase.database').test(event.eventType)) {
           event.auth = req.body.auth || { admin: true };
