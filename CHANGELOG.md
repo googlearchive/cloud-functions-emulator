@@ -1,3 +1,12 @@
+##### 1.0.0-alpha.20 - 20 June 2017
+
+###### Bug fixes
+- [#105](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/105) - Warning probably not needed for semver minor changes
+- [#108](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/108) - Call command does not appear in help text
+
+###### Other
+- Upgraded dependencies
+
 ##### 1.0.0-alpha.19 - 11 May 2017
 
 ###### Bug fixes
