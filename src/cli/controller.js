@@ -617,6 +617,7 @@ class Controller {
           `--logFile=${this.config.logFile}`,
           `--restPort=${this.config.restPort}`,
           `--supervisorPort=${this.config.supervisorPort}`,
+          `--projectId=${this.config.projectId}`,
           `--tail=${this.config.tail}`
         ];
 

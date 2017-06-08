@@ -47,6 +47,7 @@ exports.options = [
   'timeout',
   'useMocks',
   'verbose',
+  'projectId',
   'tail'
 ];
 
