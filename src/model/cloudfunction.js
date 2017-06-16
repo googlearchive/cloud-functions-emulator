@@ -215,8 +215,8 @@ class CloudFunction {
   static parseLocation (location = '') {
     const matches = location.match(CloudFunction.LOCATION_REG_EXP);
     return {
-      project: matches[1],
-      location: matches[2]
+      project: matches ? matches[1] : null,
+      location: matches ? matches[2] : null
     };
   }
 
@@ -230,9 +230,9 @@ class CloudFunction {
   static parseName (name = '') {
     const matches = name.match(CloudFunction.NAME_REG_EXP);
     return {
-      project: matches[1],
-      location: matches[2],
-      name: matches[3]
+      project: matches ? matches[1] : null,
+      location: matches ? matches[2] : null,
+      name: matches ? matches[3] : null
     };
   }
 
