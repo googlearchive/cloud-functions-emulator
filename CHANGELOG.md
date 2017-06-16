@@ -1,4 +1,13 @@
-##### 1.0.0-alpha.20 - 20 June 2017
+##### 1.0.0-alpha.21 - 16 June 2017
+
+###### Bug fixes
+- [#59](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/59) - New logs not written
+- [#110](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/110) - Not working with latest stable version of node
+
+###### Other
+- Upgraded dependencies
+
+##### 1.0.0-alpha.20 - 07 June 2017
 
 ###### Bug fixes
 - [#105](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/105) - Warning probably not needed for semver minor changes
