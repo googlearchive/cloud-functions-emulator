@@ -17,7 +17,41 @@
 
 const fs = require('fs');
 const path = require('path');
-const EOL = require('os').EOL;
+const readline = require('readline');
+
+function readLogLines (filePath, linesToRead, output) {
+  try {
+    const parts = path.parse(filePath);
+    const files = fs
+      .readdirSync(parts.dir)
+      .filter((file) => file && file.includes(parts.name));
+    files.sort();
+
+    // Here, we naively select the newest log file, even if the user wants to
+    // display more lines than are available in the newest log file.
+    const rl = readline.createInterface({
+      input: fs.createReadStream(path.join(parts.dir, files[files.length - 1])),
+      terminal: false
+    });
+    const lines = [];
+    rl
+      .on('line', (line) => {
+        lines.push(line);
+      })
+      .on('close', () => {
+        lines
+          .slice(lines.length - linesToRead)
+          .forEach((line) => output(`${line}\n`));
+      });
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      output('');
+      return;
+    }
+
+    throw err;
+  }
+}
 
 module.exports = {
   assertLogsPath (logFile) {
@@ -41,44 +75,7 @@ module.exports = {
     }
   },
 
-  readLogLines (filePath, num, output) {
-    try {
-      var buf = fs.readFileSync(filePath);
-      var chr = null;
-      var cursor = buf.length;
-      var count = 0;
-
-      for (var i = cursor; i >= 0; --i) {
-        chr = buf.toString('utf8', i - 1, i);
-        if (chr === EOL) {
-          // We hit a newline char
-          if (cursor !== i) {
-            // Mark this position
-            cursor = i;
-            if (++count >= num) {
-              break;
-            }
-          }
-        }
-      }
-
-      // The last line in the squence (the first line in the file)
-      // will not terminate with EOL, so ensure we're always include
-      // the last line
-      if (count < num) {
-        cursor = 0;
-      }
-
-      output(buf.toString('utf8', cursor, buf.length) + '\n');
-    } catch (err) {
-      if (err.code === 'ENOENT') {
-        output('');
-        return;
-      }
-
-      throw err;
-    }
-  }
+  readLogLines: readLogLines
 };
 
 function _pathExists (p) {
