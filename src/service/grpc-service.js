@@ -93,13 +93,20 @@ class RpcService extends Service {
           eventId,
           // The current ISO 8601 timestamp
           timestamp: (new Date()).toISOString(),
-          // TODO: The event type
-          eventType: 'TODO',
-          // TODO: The resource that triggered the event
-          resource: 'TODO',
+          // Parameters for the event
+          params: call.request.params || {},
           // The event payload
           data: call.request.data
         };
+
+        if (cloudfunction.eventTrigger) {
+          event.eventType = cloudfunction.eventTrigger.eventType;
+          event.resource = call.request.resource || cloudfunction.eventTrigger.resource;
+        }
+
+        if (new RegExp('firebase.database').test(event.eventType)) {
+          event.auth = call.request.auth || { admin: true };
+        }
 
         const parts = CloudFunction.parseName(call.request.name);
 

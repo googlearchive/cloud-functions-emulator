@@ -124,6 +124,7 @@ class RestService extends Service {
           eventId,
           // The current ISO 8601 timestamp
           timestamp: (new Date()).toISOString(),
+          // Parameters for the event
           params: req.body.params || {},
           // The event payload
           data: req.body.data

@@ -60,11 +60,14 @@ class GrpcClient extends Client {
     return err;
   }
 
-  callFunction (name, data) {
+  callFunction (name, data, resource, params, auth) {
     return new Promise((resolve, reject) => {
       this.functionsClient.callFunction({
         name: CloudFunction.formatName(this.config.projectId, this.config.region, name),
-        data: JSON.stringify(data)
+        data: JSON.stringify(data),
+        resource: resource,
+        params: params,
+        auth: auth
       }, (err, body) => {
         if (err) {
           reject(this._processError(err));
