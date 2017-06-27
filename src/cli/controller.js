@@ -338,11 +338,16 @@ class Controller {
           } else if (opts.triggerProvider === 'cloud.storage') {
             opts.triggerEvent || (opts.triggerEvent = 'object.change');
           } else if (opts.triggerProvider === 'google.firebase.database') {
-            opts.triggerEvent || (opts.triggerEvent = 'ref.write');
+            if (!opts.triggerEvent) {
+              throw new Error('Provider google.firebase.database requires trigger event ref.create, ref.update' +
+              'ref.delete or ref.write.');
+            }
           } else if (opts.triggerProvider === 'google.firebase.auth') {
             if (!opts.triggerEvent) {
-              throw new Error('Provider firebase.auth requires trigger event user.create or user.delete!');
+              throw new Error('Provider google.firebase.auth requires trigger event user.create or user.delete.');
             }
+          } else if (opts.triggerProvider === 'google.firebase.analytics') {
+            opts.triggerEvent || (opts.triggerEvent = 'event.log');
           }
           cloudfunction.eventTrigger = {
             eventType: `providers/${opts.triggerProvider}/eventTypes/${opts.triggerEvent}`
