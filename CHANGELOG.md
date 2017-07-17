@@ -1,3 +1,11 @@
+##### 1.0.0-alpha.22 - 17 July 2017
+
+###### Bug fixes
+- [#124](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/pull/124) - Update supported Node.js version to 6.11.1 by max@
+
+###### Other
+- Upgraded dependencies
+
 ##### 1.0.0-alpha.21 - 16 June 2017
 
 ###### Bug fixes
