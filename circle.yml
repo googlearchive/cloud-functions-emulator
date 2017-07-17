@@ -19,7 +19,7 @@
 # Adjust the behavior of the virtual machine (VM)
 machine:
   node:
-    version: 6.9.1
+    version: 6.11.1
 
 # Use for broader build-related configuration
 general:
