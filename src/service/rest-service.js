@@ -104,15 +104,15 @@ class RestService extends Service {
     if (req.headers['user-agent'].includes('google-cloud-sdk') && typeof req.body.data === 'string') {
       try {
         req.body.data = JSON.parse(req.body.data);
-        if (req.body.params) {
-          req.body.params = JSON.parse(req.body.params);
-        }
-        if (req.body.auth) {
-          req.body.auth = JSON.parse(req.body.auth);
-        }
       } catch (err) {
 
       }
+    }
+    try {
+      req.body.params = JSON.parse(req.body.params);
+      req.body.auth = JSON.parse(req.body.auth);
+    } catch (err) {
+
     }
     const name = CloudFunction.formatName(req.params.project, req.params.location, req.params.name);
     logger.debug('RestService#callFunction', name);

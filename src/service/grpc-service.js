@@ -87,6 +87,12 @@ class RpcService extends Service {
             call.request.data = {};
           }
         }
+        try {
+          call.request.params = JSON.parse(call.request.params);
+          call.request.auth = JSON.parse(call.request.auth);
+        } catch (err) {
+
+        }
 
         const event = {
           // A unique identifier for this execution
