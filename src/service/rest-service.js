@@ -133,7 +133,7 @@ class RestService extends Service {
         }
 
         if (new RegExp('firebase.database').test(event.eventType)) {
-          event.auth = req.body.auth;
+          event.auth = req.body.auth || { admin: true };
         }
 
         return got.post(`${this.functions.getSupervisorHost()}/${req.params.project}/${req.params.location}/${req.params.name}`, {
