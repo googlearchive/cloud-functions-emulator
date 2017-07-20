@@ -87,32 +87,19 @@ class RpcService extends Service {
             call.request.data = {};
           }
         }
-        try {
-          call.request.params = JSON.parse(call.request.params);
-          call.request.auth = JSON.parse(call.request.auth);
-        } catch (err) {
-
-        }
 
         const event = {
           // A unique identifier for this execution
           eventId,
           // The current ISO 8601 timestamp
           timestamp: (new Date()).toISOString(),
-          // Parameters for the event
-          params: call.request.params || {},
+          // TODO: The event type
+          eventType: 'TODO',
+          // TODO: The resource that triggered the event
+          resource: 'TODO',
           // The event payload
           data: call.request.data
         };
-
-        if (cloudfunction.eventTrigger) {
-          event.eventType = cloudfunction.eventTrigger.eventType;
-          event.resource = call.request.resource || cloudfunction.eventTrigger.resource;
-        }
-
-        if (new RegExp('firebase.database').test(event.eventType)) {
-          event.auth = call.request.auth || { admin: true };
-        }
 
         const parts = CloudFunction.parseName(call.request.name);
 

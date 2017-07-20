@@ -109,7 +109,6 @@ class RestService extends Service {
       }
     }
     try {
-      req.body.params = JSON.parse(req.body.params);
       req.body.auth = JSON.parse(req.body.auth);
     } catch (err) {
 
@@ -124,8 +123,6 @@ class RestService extends Service {
           eventId,
           // The current ISO 8601 timestamp
           timestamp: (new Date()).toISOString(),
-          // Parameters for the event
-          params: req.body.params || {},
           // The event payload
           data: req.body.data
         };
@@ -136,7 +133,7 @@ class RestService extends Service {
         }
 
         if (new RegExp('firebase.database').test(event.eventType)) {
-          event.auth = req.body.auth || { admin: true };
+          event.auth = req.body.auth;
         }
 
         return got.post(`${this.functions.getSupervisorHost()}/${req.params.project}/${req.params.location}/${req.params.name}`, {

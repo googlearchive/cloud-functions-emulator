@@ -42,7 +42,7 @@ class RestClient extends Client {
       });
   }
 
-  callFunction (name, data, resource, params, auth) {
+  callFunction (name, data, resource, auth) {
     return this._action(
       'projects.locations.functions.call',
       {
@@ -50,7 +50,6 @@ class RestClient extends Client {
         resource: {
           data: data,
           resource: resource,
-          params: params,
           auth: auth
         }
       }

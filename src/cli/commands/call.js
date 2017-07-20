@@ -56,21 +56,6 @@ exports.builder = (yargs) => {
         normalize: true,
         requiresArg: true,
         type: 'string'
-      },
-      resource: {
-        description: 'Specify resource string for event that is sent to function',
-        requiresArg: false,
-        type: 'string'
-      },
-      params: {
-        description: 'Specify params for event that is sent to function',
-        requiresArg: false,
-        type: 'string'
-      },
-      auth: {
-        description: `Specify auth for event that is sent to database function. ${'Default:'.bold} ${'{admin: true}'.green}`,
-        requiresArg: false,
-        type: 'string'
       }
     }, _.pick(OPTIONS, ['grpcPort', 'host', 'projectId', 'region', 'restPort', 'service'])))
     .epilogue(`See ${'https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Calling-functions'.bold}`);
@@ -97,7 +82,7 @@ exports.handler = (opts) => {
   const controller = new Controller(opts);
 
   return controller.doIfRunning()
-    .then(() => controller.call(opts.functionName, opts.data, opts.resource, opts.params, opts.auth))
+    .then(() => controller.call(opts.functionName, opts.data))
     .then(([body, response]) => {
       controller.log(`ExecutionId: ${body.executionId}`);
       if (body.result) {

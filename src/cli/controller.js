@@ -285,8 +285,8 @@ class Controller {
    * @param {string} name The name of the function to call.
    * @param {object} data The data to send to the function.
    */
-  call (name, data, resource, params, auth) {
-    return this.client.callFunction(name, data, resource, params, auth);
+  call (name, data, resource, auth) {
+    return this.client.callFunction(name, data, resource, auth);
   }
 
   /**
