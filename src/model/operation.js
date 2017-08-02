@@ -161,7 +161,7 @@ class Operation {
   static parseName (name = '') {
     const matches = name.match(Operation.NAME_REG_EXP);
     return {
-      operation: matches[1]
+      operation: matches ? matches[1] : null
     };
   }
 

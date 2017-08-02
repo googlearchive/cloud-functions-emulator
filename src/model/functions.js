@@ -390,9 +390,8 @@ class Functions {
               return new Promise((resolve, reject) => {
                 setTimeout(() => {
                   got.post(`${this.getSupervisorHost()}/api/deploy`, {
-                    body: JSON.stringify({ name: cloudfunction.name }),
-                    headers: {
-                      'Content-Type': 'application/json'
+                    body: {
+                      name: cloudfunction.name
                     },
                     json: true
                   }).then(resolve, (err) => {
@@ -536,9 +535,8 @@ class Functions {
               this.adapter.deleteFunction(name)
                 .then(() => {
                   return got.post(`${this.getSupervisorHost()}/api/delete`, {
-                    body: JSON.stringify({ name: cloudfunction.name }),
-                    headers: {
-                      'Content-Type': 'application/json'
+                    body: {
+                      name: cloudfunction.name
                     },
                     json: true
                   });

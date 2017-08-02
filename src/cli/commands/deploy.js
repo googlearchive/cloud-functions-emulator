@@ -179,8 +179,8 @@ function calculateTimeout (timeout) {
   }
 
   if (typeof timeout === 'string') {
-    let matches;
-    if (matches = timeout.match(/^(\d+)s$/)) { // eslint-disable-line
+    let matches = timeout.match(/^(\d+)s$/);
+    if (matches && matches[1] && typeof matches[1] === 'string') {
       const timeout = parseFloat(matches[1]);
       if (!isNaN(timeout)) {
         if (timeout > MAX.seconds) {
@@ -189,7 +189,10 @@ function calculateTimeout (timeout) {
         }
         return { seconds: timeout };
       }
-    } else if (matches = timeout.match(/^(\d+)ms$/)) { // eslint-disable-line
+    }
+
+    matches = timeout.match(/^(\d+)ms$/);
+    if (matches && matches[1] && typeof matches[1] === 'string') {
       const timeout = parseFloat(matches[1]) / 1000;
       if (!isNaN(timeout)) {
         if (timeout > MAX.seconds) {

@@ -1,11 +1,11 @@
 {
   "name": "@google-cloud/functions-emulator",
   "description": "Google Cloud Functions Emulator",
-  "version": "1.0.0-alpha.19",
+  "version": "1.0.0-alpha.22",
   "license": "Apache-2.0",
   "author": "Google Inc.",
   "engines": {
-    "node": ">=6.9.1"
+    "node": ">=6.11.1"
   },
   "main": "./bin/emulator",
   "bin": {
@@ -53,18 +53,18 @@
     "postinstall": "node scripts/upgrade-warning"
   },
   "dependencies": {
-    "@google-cloud/storage": "1.1.1",
+    "@google-cloud/storage": "1.2.0",
     "adm-zip": "0.4.7",
-    "ajv": "5.1.3",
+    "ajv": "5.2.2",
     "body-parser": "1.17.2",
     "cli-table2": "0.2.0",
     "colors": "1.1.2",
     "configstore": "3.1.0",
     "express": "4.15.3",
     "google-proto-files": "0.12.0",
-    "googleapis": "19.0.0",
-    "got": "6.7.1",
-    "grpc": "1.3.2",
+    "googleapis": "20.1.0",
+    "got": "7.1.0",
+    "grpc": "1.4.1",
     "http-proxy": "1.16.2",
     "lodash": "4.17.4",
     "prompt": "1.0.0",
@@ -73,19 +73,19 @@
     "serializerr": "1.0.3",
     "supertest": "3.0.0",
     "tmp": "0.0.31",
-    "uuid": "3.0.1",
+    "uuid": "3.1.0",
     "winston": "2.3.1",
-    "yargs": "8.0.1"
+    "yargs": "8.0.2"
   },
   "devDependencies": {
     "intelli-espower-loader": "1.0.1",
     "mocha": "3.4.2",
-    "nyc": "10.3.2",
-    "power-assert": "1.4.2",
+    "nyc": "11.0.3",
+    "power-assert": "1.4.4",
     "proxyquire": "1.8.0",
     "semistandard": "11.0.0",
     "semistandard-format": "3.0.0",
-    "sinon": "2.3.1"
+    "sinon": "2.3.8"
   },
   "repository": {
     "type": "git",

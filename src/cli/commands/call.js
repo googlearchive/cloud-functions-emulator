@@ -40,7 +40,7 @@ Positional arguments:
  * http://yargs.js.org/docs/#methods-commandmodule-providing-a-command-module
  */
 exports.command = 'call <functionName>';
-exports.desecription = DESCRIPTION;
+exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)

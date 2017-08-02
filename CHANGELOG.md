@@ -1,3 +1,29 @@
+##### 1.0.0-alpha.22 - 17 July 2017
+
+###### Bug fixes
+- [#124](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/pull/124) - Update supported Node.js version to 6.11.1 by max@
+
+###### Other
+- Upgraded dependencies
+
+##### 1.0.0-alpha.21 - 16 June 2017
+
+###### Bug fixes
+- [#59](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/59) - New logs not written
+- [#110](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/110) - Not working with latest stable version of node
+
+###### Other
+- Upgraded dependencies
+
+##### 1.0.0-alpha.20 - 07 June 2017
+
+###### Bug fixes
+- [#105](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/105) - Warning probably not needed for semver minor changes
+- [#108](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/108) - Call command does not appear in help text
+
+###### Other
+- Upgraded dependencies
+
 ##### 1.0.0-alpha.19 - 11 May 2017
 
 ###### Bug fixes
