@@ -284,9 +284,10 @@ class Controller {
    *
    * @param {string} name The name of the function to call.
    * @param {object} data The data to send to the function.
+   * @param {object} opts Optional event fields to send to the function.
    */
-  call (name, data) {
-    return this.client.callFunction(name, data);
+  call (name, data, opts) {
+    return this.client.callFunction(name, data, opts);
   }
 
   /**
@@ -337,12 +338,17 @@ class Controller {
             opts.triggerEvent || (opts.triggerEvent = 'topic.publish');
           } else if (opts.triggerProvider === 'cloud.storage') {
             opts.triggerEvent || (opts.triggerEvent = 'object.change');
-          } else if (opts.triggerProvider === 'firebase.database') {
-            opts.triggerEvent || (opts.triggerEvent = 'data.write');
-          } else if (opts.triggerProvider === 'firebase.auth') {
+          } else if (opts.triggerProvider === 'google.firebase.database') {
             if (!opts.triggerEvent) {
-              throw new Error('Provider firebase.auth requires trigger event user.create or user.delete!');
+              throw new Error('Provider google.firebase.database requires trigger event ref.create, ref.update' +
+              'ref.delete or ref.write.');
             }
+          } else if (opts.triggerProvider === 'google.firebase.auth') {
+            if (!opts.triggerEvent) {
+              throw new Error('Provider google.firebase.auth requires trigger event user.create or user.delete.');
+            }
+          } else if (opts.triggerProvider === 'google.firebase.analytics') {
+            opts.triggerEvent || (opts.triggerEvent = 'event.log');
           }
           cloudfunction.eventTrigger = {
             eventType: `providers/${opts.triggerProvider}/eventTypes/${opts.triggerEvent}`

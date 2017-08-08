@@ -108,6 +108,11 @@ class RestService extends Service {
 
       }
     }
+    try {
+      req.body.auth = JSON.parse(req.body.auth);
+    } catch (err) {
+
+    }
     const name = CloudFunction.formatName(req.params.project, req.params.location, req.params.name);
     logger.debug('RestService#callFunction', name);
     const eventId = uuid.v4();
@@ -118,13 +123,18 @@ class RestService extends Service {
           eventId,
           // The current ISO 8601 timestamp
           timestamp: (new Date()).toISOString(),
-          // TODO: The event type
-          eventType: 'TODO',
-          // TODO: The resource that triggered the event
-          resource: 'TODO',
           // The event payload
           data: req.body.data
         };
+
+        if (cloudfunction.eventTrigger) {
+          event.eventType = cloudfunction.eventTrigger.eventType;
+          event.resource = req.body.resource || cloudfunction.eventTrigger.resource;
+        }
+
+        if (new RegExp('firebase.database').test(event.eventType)) {
+          event.auth = req.body.auth || { admin: true };
+        }
 
         return got.post(`${this.functions.getSupervisorHost()}/${req.params.project}/${req.params.location}/${req.params.name}`, {
           body: JSON.stringify(cloudfunction.httpsTrigger ? event.data : event),
