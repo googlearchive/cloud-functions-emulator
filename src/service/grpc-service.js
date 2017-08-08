@@ -49,14 +49,14 @@ class RpcService extends Service {
     this.type = 'gRPC';
     this.server = new Server();
 
-    this.server.addProtoService(protos.Operations.service, {
+    this.server.addService(protos.Operations.service, {
       cancelOperation: notImplemented,
       deleteOperation: notImplemented,
       getOperation: (call, cb) => this.getOperation(call, cb),
       listOperations: notImplemented
     });
 
-    this.server.addProtoService(protos.CloudFunctionsService.service, {
+    this.server.addService(protos.CloudFunctionsService.service, {
       callFunction: (call, cb) => this.callFunction(call, cb).catch((err) => this.handleError(err, cb)),
       createFunction: (call, cb) => this.createFunction(call, cb).catch((err) => this.handleError(err, cb)),
       deleteFunction: (call, cb) => this.deleteFunction(call, cb).catch((err) => this.handleError(err, cb)),
