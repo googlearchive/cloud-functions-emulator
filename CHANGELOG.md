@@ -1,3 +1,12 @@
+##### 1.0.0-alpha.23 - 08 August 2017
+
+###### Bug fixes
+- [#121](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/pull/121) - Support Firebase event types in REST client laurenzlong@
+- [#130](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/pull/130) - Replace deprecated addProtoService with addService laurenzlong@
+
+###### Other
+- Upgraded dependencies
+
 ##### 1.0.0-alpha.22 - 17 July 2017
 
 ###### Bug fixes
