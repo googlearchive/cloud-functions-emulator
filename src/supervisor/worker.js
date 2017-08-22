@@ -143,7 +143,11 @@ function main () {
     if (cloudfunction.serviceAccount && !message.debug) {
       fs.watch(cloudfunction.serviceAccount, {
         recursive: true
-      }, () => {
+      }, (event, fileName) => {
+        // Ignore changes in node_modules.
+        if (fileName.startsWith('node_modules')) {
+          return;
+        }
         process.send({
           close: true
         });
