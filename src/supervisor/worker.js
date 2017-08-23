@@ -140,10 +140,21 @@ function main () {
     });
 
     // Only start watching for file changes if the funciton is not in debug mode
-    if (cloudfunction.serviceAccount && !message.debug) {
+    if (cloudfunction.serviceAccount && !message.debug && message.watch) {
       fs.watch(cloudfunction.serviceAccount, {
         recursive: true
-      }, () => {
+      }, (event, filename) => {
+        // Ignore node_modules
+        if (Array.isArray(message.watchIgnore)) {
+          for (let i = 0; i < message.watchIgnore.length; i++) {
+            console.log(`Checking ${message.watchIgnore[i]}.`);
+            if ((new RegExp(message.watchIgnore[i])).test(filename)) {
+              console.log(`Ignoring ${filename}.`);
+              return;
+            }
+          }
+        }
+
         process.send({
           close: true
         });

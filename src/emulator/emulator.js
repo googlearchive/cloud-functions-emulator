@@ -30,7 +30,11 @@ class Emulator {
       host: opts.host,
       port: opts.supervisorPort,
       region: opts.region,
-      useMocks: opts.useMocks
+      useMocks: opts.useMocks,
+      idlePruneInterval: opts.idlePruneInterval,
+      maxIdle: opts.maxIdle,
+      watch: opts.watch,
+      watchIgnore: opts.watchIgnore
     });
     this.restService = Service.restService(functions, {
       bindHost: opts.bindHost,

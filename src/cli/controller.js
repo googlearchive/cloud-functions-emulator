@@ -623,7 +623,11 @@ class Controller {
           `--logFile=${this.config.logFile}`,
           `--restPort=${this.config.restPort}`,
           `--supervisorPort=${this.config.supervisorPort}`,
-          `--tail=${this.config.tail}`
+          `--tail=${this.config.tail}`,
+          `--maxIdle=${this.config.maxIdle}`,
+          `--idlePruneInterval=${this.config.idlePruneInterval}`,
+          `--watch=${this.config.watch}`,
+          `--watchIgnore=${this.config.watchIgnore}`
         ];
 
         // Make sure the child is detached, otherwise it will be bound to the

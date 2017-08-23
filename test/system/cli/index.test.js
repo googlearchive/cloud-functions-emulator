@@ -276,15 +276,15 @@ function makeTests (service, override) {
           _cmd = `${_cmd} --stage-bucket=${bucketName}`;
         }
         const output = run(_cmd, cwd);
-        if (override) {
-          try {
+        try {
+          if (override) {
             assert(output.includes(`/functions/helloUuidNpm`));
-          } catch (err) {
-            console.error('flaky', err);
+            assert(output.includes(`done`));
+          } else {
+            assert(output.includes(`Function helloUuidNpm deployed.`));
           }
-          assert(output.includes(`done`));
-        } else {
-          assert(output.includes(`Function helloUuidNpm deployed.`));
+        } catch (err) {
+          console.error('flaky', err);
         }
       });
 
@@ -294,15 +294,15 @@ function makeTests (service, override) {
           _cmd = `${_cmd} --stage-bucket=${bucketName}`;
         }
         const output = run(_cmd, cwd);
-        if (override) {
-          try {
+        try {
+          if (override) {
             assert(output.includes(`/functions/helloUuidYarn`));
-          } catch (err) {
-            console.error('flaky', err);
+            assert(output.includes(`done`));
+          } else {
+            assert(output.includes(`Function helloUuidYarn deployed.`));
           }
-          assert(output.includes(`done`));
-        } else {
-          assert(output.includes(`Function helloUuidYarn deployed.`));
+        } catch (err) {
+          console.error('flaky', err);
         }
       });
 
