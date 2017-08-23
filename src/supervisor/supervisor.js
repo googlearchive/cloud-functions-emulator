@@ -26,6 +26,7 @@ const logger = require('winston');
 const path = require('path');
 const url = require('url');
 
+const defaults = require('../defaults.json');
 const Errors = require('../utils/errors');
 const Model = require('../model');
 const server = require('../server');
@@ -54,8 +55,12 @@ class Supervisor {
     } else if (this.config.useMocks === 'false') {
       this.config.useMocks = false;
     }
-    this.config.idlePruneInterval || (this.config.idlePruneInterval = DEFAULT_IDLE_PRUNE_INTERVAL);
-    this.config.maxIdle || (this.config.maxIdle = DEFAULT_MAX_IDLE);
+    if (this.config.maxIdle === undefined) {
+      this.config.maxIdle = defaults.maxIdle;
+    }
+    if (this.config.idlePruneInterval === undefined) {
+      this.config.idlePruneInterval = defaults.idlePruneInterval;
+    }
 
     // Setup the express app
     this.app = express();
@@ -89,20 +94,26 @@ class Supervisor {
     this._proxy
       .on('error', (err, req, res) => {
         // The function failed to respond to the request or crashed
+        clearTimeout(req.functionTimeout);
         this.closeWorker(req.functionName);
         logger.info(`Execution took ${Date.now() - req.functionStart} ms, finished with status: 'crash'`);
 
-        res
-          .status(500)
-          .json({
-            error: {
-              code: 500,
-              status: 'INTERNAL',
-              message: 'function crashed',
-              errors: [err.message]
-            }
-          })
-          .end();
+        try {
+          res
+            .status(500)
+            .json({
+              error: {
+                code: 500,
+                status: 'INTERNAL',
+                message: 'function crashed',
+                errors: [err.message]
+              }
+            })
+            .end();
+        } catch (err) {
+          logger.error('Something went wrong with the function!');
+          logger.error(err);
+        }
       })
       .on('proxyReq', (proxyReq, req, res, options) => {
         // This allows us to rewrite the url from:
@@ -119,7 +130,12 @@ class Supervisor {
     this._workerPool = new Map();
 
     // Periodically check for and close idle workers
-    this.pruneIntervalId = setInterval(() => this.prune(), this.config.idlePruneInterval);
+    if (typeof this.config.idlePruneInterval === 'number' &&
+        this.config.idlePruneInterval > 0 &&
+        typeof this.config.maxIdle === 'number' &&
+        this.config.maxIdle > 0) {
+      this.pruneIntervalId = setInterval(() => this.prune(), this.config.idlePruneInterval);
+    }
   }
 
   static get DEFAULT_MAX_IDLE () {
@@ -184,19 +200,24 @@ class Supervisor {
     return this.getOrCreateWorker(formattedName)
       .then((worker) => {
         req.functionTimeout = setTimeout(() => {
-          this.closeWorker(req.functionName);
-          logger.info(`Execution took ${Date.now() - req.functionStart} ms, finished with status: 'timeout'`);
+          try {
+            this.closeWorker(req.functionName);
+            logger.info(`Execution took ${Date.now() - req.functionStart} ms, finished with status: 'timeout'`);
 
-          res
-            .status(500)
-            .json({
-              error: {
-                code: 500,
-                status: 'INTERNAL',
-                message: 'function execution attempt timed out'
-              }
-            })
-            .end();
+            res
+              .status(500)
+              .json({
+                error: {
+                  code: 500,
+                  status: 'INTERNAL',
+                  message: 'function execution attempt timed out'
+                }
+              })
+              .end();
+          } catch (err) {
+            logger.error('Something went wrong with the function timeout!');
+            logger.error(err);
+          }
         }, worker.functionTimeout);
 
         this._proxy.web(req, res, {
@@ -435,7 +456,9 @@ class Supervisor {
             name: cloudfunction.shortName,
             cloudfunction,
             useMocks: this.config.useMocks,
-            debug: worker.debug || worker.inspect
+            debug: worker.debug || worker.inspect,
+            watch: this.config.watch,
+            watchIgnore: this.config.watchIgnore
           });
         }
       });
@@ -548,7 +571,9 @@ class Supervisor {
 
     for (let [name, worker] of this._workerPool) {
       // Find workers that been idle longer than MAX_IDLE
-      if ((Date.now() - worker.lastAccessed) >= this.config.maxIdle) {
+      if (typeof this.config.maxIdle === 'number' &&
+          this.config.maxIdle > 0 &&
+          (Date.now() - worker.lastAccessed) >= this.config.maxIdle) {
         // Shutdown and remove idle workers from the pool
         tasks.push(this.closeWorker(name));
       }
@@ -620,7 +645,9 @@ class Supervisor {
   stop () {
     logger.debug('Stopping supervisor...');
 
-    clearInterval(this.pruneIntervalId);
+    if (this.pruneIntervalId) {
+      clearInterval(this.pruneIntervalId);
+    }
 
     this.clear();
 

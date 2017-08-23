@@ -49,7 +49,7 @@ module.exports = {
     type: 'string'
   },
   timeout: {
-    description: `The timeout in milliseconds the CLI should wait for the Emulator to start or stop. ${'Default:'.bold} ${defaults.timeout.toString().green}`,
+    description: `How long (in milliseconds) the CLI should wait for the Emulator to start or stop before giving up. ${'Default:'.bold} ${defaults.timeout.toString().green}`,
     requiresArg: true,
     type: 'number'
   },
@@ -72,10 +72,20 @@ module.exports = {
     requiresArg: true,
     type: 'string'
   },
+  idlePruneInterval: {
+    description: `How often (in milliseconds) to check workers for idleness, for possible pruning. ${'Default:'.bold} ${defaults.idlePruneInterval.toString().green}`,
+    requiresArg: true,
+    type: 'number'
+  },
   logFile: {
     description: `The path to the logs file to which function logs will be written. ${'Default:'.bold} ${defaults.logFile.toString().green}`,
     requiresArg: true,
     type: 'string'
+  },
+  maxIdle: {
+    description: `Maximum time (in milliseconds) a worker function can sit idle before it will be closed. ${'Default:'.bold} ${defaults.maxIdle.toString().green}`,
+    requiresArg: true,
+    type: 'number'
   },
   restPort: {
     description: `The port of the Cloud Functions Emulator REST API. ${'Default:'.bold} ${defaults.restPort.toString().green}`,
@@ -101,5 +111,15 @@ module.exports = {
     description: `When ${'true'.bold}, shows debug logs from the Emulator itself in the log file. ${'Default:'.bold} ${defaults.verbose.toString().green}`,
     requiresArg: false,
     type: 'boolean'
+  },
+  watch: {
+    description: `When ${'true'.bold}, automatically reloads deployed functions on file changes. ${'Default:'.bold} ${defaults.watch.toString().green}`,
+    requiresArg: false,
+    type: 'boolean'
+  },
+  watchIgnore: {
+    description: `List of patterns that the file watcher should ignore. ${'Default:'.bold} ${defaults.watchIgnore.toString().green}`,
+    requiresArg: true,
+    type: 'array'
   }
 };

@@ -40,14 +40,18 @@ exports.options = [
   'bindHost',
   'grpcPort',
   'host',
+  'idlePruneInterval',
   'logFile',
+  'maxIdle',
   'restPort',
   'storage',
   'supervisorPort',
+  'tail',
   'timeout',
   'useMocks',
   'verbose',
-  'tail'
+  'watch',
+  'watchIgnore'
 ];
 
 /**

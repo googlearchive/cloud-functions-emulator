@@ -46,6 +46,7 @@ module.exports = {
     }, 1000);
   },
   helloGET (req, res) {
+    console.log(req.method);
     res.send({
       method: req.method,
       headers: req.headers,

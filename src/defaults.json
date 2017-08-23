@@ -2,14 +2,20 @@
   "bindHost": "localhost",
   "grpcPort": 8009,
   "host": "localhost",
+  "idlePruneInterval": 60000,
   "logFile": "logs/cloud-functions-emulator.log",
+  "maxIdle": 300000,
   "region": "us-central1",
   "restPort": 8008,
   "service": "rest",
   "storage": "configstore",
   "supervisorPort": 8010,
+  "tail": false,
   "timeout": 20000,
   "useMocks": false,
-  "verbose": false, 
-  "tail": false
+  "verbose": false,
+  "watch": true,
+  "watchIgnore": [
+    "node_modules"
+  ]
 }

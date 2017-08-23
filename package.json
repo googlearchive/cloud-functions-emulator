@@ -1,7 +1,7 @@
 {
   "name": "@google-cloud/functions-emulator",
   "description": "Google Cloud Functions Emulator",
-  "version": "1.0.0-alpha.23",
+  "version": "1.0.0-alpha.24",
   "license": "Apache-2.0",
   "author": "Google Inc.",
   "engines": {
@@ -71,7 +71,7 @@
     "rimraf": "2.6.1",
     "semver": "5.4.1",
     "serializerr": "1.0.3",
-    "tmp": "0.0.31",
+    "tmp": "0.0.33",
     "uuid": "3.1.0",
     "winston": "2.3.1",
     "yargs": "8.0.2"
@@ -85,7 +85,7 @@
     "proxyquire": "1.8.0",
     "semistandard": "11.0.0",
     "semistandard-format": "3.0.0",
-    "sinon": "3.1.0",
+    "sinon": "3.2.1",
     "supertest": "3.0.0"
   },
   "repository": {

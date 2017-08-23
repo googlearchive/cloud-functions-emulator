@@ -1,3 +1,21 @@
+##### 1.0.0-alpha.24 - 22 August 2017
+
+###### Backwards compatible changes
+- [#63](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/pull/63) - Add option to disable file watcher
+  - Added `--watch` and `--watchIgnore` options.
+- [#66](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/pull/66) - Make worker idle timeout configurable
+  - Added `--maxIdle` and `--idlePruneInterval` options.
+
+###### Bug fixes
+- [#115](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/pull/115) - Emulator crashes unpredictably
+  - This is a partial fix. The full fix requires adding worker pools to each
+    deployed function and enforcing one concurrent request per worker.
+    Currently, only one worker is deployed per function, which handles all
+    requests.
+
+###### Other
+- Upgraded dependencies
+
 ##### 1.0.0-alpha.23 - 08 August 2017
 
 ###### Bug fixes
