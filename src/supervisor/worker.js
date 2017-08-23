@@ -147,9 +147,7 @@ function main () {
         // Ignore node_modules
         if (Array.isArray(message.watchIgnore)) {
           for (let i = 0; i < message.watchIgnore.length; i++) {
-            console.log(`Checking ${message.watchIgnore[i]}.`);
             if ((new RegExp(message.watchIgnore[i])).test(filename)) {
-              console.log(`Ignoring ${filename}.`);
               return;
             }
           }

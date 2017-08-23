@@ -1,3 +1,8 @@
+##### 1.0.0-alpha.25 - 23 August 2017
+
+###### Bug fixes
+- Removed extraneous logging on file change
+
 ##### 1.0.0-alpha.24 - 22 August 2017
 
 ###### Backwards compatible changes
