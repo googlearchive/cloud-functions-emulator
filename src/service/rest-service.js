@@ -45,11 +45,18 @@ class RestService extends Service {
     // Standard ExpressJS app. Where possible this should mimic the *actual*
     // setup of Cloud Functions regarding the use of body parsers etc.
     this.server = express();
-    this.server.use(bodyParser.json());
-    this.server.use(bodyParser.raw());
-    this.server.use(bodyParser.text());
+    this.server.use(bodyParser.json({
+      limit: '10mb'
+    }));
+    this.server.use(bodyParser.raw({
+      limit: '10mb'
+    }));
+    this.server.use(bodyParser.text({
+      limit: '10mb'
+    }));
     this.server.use(bodyParser.urlencoded({
-      extended: true
+      extended: true,
+      limit: '10mb'
     }));
 
     // Never cache
