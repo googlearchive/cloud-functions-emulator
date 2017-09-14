@@ -67,11 +67,18 @@ class Supervisor {
 
     // Setup the Supervisor API
     const apiRouter = express.Router();
-    apiRouter.use(bodyParser.json());
-    apiRouter.use(bodyParser.raw());
-    apiRouter.use(bodyParser.text());
+    apiRouter.use(bodyParser.json({
+      limit: '10mb'
+    }));
+    apiRouter.use(bodyParser.raw({
+      limit: '10mb'
+    }));
+    apiRouter.use(bodyParser.text({
+      limit: '10mb'
+    }));
     apiRouter.use(bodyParser.urlencoded({
-      extended: true
+      extended: true,
+      limit: '10mb'
     }));
     apiRouter.post('/clear', (req, res, next) => this.clearHandler(req, res).catch(next));
     apiRouter.post('/debug', (req, res, next) => this.debugHandler(req, res).catch(next));
