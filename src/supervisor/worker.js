@@ -71,10 +71,11 @@ function main () {
     const app = express();
 
     // Parse request body
-    app.use(bodyParser.json());
-    app.use(bodyParser.raw());
-    app.use(bodyParser.text());
+    app.use(bodyParser.json({limit: '10mb'}));
+    app.use(bodyParser.raw({limit: '10mb'}));
+    app.use(bodyParser.text({limit: '10mb'}));
     app.use(bodyParser.urlencoded({
+      limit: '10mb',
       extended: true
     }));
 
