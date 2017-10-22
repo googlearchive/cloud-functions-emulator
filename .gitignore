@@ -20,3 +20,5 @@ test/system/*.log
 .idea/
 test/firebase/
 test/system/test-log.txt
+yarn.lock
+package-lock.json
