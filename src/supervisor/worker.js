@@ -69,15 +69,30 @@ function main () {
     }
 
     const app = express();
+    
+    const requestLimit = '1024mb';
+    
+    const rawBodySaver = (req, res, buf) => {
+      req.rawBody = buf;
+    };
+
+    const rawBodySavingOptions = {
+      limit: requestLimit,
+      verify: rawBodySaver
+    };
+
+    // Use extended query string parsing for URL-encoded bodies.
+    const urlEncodedOptions = {
+      limit: requestLimit,
+      verify: rawBodySaver,
+      extended: true
+    };
 
     // Parse request body
-    app.use(bodyParser.json({limit: '10mb'}));
-    app.use(bodyParser.raw({limit: '10mb'}));
-    app.use(bodyParser.text({limit: '10mb'}));
-    app.use(bodyParser.urlencoded({
-      limit: '10mb',
-      extended: true
-    }));
+    app.use(bodyParser.raw(rawBodySavingOptions));
+    app.use(bodyParser.json(rawBodySavingOptions));
+    app.use(bodyParser.text(rawBodySavingOptions));
+    app.use(bodyParser.urlencoded(urlEncodedOptions));
 
     // Never cache
     app.use((req, res, next) => {
