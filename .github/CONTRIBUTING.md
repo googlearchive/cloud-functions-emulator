@@ -1,9 +1,16 @@
 # How to become a contributor and submit your own code
 
+**Table of contents**
+
+* [Contributor License Agreements](#contributor-license-agreements)
+* [Contributing a patch](#contributing-a-patch)
+* [Running the tests](#running-the-tests)
+* [Releasing the library](#releasing-the-library)
+
 ## Contributor License Agreements
 
 We'd love to accept your sample apps and patches! Before we can take them, we
-have to jump over a few legal hurdles.
+have to jump a couple of legal hurdles.
 
 Please fill out either the individual or corporate Contributor License Agreement
 (CLA).
@@ -21,37 +28,26 @@ accept your pull requests.
 
 ## Contributing A Patch
 
-1. Submit an issue describing your proposed change to the repo in question.
-1. The repo owner will respond to your issue promptly.
-1. If your proposed change is accepted, and you haven't already done so, sign a Contributor License Agreement (see details above).
-1. Fork the desired repo, develop and test your code changes.
+1.  Submit an issue describing your proposed change to the repo in question.
+1.  The repo owner will respond to your issue promptly.
+1.  If your proposed change is accepted, and you haven't already done so, sign a
+    Contributor License Agreement (see details above).
+1.  Fork the desired repo, develop and test your code changes.
+1.  Ensure that your code adheres to the existing style in the code to which
+    you are contributing.
+1.  Ensure that your code has an appropriate set of tests which all pass.
+1.  Submit a pull request.
 
-    1. Clone the repo:
+## Running the tests
 
-            git clone git@github.com:GoogleCloudPlatform/cloud-functions-emulator.git
+1.  [Prepare your environment for Node.js setup][setup].
 
-    1. Change directory into the project folder:
+1.  Install dependencies:
 
-            cd cloud-functions-emulator
+        npm install
 
-    1. Install dependencies:
+1.  Run the tests:
 
-            npm install
+        npm test
 
-        or
-
-            yarn
-
-    1. Develop your changes.
-    1. Run the tests:
-
-            npm test
-
-        or
-
-            yarn test
-
-1. Ensure that your code adheres to the existing style in the project. Refer to the
-   [Google Cloud Platform Samples Style Guide](https://github.com/GoogleCloudPlatform/Template/wiki/style.html) for the
-   recommended coding standards for this organization.  You can run `npm run lint` to match our JavaScript coding standards.
-1. Submit a pull request!
+[setup]: https://cloud.google.com/nodejs/docs/setup
