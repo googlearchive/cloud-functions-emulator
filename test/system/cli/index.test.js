@@ -666,7 +666,15 @@ describe(`system/cli`, () => {
       .then(() => storage.bucket(bucketName).delete());
   });
 
-  makeTests(`grpc`);
-  makeTests(`rest`);
-  makeTests(`rest`, `${GCLOUD} beta functions`);
+  if (!process.env.CIRCLECI) {
+    makeTests(`grpc`);
+    makeTests(`rest`);
+    makeTests(`rest`, `${GCLOUD} beta functions`);
+  } else if (process.env.CIRCLE_NODE_INDEX === '0') {
+    makeTests(`grpc`);
+  } else if (process.env.CIRCLE_NODE_INDEX === '1') {
+    makeTests(`rest`);
+  } else if (process.env.CIRCLE_NODE_INDEX === '2') {
+    makeTests(`rest`, `${GCLOUD} beta functions`);
+  }
 });

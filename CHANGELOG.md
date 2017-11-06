@@ -1,3 +1,12 @@
+##### 1.0.0-alpha.26 - 06 November 2017
+
+###### Bug fixes
+- [#152](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/pull/152) - Fixed body parser limits
+
+###### Other
+- Updated dependencies
+- Integrated `@google-cloud/nodejs-repo-tools`
+
 ##### 1.0.0-alpha.25 - 23 August 2017
 
 ###### Bug fixes
