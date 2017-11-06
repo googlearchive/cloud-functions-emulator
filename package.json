@@ -7,6 +7,7 @@
   "engines": {
     "node": ">=6.11.1"
   },
+  "repository": "GoogleCloudPlatform/cloud-functions-emulator",
   "main": "./bin/emulator",
   "bin": {
     "functions": "./bin/functions",
@@ -38,19 +39,31 @@
       "doc"
     ]
   },
+  "contributors": [
+    "Jason Dobry <jason.dobry@gmail.com>",
+    "Jason Polites <jason.polites@gmail.com>",
+    "Kim Vogt <kim.vogt@gmail.com>",
+    "Kris J. Pruden <kpruden@users.noreply.github.com>",
+    "Lauren Long <laurenzlong@users.noreply.github.com>",
+    "Max Schoening <max@max.wtf>",
+    "Roseanna <saffy@users.noreply.github.com>",
+    "Tim Swast <swast@google.com>",
+    "aminy <aminy@indicee.com>"
+  ],
   "scripts": {
     "lint": "semistandard",
-    "mocha": "mocha test/_setup test/ --recursive -t 20000 -S -R spec --require intelli-espower-loader",
+    "mocha": "mocha test/_setup test/ --recursive -t 30000 -S -R spec --require intelli-espower-loader",
     "unit-test": "npm run mocha -- --grep \"unit/\"",
     "system-test": "npm run mocha -- --grep \"system/\"",
-    "mocha-debug": "mocha debug test/_setup test/ --recursive -t 20000 -S -R spec --require intelli-espower-loader",
-    "cover": "nyc --cache mocha test/_setup test/ --recursive -t 20000 -S -R spec --require intelli-espower-loader && nyc report --reporter=html",
-    "unit-cover": "nyc --cache mocha test/_setup test/ --grep \"unit/\" --recursive -t 20000 -S -R spec --require intelli-espower-loader && nyc report --reporter=html",
-    "system-cover": "nyc --cache mocha test/_setup test/ --grep \"system/\" --recursive -t 20000 -S -R spec --require intelli-espower-loader && nyc report --reporter=html",
+    "mocha-debug": "mocha debug test/_setup test/ --recursive -t 30000 -S -R spec --require intelli-espower-loader",
+    "cover": "nyc --cache mocha test/_setup test/ --recursive -t 30000 -S -R spec --require intelli-espower-loader && nyc report --reporter=html",
+    "unit-cover": "nyc --cache mocha test/_setup test/ --grep \"unit/\" --recursive -t 30000 -S -R spec --require intelli-espower-loader && nyc report --reporter=html",
+    "system-cover": "nyc --cache mocha test/_setup test/ --grep \"system/\" --recursive -t 30000 -S -R spec --require intelli-espower-loader && nyc report --reporter=html",
     "test": "npm run lint && npm run cover",
     "format": "semistandard-format -w",
     "start": "node .",
-    "postinstall": "node scripts/upgrade-warning"
+    "postinstall": "node scripts/upgrade-warning",
+    "generate-scaffolding": "repo-tools generate contributors coc contributing license pr_template pkgjson"
   },
   "dependencies": {
     "@google-cloud/storage": "1.4.0",
@@ -77,6 +90,7 @@
     "yargs": "9.0.1"
   },
   "devDependencies": {
+    "@google-cloud/nodejs-repo-tools": "2.0.11",
     "intelli-espower-loader": "1.0.1",
     "mocha": "4.0.1",
     "nock": "9.0.24",
@@ -87,6 +101,5 @@
     "semistandard-format": "3.0.0",
     "sinon": "4.0.1",
     "supertest": "3.0.0"
-  },
-  "repository": "GoogleCloudPlatform/cloud-functions-emulator"
+  }
 }

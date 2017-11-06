@@ -21,14 +21,14 @@ const path = require(`path`);
 process.env.XDG_CONFIG_HOME = path.join(__dirname, `../`);
 
 const Configstore = require(`configstore`);
-const spawnSync = require(`child_process`).spawnSync;
 const fs = require(`fs`);
 const rimraf = require(`rimraf`);
 const storage = require(`@google-cloud/storage`)();
+const tools = require(`@google-cloud/nodejs-repo-tools`);
 const uuid = require(`uuid`);
 
 const pkg = require(`../../../package.json`);
-const { run, tryTest } = require(`./utils`);
+const { run } = require(`./utils`);
 const detectProjectId = require('../../../src/utils/detectProjectId');
 
 const bucketName = `cloud-functions-emulator-${uuid.v4()}`;
@@ -43,6 +43,7 @@ const operations = new Configstore(path.join(pkg.name, `.operations`));
 const prefix = `Google Cloud Functions Emulator`;
 
 const GCLOUD = process.env.GCLOUD_CMD_OVERRIDE || `gcloud`;
+const HOST = 8088;
 const REST_PORT = 8088;
 const GRPC_PORT = 8089;
 const SUPERVISOR_PORT = 8090;
@@ -51,72 +52,89 @@ const PROJECT_ID = detectProjectId(null, false);
 
 function makeTests (service, override) {
   const shortArgs = ``;
-  const args = `--logFile=${logFile} --host=localhost --supervisorPort=${SUPERVISOR_PORT} --verbose`;
   let overrideArgs = ``;
   let currentEndpoint;
 
   describe(`${service}${override ? '-sdk' : ''}`, () => {
     before(() => {
-      if (override) {
-        overrideArgs = `--region=${REGION}`;
-        const output = spawnSync(`${GCLOUD} info --format='value(config.properties.api_endpoint_overrides.cloudfunctions)'`, { shell: true });
-        currentEndpoint = output.stdout.toString().trim() + output.stderr.toString().trim();
-        spawnSync(`${GCLOUD} config set api_endpoint_overrides/cloudfunctions http://localhost:${REST_PORT}/`, { shell: true, stdio: ['ignore', 'ignore', 'ignore'] });
-      }
+      return Promise.resolve()
+        .then(() => {
+          if (override) {
+            overrideArgs = `--region=${REGION}`;
+            return tools.spawnAsyncWithIO(GCLOUD, ['info', `--format='value(config.properties.api_endpoint_overrides.cloudfunctions)'`], cwd)
+              .then((results) => {
+                currentEndpoint = results.output;
+                return tools.spawnAsyncWithIO(GCLOUD, ['config', 'set', 'api_endpoint_overrides/cloudfunctions', `http://localhost:${REST_PORT}/`], cwd);
+              });
+          }
+        })
+        .then(() => {
+          try {
+            // Try to remove the existing file if it's there
+            fs.unlinkSync(logFile);
+          } catch (err) {
 
-      try {
-        // Try to remove the existing file if it's there
-        fs.unlinkSync(logFile);
-      } catch (err) {
+          }
 
-      }
+          // Clear all Functions data
+          functions.clear();
+          // Clear all Operations data
+          operations.clear();
 
-      // Clear all Functions data
-      functions.clear();
-      // Clear all Operations data
-      operations.clear();
+          config.set('host', HOST);
+          server.set('host', HOST);
+          config.set('service', service);
+          server.set('service', service);
+          config.set('restPort', REST_PORT);
+          server.set('restPort', REST_PORT);
+          config.set('grpcPort', GRPC_PORT);
+          server.set('grpcPort', GRPC_PORT);
+          config.set('supervisorPort', SUPERVISOR_PORT);
+          server.set('supervisorPort', SUPERVISOR_PORT);
+          config.set('logFile', logFile);
+          server.set('logFile', logFile);
 
-      config.set('service', service);
-      server.set('service', service);
-      config.set('restPort', REST_PORT);
-      server.set('restPort', REST_PORT);
-      config.set('grpcPort', GRPC_PORT);
-      server.set('grpcPort', GRPC_PORT);
-      config.set('supervisorPort', SUPERVISOR_PORT);
-      server.set('supervisorPort', SUPERVISOR_PORT);
-      config.set('logFile', logFile);
-      server.set('logFile', logFile);
+          return tools.spawnAsyncWithIO('node', ['bin/functions', 'kill'], cwd);
+        })
+        .then(() => tools.spawnAsyncWithIO('node', ['bin/functions', 'restart'], cwd))
+        .then((results) => {
+          assert(results.output.includes(`${prefix} STARTED`));
 
-      run(`${cmd} kill ${args}`, cwd);
-
-      let output = run(`${cmd} restart ${args}`, cwd);
-      assert(output.includes(`${prefix} STARTED`));
-
-      return tryTest(() => {
-        output = run(`${cmd} clear`, cwd);
-        assert(output.includes(`${prefix} CLEARED`));
-      }).start();
+          return tools.tryTest(() => {
+            return tools.spawnAsyncWithIO('node', ['bin/functions', 'clear'], cwd)
+              .then((results) => {
+                assert(results.output.includes(`${prefix} CLEARED`));
+              });
+          }).start();
+        });
     });
 
     after(() => {
-      if (override) {
-        if (currentEndpoint) {
-          spawnSync(`${GCLOUD} config set api_endpoint_overrides/cloudfunctions ${currentEndpoint}`, { shell: true, stdio: ['ignore', 'ignore', 'ignore'] });
-        } else {
-          spawnSync(`${GCLOUD} config unset api_endpoint_overrides/cloudfunctions`, { shell: true, stdio: ['ignore', 'ignore', 'ignore'] });
-        }
-      }
+      return Promise.resolve()
+        .then(() => {
+          if (override) {
+            if (currentEndpoint) {
+              return tools.spawnAsyncWithIO(GCLOUD, ['config', 'set', 'api_endpoint_overrides/cloudfunctions', currentEndpoint]);
+            } else {
+              return tools.spawnAsyncWithIO(GCLOUD, ['config', 'unset', 'api_endpoint_overrides/cloudfunctions']);
+            }
+          }
+        })
+        .then(() => tools.spawnAsyncWithIO('node', ['bin/functions', 'restart'], cwd))
+        .then((results) => {
+          assert(results.output.includes(`${prefix} STARTED`));
 
-      let output = run(`${cmd} restart ${args}`, cwd);
-      assert(output.includes(`STARTED`));
-
-      return tryTest(() => {
-        output = run(`${cmd} clear`, cwd);
-        assert(output.includes(`${prefix} CLEARED`));
-      }).start().then(() => {
-        output = run(`${cmd} stop`, cwd);
-        assert(output.includes(`${prefix} STOPPED`));
-      });
+          return tools.tryTest(() => {
+            return tools.spawnAsyncWithIO('node', ['bin/functions', 'clear'], cwd)
+              .then((results) => {
+                assert(results.output.includes(`${prefix} CLEARED`));
+              });
+          }).start();
+        })
+        .then(() => tools.spawnAsyncWithIO('node', ['bin/functions', 'stop'], cwd))
+        .then((results) => {
+          assert(results.output.includes(`${prefix} STOPPED`));
+        });
     });
 
     describe(`config`, () => {
@@ -137,7 +155,7 @@ function makeTests (service, override) {
           const output = run(`${override} list --region=${REGION}`, cwd);
           assert(output.includes(`Listed 0 items.`));
         } else {
-          return tryTest(() => {
+          return tools.tryTest(() => {
             const output = run(`${cmd} list`, cwd);
             assert(output.includes(`No functions deployed`));
           }).start();
