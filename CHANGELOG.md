@@ -1,3 +1,11 @@
+##### 1.0.0-alpha.27 - 13 November 2017
+
+###### Bug fixes
+- [#159](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/159) - Emulator rejects function names with underscores
+
+###### Other
+- Updated dependencies
+
 ##### 1.0.0-alpha.26 - 06 November 2017
 
 ###### Bug fixes
