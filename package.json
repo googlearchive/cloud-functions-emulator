@@ -74,7 +74,7 @@
     "colors": "1.1.2",
     "configstore": "3.1.1",
     "express": "4.16.2",
-    "google-proto-files": "0.13.1",
+    "google-proto-files": "0.14.1",
     "googleapis": "22.2.0",
     "got": "7.1.0",
     "grpc": "1.7.1",
@@ -90,16 +90,16 @@
     "yargs": "10.0.3"
   },
   "devDependencies": {
-    "@google-cloud/nodejs-repo-tools": "2.1.1",
+    "@google-cloud/nodejs-repo-tools": "2.1.2",
     "intelli-espower-loader": "1.0.1",
     "mocha": "4.0.1",
-    "nock": "9.0.28",
+    "nock": "9.1.0",
     "nyc": "11.3.0",
     "power-assert": "1.4.4",
     "proxyquire": "1.8.0",
     "semistandard": "11.0.0",
     "semistandard-format": "3.0.0",
-    "sinon": "4.1.1",
+    "sinon": "4.1.2",
     "supertest": "3.0.0"
   }
 }
