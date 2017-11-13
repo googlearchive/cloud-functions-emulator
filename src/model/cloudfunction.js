@@ -22,8 +22,8 @@ const protos = require('./protos');
 const Schema = require('../utils/schema');
 
 const LOCATION_REG_EXP = /^projects\/([-\w]+)\/locations\/([-\w]+)$/;
-const NAME_REG_EXP = /^projects\/([-\w]+)\/locations\/([-\w]+)\/functions\/([A-Za-z][-A-Za-z0-9]*)$/;
-const SHORT_NAME_REG_EXP = /^[A-Za-z][-A-Za-z0-9]*$/;
+const NAME_REG_EXP = /^projects\/([-\w]+)\/locations\/([-\w]+)\/functions\/([A-Za-z][-A-Za-z0-9_]*)$/;
+const SHORT_NAME_REG_EXP = /^[A-Za-z][-A-Za-z0-9_]*$/;
 
 const CloudFunctionSchema = {
   type: 'object',

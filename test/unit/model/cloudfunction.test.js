@@ -119,6 +119,18 @@ describe(`unit/model/cloudfunction`, () => {
         },
         `should accept a valid "name" argument`
       );
+
+      assert.doesNotThrow(
+        () => {
+          const cloudfunction = new CloudFunction(`${TEST_NAME}_func`);
+          assert(cloudfunction.name === `${TEST_NAME}_func`);
+        },
+        (err) => {
+          assert.ifError(err);
+          return true;
+        },
+        `should accept a valid "name" argument`
+      );
     });
 
     it(`should decode the props`, () => {
