@@ -33,7 +33,7 @@ const server = require('../server');
 
 const DEFAULT_MAX_IDLE = 5 * 60 * 1000;
 const DEFAULT_IDLE_PRUNE_INTERVAL = 60 * 1000;
-const NAME_REG_EXP = /^\/([-\w]+)\/([-\w]+)\/([A-Za-z][-A-Za-z0-9]*)/;
+const NAME_REG_EXP = /^\/([-\w]+)\/([-\w]+)\/([A-Za-z][-A-Za-z0-9_]*)/;
 
 const { CloudFunction } = Model;
 
