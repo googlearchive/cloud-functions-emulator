@@ -24,11 +24,11 @@ const pkg = require('../package.json');
 const config = module.exports = new Configstore(path.join(pkg.name, '/config'), defaults);
 
 // migrate legacy {rest,grpc,supervisor}Host to host
-const host = ['grpcHost', 'supervisorHost'].reduce((host, key) => {
+const host = ['grpcHost', 'supervisorHost', 'restHost'].reduce((host, key) => {
   return host !== 'localhost' ? host : config.get(key);
-}, config.get('restHost'));
+}, config.get('host'));
 
-config.set('host', host);
+config.set('host', host || defaults.host);
 config.delete('restHost');
 config.delete('grpcHost');
 config.delete('supervisorHost');

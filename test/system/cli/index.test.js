@@ -43,7 +43,7 @@ const operations = new Configstore(path.join(pkg.name, `.operations`));
 const prefix = `Google Cloud Functions Emulator`;
 
 const GCLOUD = process.env.GCLOUD_CMD_OVERRIDE || `gcloud`;
-const HOST = 8088;
+const HOST = 'localhost';
 const REST_PORT = 8088;
 const GRPC_PORT = 8089;
 const SUPERVISOR_PORT = 8090;
