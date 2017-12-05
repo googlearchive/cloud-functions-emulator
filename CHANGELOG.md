@@ -1,3 +1,13 @@
+##### 1.0.0-alpha.28 - 05 December 2017
+
+###### Bug fixes
+- [#162](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/162) - Emulator doesn't support functions with underscore in function name
+- [#165](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/165) - Update supported Node.js version to 6.11.5
+- Fixed the `host` config option not being preserved.
+
+###### Other
+- Updated dependencies
+
 ##### 1.0.0-alpha.27 - 13 November 2017
 
 ###### Bug fixes
