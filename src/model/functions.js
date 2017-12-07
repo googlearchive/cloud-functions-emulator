@@ -612,7 +612,7 @@ class Functions {
   }
 
   getSupervisorHost () {
-    return `http://localhost:${this.config.supervisorPort}`;
+    return `http://${this.config.bindHost}:${this.config.supervisorPort}`;
   }
 
   /**
