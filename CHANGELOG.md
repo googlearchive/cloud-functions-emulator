@@ -1,3 +1,8 @@
+##### 1.0.0-alpha.29 - 12 December 2017
+
+###### Bug fixes
+- [#171](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/171) - changed getter for supervisorHost to allow for bindHost option
+
 ##### 1.0.0-alpha.28 - 05 December 2017
 
 ###### Bug fixes
