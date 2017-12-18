@@ -62,6 +62,11 @@ module.exports = {
     requiresArg: true,
     type: 'string'
   },
+  enableGrpc: {
+    description: `Whether to enable GRPC support in the Emulator. ${'Default:'.bold} ${defaults.enableGrpc.toString().green}`,
+    requiresArg: false,
+    type: 'boolean'
+  },
   grpcPort: {
     description: `The port of the Cloud Functions Emulator gRPC API. ${'Default:'.bold} ${defaults.grpcPort.toString().green}`,
     requiresArg: true,

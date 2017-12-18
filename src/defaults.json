@@ -1,5 +1,6 @@
 {
   "bindHost": "localhost",
+  "enableGrpc": false,
   "grpcPort": 8009,
   "host": "localhost",
   "idlePruneInterval": 60000,

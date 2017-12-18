@@ -23,13 +23,17 @@ const OPTIONS = require('../../../options');
 
 const EPILOGUE = `Available configuration options:
 
-  ${'CLI'.underline} - Manages the Emulator.
+  ${'CLI'.underline} - Global settings.
     ${'projectId'.bold}
       ${OPTIONS.projectId.description}
 
     ${'region'.bold}
       ${OPTIONS.region.description}
 
+    ${'storage'.bold}
+      ${OPTIONS.storage.description}
+
+  ${'CLI'.underline} - Manages the Emulator.
     ${'service'.bold}
       ${OPTIONS.service.description}
 
@@ -40,14 +44,23 @@ const EPILOGUE = `Available configuration options:
     ${'bindHost'.bold}
       ${OPTIONS.bindHost.description}
 
+    ${'enableGrpc'.bold}
+      ${OPTIONS.enableGrpc.description}
+
     ${'grpcPort'.bold}
       ${OPTIONS.grpcPort.description}
 
     ${'host'.bold}
       ${OPTIONS.host.description}
 
+    ${'idlePruneInterval'.bold}
+      ${OPTIONS.idlePruneInterval.description}
+
     ${'logFile'.bold}
       ${OPTIONS.logFile.description}
+
+    ${'maxIdle'.bold}
+      ${OPTIONS.maxIdle.description}
 
     ${'restPort'.bold}
       ${OPTIONS.restPort.description}
@@ -55,14 +68,20 @@ const EPILOGUE = `Available configuration options:
     ${'supervisorPort'.bold}
       ${OPTIONS.supervisorPort.description}
 
+    ${'tail'.bold}
+      ${OPTIONS.tail.description}
+
     ${'useMocks'.bold}
       ${OPTIONS.useMocks.description}
 
     ${'verbose'.bold}
       ${OPTIONS.verbose.description}
 
-    ${'tail'.bold}
-      ${OPTIONS.tail.description}
+    ${'watch'.bold}
+      ${OPTIONS.watch.description}
+
+    ${'watchIgnore'.bold}
+      ${OPTIONS.watchIgnore.description}
 
     See ${'https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Configuring-the-Emulator'.bold}
 `;

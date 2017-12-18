@@ -41,11 +41,13 @@ class Emulator {
       host: opts.host,
       port: opts.restPort
     });
-    this.grpcService = Service.grpcService(functions, {
-      bindHost: opts.bindHost,
-      host: opts.host,
-      port: opts.grpcPort
-    });
+    if (this.config.enableGrpc) {
+      this.grpcService = Service.grpcService(functions, {
+        bindHost: opts.bindHost,
+        host: opts.host,
+        port: opts.grpcPort
+      });
+    }
   }
 
   start () {
@@ -66,7 +68,9 @@ class Emulator {
     this.restService
       .start()
       .on('error', makeHandler('restPort'));
-    this.grpcService.start();
+    if (this.grpcService) {
+      this.grpcService.start();
+    }
 
     process.on('exit', (code) => {
       logger.debug(`Emulator exiting with code: ${code}`);
@@ -78,7 +82,9 @@ class Emulator {
     logger.debug('Emulator#stop');
     this.supervisor.stop();
     this.restService.stop();
-    this.grpcService.stop();
+    if (this.grpcService) {
+      this.grpcService.stop();
+    }
   }
 }
 
