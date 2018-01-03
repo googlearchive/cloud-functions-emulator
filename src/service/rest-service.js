@@ -32,7 +32,7 @@ const Service = require('./service');
 const { CloudFunction, Operation } = Model;
 
 // TODO: Support more than one version.
-const API_VERSION = 'v1beta2';
+const API_VERSION = 'v1';
 const DISCOVERY_URL = `https://cloudfunctions.googleapis.com/$discovery/rest?version=${API_VERSION}`;
 
 class RestService extends Service {

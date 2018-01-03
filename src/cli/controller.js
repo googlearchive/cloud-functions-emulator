@@ -112,16 +112,16 @@ class Controller {
   _createArchive (name, opts) {
     let sourceArchiveUrl;
 
-    opts.localPath = path.resolve(opts.localPath);
+    opts.source = path.resolve(opts.source);
 
-    let pathForCmd = opts.localPath;
+    let pathForCmd = opts.source;
 
     if (process.platform === 'win32') {
       // See https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/34
-      pathForCmd = opts.localPath.replace(/\\/g, '/');
+      pathForCmd = opts.source.replace(/\\/g, '/');
     }
 
-    if (!fs.existsSync(opts.localPath)) {
+    if (!fs.existsSync(opts.source)) {
       throw new Error('Provided directory does not exist.');
     }
 
@@ -152,12 +152,12 @@ class Controller {
 
         const zip = new AdmZip();
 
-        const files = fs.readdirSync(opts.localPath);
+        const files = fs.readdirSync(opts.source);
         files.forEach((entry) => {
           if (entry === 'node_modules') {
             return false;
           }
-          const entryPath = path.join(opts.localPath, entry);
+          const entryPath = path.join(opts.source, entry);
           const stats = fs.statSync(entryPath);
 
           if (stats.isDirectory()) {
@@ -316,10 +316,10 @@ class Controller {
         cloudfunction.entryPoint = opts.entryPoint;
       }
 
-      if (opts.sourcePath) {
-        throw new Error('"source-path" is not supported yet!');
-      } else if (opts.localPath) {
-        cloudfunction.serviceAccount = path.resolve(opts.localPath);
+      if (opts.source.startsWith('https://')) {
+        throw new Error('"https://" source is not supported yet!');
+      } else if (!opts.source.startsWith('gs://')) {
+        cloudfunction.serviceAccount = path.resolve(opts.source);
         return this._createArchive(name, opts)
           .then((sourceArchiveUrl) => {
             cloudfunction.setSourceArchiveUrl(sourceArchiveUrl);

@@ -93,8 +93,10 @@ function makeTests (service, override) {
           server.set('supervisorPort', SUPERVISOR_PORT);
           config.set('logFile', logFile);
           server.set('logFile', logFile);
+          config.set('enableGrpc', service === 'grpc');
+          server.set('enableGrpc', service === 'grpc');
 
-          return tools.spawnAsyncWithIO('node', ['bin/functions', 'kill'], cwd);
+          return tools.spawnAsyncWithIO('node', ['bin/functions', 'stop'], cwd);
         })
         .then(() => tools.spawnAsyncWithIO('node', ['bin/functions', 'restart'], cwd))
         .then((results) => {
@@ -152,7 +154,7 @@ function makeTests (service, override) {
       before(() => {
         if (override) {
           deployArgs = `${overrideArgs} --stage-bucket=${bucketName}`;
-          const output = run(`${override} list --region=${REGION}`, cwd);
+          const output = run(`${override} list --regions=${REGION}`, cwd);
           assert(output.includes(`Listed 0 items.`));
         } else {
           return tools.tryTest(() => {
@@ -163,7 +165,7 @@ function makeTests (service, override) {
       });
 
       it(`should deploy a background function`, () => {
-        const output = run(`${override || cmd} deploy ${name} --local-path=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
+        const output = run(`${override || cmd} deploy ${name} --source=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
         if (override) {
           try {
             assert(output.includes(`/functions/${name}`));
@@ -177,7 +179,7 @@ function makeTests (service, override) {
       });
 
       it(`should deploy a function with JSON`, () => {
-        const output = run(`${override || cmd} deploy helloData --local-path=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
+        const output = run(`${override || cmd} deploy helloData --source=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
         if (override) {
           try {
             assert(output.includes(`/functions/helloData`));
@@ -190,8 +192,8 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should deploy a synchronous function`, () => {
-        const output = run(`${override || cmd} deploy helloPromise --local-path=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
+      it(`should deploy a synchronous function`, () => {--source
+        const output = run(`${override || cmd} deploy helloPromise --source=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
         if (override) {
           try {
             assert(output.includes(`/functions/helloPromise`));
@@ -204,8 +206,8 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should deploy a function that throws and process does not crash`, () => {
-        const output = run(`${override || cmd} deploy helloThrow --local-path=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
+      it(`should deploy a function that throws and process does not crash`, () => {--source
+        const output = run(`${override || cmd} deploy helloThrow --source=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
         if (override) {
           try {
             assert(output.includes(`/functions/helloThrow`));
@@ -218,8 +220,8 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should deploy a function returns JSON`, () => {
-        const output = run(`${override || cmd} deploy helloJSON --local-path=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
+      it(`should deploy a function returns JSON`, () => {--source
+        const output = run(`${override || cmd} deploy helloJSON --source=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
         if (override) {
           try {
             assert(output.includes(`/functions/helloJSON`));
@@ -232,8 +234,8 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should deploy a function with a timeout`, () => {
-        const output = run(`${override || cmd} deploy helloSlow --local-path=test/test_module/ --trigger-http --timeout=2s ${deployArgs}`, cwd);
+      it(`should deploy a function with a timeout`, () => {--source
+        const output = run(`${override || cmd} deploy helloSlow --source=test/test_module/ --trigger-http --timeout=2s ${deployArgs}`, cwd);
         if (override) {
           try {
             assert(output.includes(`/functions/helloSlow`));
@@ -246,8 +248,8 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should deploy an HTTP function that fails to respond (crashes asynchronously)`, () => {
-        const output = run(`${override || cmd} deploy helloNoResponse --local-path=test/test_module/ --trigger-http ${deployArgs}`, cwd);
+      it(`should deploy an HTTP function that fails to respond (crashes asynchronously)`, () => {--source
+        const output = run(`${override || cmd} deploy helloNoResponse --source=test/test_module/ --trigger-http ${deployArgs}`, cwd);
         if (override) {
           try {
             assert(output.includes(`/functions/helloNoResponse`));
@@ -260,8 +262,8 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should deploy an HTTP function`, () => {
-        const output = run(`${override || cmd} deploy helloGET --local-path=test/test_module/ --trigger-http ${deployArgs}`, cwd);
+      it(`should deploy an HTTP function`, () => {--source
+        const output = run(`${override || cmd} deploy helloGET --source=test/test_module/ --trigger-http ${deployArgs}`, cwd);
         if (override) {
           try {
             assert(output.includes(`/functions/helloGET`));
@@ -274,8 +276,8 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should deploy an HTTP function and send it JSON`, () => {
-        const output = run(`${override || cmd} deploy helloPOST --local-path=test/test_module/ --trigger-http ${deployArgs}`, cwd);
+      it(`should deploy an HTTP function and send it JSON`, () => {--source
+        const output = run(`${override || cmd} deploy helloPOST --source=test/test_module/ --trigger-http ${deployArgs}`, cwd);
         if (override) {
           try {
             assert(output.includes(`/functions/helloPOST`));
@@ -288,8 +290,8 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should deploy a function that needs "npm install"`, () => {
-        let _cmd = `${override || cmd} deploy helloUuidNpm --local-path=test/test_module_2/ --trigger-http ${deployArgs}`;
+      it(`should deploy a function that needs "npm install"`, () => {--source
+        let _cmd = `${override || cmd} deploy helloUuidNpm --source=test/test_module_2/ --trigger-http ${deployArgs}`;
         if (!_cmd.includes(`--stage-bucket=${bucketName}`)) {
           _cmd = `${_cmd} --stage-bucket=${bucketName}`;
         }
@@ -306,8 +308,8 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should deploy a function that needs "yarn install"`, () => {
-        let _cmd = `${override || cmd} deploy helloUuidYarn --local-path=test/test_module_3/ --trigger-http ${deployArgs}`;
+      it(`should deploy a function that needs "yarn install"`, () => {--source
+        let _cmd = `${override || cmd} deploy helloUuidYarn --source=test/test_module_3/ --trigger-http ${deployArgs}`;
         if (!_cmd.includes(`--stage-bucket=${bucketName}`)) {
           _cmd = `${_cmd} --stage-bucket=${bucketName}`;
         }
@@ -324,15 +326,15 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should fail when the module does not exist`, () => {
-        const output = run(`${override || cmd} deploy fail --local-path=test/test_module/foo/bar --trigger-http ${deployArgs}`, cwd);
+      it(`should fail when the module does not exist`, () => {--source
+        const output = run(`${override || cmd} deploy fail --source=test/test_module/foo/bar --trigger-http ${deployArgs}`, cwd);
         assert(output.includes(`Provided directory does not exist.`));
       });
 
-      if (!override) {
+      if (!override) {--source
         it(`should fail when the function does not exist`, () => {
           // TODO: Make this work for the SDK
-          const output = run(`${cmd} deploy doesNotExist --local-path=test/test_module/ --trigger-http ${deployArgs}`, cwd);
+          const output = run(`${cmd} deploy doesNotExist --source=test/test_module/ --trigger-http ${deployArgs}`, cwd);
           assert(output.includes(`Node.js module defined by file index.js is expected to export function named doesNotExist`));
         });
       }
@@ -366,7 +368,7 @@ function makeTests (service, override) {
 
     describe(`list`, () => {
       it(`should list functions`, () => {
-        const output = run(`${override || cmd} list ${override ? `--region=${REGION}` : shortArgs}`, cwd);
+        const output = run(`${override || cmd} list ${override ? `--regions=${REGION}` : shortArgs}`, cwd);
         assert(output.includes(name));
         assert(output.includes(`helloData`));
         assert(output.includes(`helloGET`));
@@ -422,7 +424,7 @@ function makeTests (service, override) {
       });
 
       it(`should re-deploy over a function`, () => {
-        const output = run(`${override || cmd} deploy helloJSON --entry-point=helloPromise --local-path=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
+        const output = run(`${override || cmd} deploy helloJSON --entry-point=helloPromise --source=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
         if (override) {
           assert(output.includes(`/functions/helloJSON`));
         } else {
@@ -536,7 +538,7 @@ function makeTests (service, override) {
 
     describe(`delete`, () => {
       it(`should delete a function`, () => {
-        let output = run(`${override || cmd} delete helloData ${overrideArgs || shortArgs}`, cwd);
+        let output = run(`${override || cmd} delete helloData ${overrideArgs ? overrideArgs + ' -q' : shortArgs}`, cwd);
         if (override) {
           assert(output.includes(`/functions/helloData`));
           assert(output.includes(`deleted`));
@@ -544,7 +546,7 @@ function makeTests (service, override) {
           assert(output.includes(`Function helloData deleted.`));
         }
 
-        output = run(`${override || cmd} list ${overrideArgs || shortArgs}`, cwd);
+        output = run(`${override || cmd} list ${override ? '--regions=' + REGION + ' ' : ''}${overrideArgs || shortArgs}`, cwd);
         assert.equal(output.includes(`No functions deployed`), false);
         assert.equal(output.includes(`helloData`), false);
         assert(output.includes(`hello`));
@@ -667,9 +669,9 @@ describe(`system/cli`, () => {
   });
 
   if (!process.env.CIRCLECI) {
-    makeTests(`grpc`);
     makeTests(`rest`);
     makeTests(`rest`, `${GCLOUD} beta functions`);
+    makeTests(`grpc`);
   } else if (process.env.CIRCLE_NODE_INDEX === '0') {
     makeTests(`grpc`);
   } else if (process.env.CIRCLE_NODE_INDEX === '1') {

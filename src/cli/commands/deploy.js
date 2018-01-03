@@ -45,9 +45,9 @@ exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
     .options(_.merge(_.pick(OPTIONS, ['grpcPort', 'host', 'projectId', 'region', 'restPort', 'service']), {
-      'local-path': {
-        alias: 'l',
-        description: `Path to local directory with source code. ${'Default:'.bold} ${process.cwd().green} (the current working directory)`,
+      'source': {
+        alias: 'S',
+        description: `Location of source code to deploy. ${'Default:'.bold} ${process.cwd().green} (the current working directory). Location of the source can be one of the following: Source code in Google Cloud Storage or a local filesystem path. The value of the flag will be interpreted as a Cloud Storage location, if it starts with ${'gs://'.bold}. Otherwise, it will be interpreted as the local filesystem path.`,
         requiresArg: true,
         type: 'string'
       },
@@ -113,7 +113,7 @@ exports.builder = (yargs) => {
   EXAMPLES['deploy'].forEach((e) => yargs.example(e[0]));
 };
 exports.handler = (opts) => {
-  opts.localPath || (opts.localPath = process.cwd());
+  opts.source || (opts.source = process.cwd());
 
   if (opts.triggerBucket) {
     opts.triggerProvider = 'cloud.storage';

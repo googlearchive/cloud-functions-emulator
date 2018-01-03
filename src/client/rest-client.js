@@ -97,7 +97,7 @@ class RestClient extends Client {
       const parts = url.parse(this.getUrl(discoveryPath));
       const discoveryUrl = url.format(_.merge(parts, {
         pathname: discoveryPath,
-        search: '?version=v1beta2'
+        search: '?version=v1'
       }));
 
       google.discoverAPI(discoveryUrl, (err, functions) => {
@@ -115,7 +115,7 @@ class RestClient extends Client {
       protocol: 'http:',
       hostname: this.config.host,
       port: this.config.restPort,
-      pathname: path.join('v1beta2', pathname)
+      pathname: path.join('v1', pathname)
     });
   }
 
@@ -137,7 +137,7 @@ class RestClient extends Client {
       'projects.locations.functions.list',
       {
         pageSize: 100,
-        location: CloudFunction.formatLocation(this.config.projectId, this.config.region)
+        parent: CloudFunction.formatLocation(this.config.projectId, this.config.region)
       }
     ).then(([body, response]) => [body.functions.map((cloudfunction) => new CloudFunction(cloudfunction.name, cloudfunction)), response]);
   }
