@@ -34,21 +34,12 @@ const EPILOGUE = `Available configuration options:
       ${OPTIONS.storage.description}
 
   ${'CLI'.underline} - Manages the Emulator.
-    ${'service'.bold}
-      ${OPTIONS.service.description}
-
     ${'timeout'.bold}
       ${OPTIONS.timeout.description}
 
   ${'EMULATOR'.underline} - Emulates the Cloud Functions API.
     ${'bindHost'.bold}
       ${OPTIONS.bindHost.description}
-
-    ${'enableGrpc'.bold}
-      ${OPTIONS.enableGrpc.description}
-
-    ${'grpcPort'.bold}
-      ${OPTIONS.grpcPort.description}
 
     ${'host'.bold}
       ${OPTIONS.host.description}

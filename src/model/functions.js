@@ -33,7 +33,6 @@ const CloudFunction = require('./cloudfunction');
 const Errors = require('../utils/errors');
 const Operation = require('./operation');
 const pkg = require('../../package.json');
-const protos = require('./protos');
 const Schema = require('../utils/schema');
 
 const GCS_URL = /^gs:\/\/([A-Za-z0-9][\w-.]+[A-Za-z0-9])\/(.+)$/;
@@ -162,7 +161,6 @@ class Functions {
         if (cloudfunction) {
           const parts = CloudFunction.parseName(name);
           const err = new Errors.ConflictError(`Function ${parts.name} in location ${parts.location} in project ${parts.project} already exists`);
-          err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
           logger.error(err);
           throw err;
         }
@@ -309,7 +307,6 @@ class Functions {
   _createFunctionError (name, err) {
     logger.error(err);
     err = new Errors.InternalError(err.message);
-    err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
     return Promise.reject(err);
   }
 
@@ -359,12 +356,12 @@ class Functions {
         operation = this.operation(Operation.generateId(), {
           done: false,
           metadata: {
-            typeUrl: protos.getPath(protos.OperationMetadataV1Beta2),
+            typeUrl: 'types.googleapis.com/google.cloud.functions.v1beta2.OperationMetadataV1Beta2',
             value: {
               target: cloudfunction.name,
-              type: protos.OperationType.CREATE_FUNCTION,
+              type: 1,
               request: {
-                typeUrl: protos.getPath(protos.CreateFunctionRequest),
+                typeUrl: 'types.googleapis.com/google.cloud.functions.v1beta2.CreateFunctionRequest',
                 value: request
               }
             }
@@ -411,7 +408,7 @@ class Functions {
               cloudfunction.status = 'READY';
               operation.done = true;
               operation.response = {
-                typeUrl: protos.getPath(protos.CloudFunction),
+                typeUrl: 'types.googleapis.com/google.cloud.functions.v1beta2.CloudFunction',
                 value: _.cloneDeep(cloudfunction)
               };
 
@@ -454,7 +451,6 @@ class Functions {
    */
   _deleteFunctionError (name, err, operation) {
     err = new Errors.InternalError(err.message);
-    err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
 
     if (operation) {
       operation.done = true;
@@ -486,12 +482,12 @@ class Functions {
         const operation = this.operation(operationName, {
           done: false,
           metadata: {
-            typeUrl: protos.getPath(protos.OperationMetadataV1Beta2),
+            typeUrl: 'types.googleapis.com/google.cloud.functions.v1beta2.OperationMetadataV1Beta2',
             value: {
               target: name,
-              type: protos.OperationType.DELETE_FUNCTION,
+              type: 1,
               request: {
-                typeUrl: protos.getPath(protos.DeleteFunctionRequest),
+                typeUrl: 'types.googleapis.com/google.cloud.functions.v1beta2.DeleteFunctionRequest',
                 value: { name }
               }
             }
@@ -571,7 +567,6 @@ class Functions {
   _getFunctionNotFoundError (name) {
     const parts = CloudFunction.parseName(name);
     const err = new Errors.NotFoundError(`Function ${parts.name} in location ${parts.location} in project ${parts.project} does not exist`);
-    err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
     return Promise.reject(err);
   }
 
@@ -587,7 +582,6 @@ class Functions {
    */
   _getFunctionError (name, err) {
     err = new Errors.InternalError(err.message);
-    err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
     logger.error(err);
     return Promise.reject(err);
   }
@@ -625,7 +619,6 @@ class Functions {
    */
   _getOperationNotFoundError (name) {
     const err = new Errors.NotFoundError(`Operation ${name} does not exist`);
-    err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.Operation), name));
     return Promise.reject(err);
   }
 
@@ -641,7 +634,6 @@ class Functions {
    */
   _getOperationError (name, err) {
     err = new Errors.InternalError(err.message);
-    err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.Operation), name));
     logger.error(err);
     return Promise.reject(err);
   }

@@ -18,7 +18,6 @@
 const _ = require('lodash');
 
 const Errors = require('../utils/errors');
-const protos = require('./protos');
 const Schema = require('../utils/schema');
 
 const LOCATION_REG_EXP = /^projects\/([-\w]+)\/locations\/([-\w]+)$/;
@@ -100,15 +99,13 @@ class CloudFunction {
       }
       const err = new Errors.InvalidArgumentError(`Invalid value '${shortName}': Function name must contain only Latin letters, digits and a hyphen (-). It must start with letter, must not end with a hyphen, and must be at most 63 characters long.`);
       err.details.push(new Errors.BadRequest(err, 'name'));
-      err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
       throw err;
     }
-    _.merge(this, CloudFunction.decode(props), { name });
+    _.merge(this, props, { name });
     const errors = Schema.validate(this, CloudFunction.schema);
     if (errors) {
       const err = new Errors.InvalidArgumentError('Invalid CloudFunction property!');
       err.details.push(new Errors.BadRequest(err, errors));
-      err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
       throw err;
     }
   }
@@ -161,23 +158,6 @@ class CloudFunction {
    */
   get shortName () {
     return this.name.match(CloudFunction.NAME_REG_EXP)[3];
-  }
-
-  /**
-   * Decodes a CloudFunction message.
-   *
-   * @method CloudFunction.decode
-   * @param {object} cloudfunction The CloudFunction to decode.
-   * @returns {object} The decoded cloudfunction.
-   */
-  static decode (cloudfunction = {}) {
-    // Decode the top-level CloudFunction message fields
-    cloudfunction = protos.decode(cloudfunction, protos.CloudFunction);
-
-    // TODO: Verify "oneOf" property of the trigger type fields
-    // TODO: Verify "oneOf" property of function source
-
-    return cloudfunction;
   }
 
   /**
@@ -241,43 +221,6 @@ class CloudFunction {
       throw new Error('"sourceArchiveUrl" must be a non-empty string!');
     }
     this.sourceArchiveUrl = sourceArchiveUrl;
-  }
-
-  /**
-   * Convert this CloudFunction instance into a gRPC CloudFunction message.
-   *
-   * @method CloudFunction#toProtobuf
-   * @returns {object} The encoded CloudFunction message.
-   */
-  toProtobuf () {
-    // Get a sanitized copy of this CloudFunction instance.
-    const cloudfunction = CloudFunction.decode(this);
-
-    // These must be removed from the object for serialization
-    if (!cloudfunction.pubsubTrigger) {
-      delete cloudfunction.pubsubTrigger;
-    }
-    if (!cloudfunction.gcsTrigger) {
-      delete cloudfunction.gcsTrigger;
-    }
-    if (!cloudfunction.gcsUrl) {
-      delete cloudfunction.gcsUrl;
-    }
-
-    return cloudfunction;
-  }
-
-  /**
-   * Convert this CloudFunction instance into an object suitable for transport
-   * over REST (JSON).
-   *
-   * @method CloudFunction#toJSON
-   * @returns {object} The formatted object.
-   */
-  toJSON () {
-    // Return a sanitized copy of this CloudFunction instance. There's no need to
-    // encode anything.
-    return CloudFunction.decode(this);
   }
 }
 

@@ -14,7 +14,7 @@
  */
 
 /**
- * The Emulator has two services: "rest" and "grpc".
+ * The Emulator has one services: "rest".
  *
  * In "rest" mode the CLI uses a RestClient (implemented using the Google APIs
  * Client Library) to communicate with the Emulator:
@@ -22,13 +22,6 @@
  *     |-->-- RestClient - HTTP1.1 - JSON -->--|
  * CLI -                                       - Emulator
  *     |--<-- RestClient - HTTP1.1 - JSON --<--|
- *
- * In "grpc" mode the CLI uses a GrpcClient (implemented using the Google Cloud
- * Client Library) to communicate with the Emulator:
- *
- *     |-->-- GrpcClient - HTTP2 - Proto -->--|
- * CLI -                                      - Emulator
- *     |--<-- GrpcClient - HTTP2 - Proto --<--|
  *
  * The Gcloud SDK can be used to talk to the Emulator as well, just do:
  *
@@ -85,21 +78,10 @@ class Controller {
     this.config.logFile = logs.assertLogsPath(this.config.logFile);
 
     const clientConfig = _.merge(this.config, {
-      grpcPort: opts.grpcPort || this.server.get('grpcPort') || this.config.grpcPort,
       host: opts.host || (!this.server.get('stopped') && this.server.get('host')) || this.config.host,
       restPort: opts.restPort || this.server.get('restPort') || this.config.restPort
     });
-
-    // Initialize the client that will communicate with the Emulator
-    if (this.config.service === 'rest') {
-      // The REST client uses the Google APIs Node.js client (googleapis)
-      this.client = Client.restClient(clientConfig);
-    } else if (this.config.service === 'grpc') {
-      // The gRPC client uses the Google Cloud Node.js client (@google-cloud/functions)
-      this.client = Client.grpcClient(clientConfig);
-    } else {
-      throw new Error('"service" must be one of "rest" or "grpc"!');
-    }
+    this.client = Client.restClient(clientConfig);
   }
 
   /**
@@ -236,10 +218,6 @@ class Controller {
           throw new Error('Timeout waiting for emulator start'.red);
         }
 
-        if (this.config.service === 'grpc') {
-          this.client._setup();
-        }
-
         return new Promise((resolve, reject) => {
           this._timeout = setTimeout(() => {
             this._waitForStart(i).then(resolve, reject);
@@ -265,10 +243,6 @@ class Controller {
 
         if (i <= 0) {
           throw new Error('Timeout waiting for emulator stop');
-        }
-
-        if (this.config.service === 'grpc') {
-          this.client._setup();
         }
 
         return new Promise((resolve, reject) => {
@@ -615,7 +589,6 @@ class Controller {
         const args = [
           CWD,
           `--bindHost=${this.config.bindHost}`,
-          `--grpcPort=${this.config.grpcPort}`,
           `--host=${this.config.host}`,
           `--timeout=${this.config.timeout}`,
           `--verbose=${this.config.verbose}`,
@@ -638,7 +611,6 @@ class Controller {
 
         // Update status of settings
         this.server.set({
-          grpcPort: this.config.grpcPort,
           host: this.config.host,
           logFile: this.config.logFile,
           projectId: this.config.projectId,

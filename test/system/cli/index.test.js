@@ -45,7 +45,6 @@ const prefix = `Google Cloud Functions Emulator`;
 const GCLOUD = process.env.GCLOUD_CMD_OVERRIDE || `gcloud`;
 const HOST = 'localhost';
 const REST_PORT = 8088;
-const GRPC_PORT = 8089;
 const SUPERVISOR_PORT = 8090;
 const REGION = `us-central1`;
 const PROJECT_ID = detectProjectId(null, false);
@@ -87,14 +86,10 @@ function makeTests (service, override) {
           server.set('service', service);
           config.set('restPort', REST_PORT);
           server.set('restPort', REST_PORT);
-          config.set('grpcPort', GRPC_PORT);
-          server.set('grpcPort', GRPC_PORT);
           config.set('supervisorPort', SUPERVISOR_PORT);
           server.set('supervisorPort', SUPERVISOR_PORT);
           config.set('logFile', logFile);
           server.set('logFile', logFile);
-          config.set('enableGrpc', service === 'grpc');
-          server.set('enableGrpc', service === 'grpc');
 
           return tools.spawnAsyncWithIO('node', ['bin/functions', 'stop'], cwd);
         })
@@ -143,7 +138,6 @@ function makeTests (service, override) {
       it(`should list configuration`, () => {
         let output = run(`${cmd} config list`, cwd);
         assert(output.includes(`host`));
-        assert(output.includes(`grpcPort`));
         assert(output.includes(`restPort`));
       });
     });
@@ -192,7 +186,7 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should deploy a synchronous function`, () => {--source
+      it(`should deploy a synchronous function`, () => {
         const output = run(`${override || cmd} deploy helloPromise --source=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
         if (override) {
           try {
@@ -206,7 +200,7 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should deploy a function that throws and process does not crash`, () => {--source
+      it(`should deploy a function that throws and process does not crash`, () => {
         const output = run(`${override || cmd} deploy helloThrow --source=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
         if (override) {
           try {
@@ -220,7 +214,7 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should deploy a function returns JSON`, () => {--source
+      it(`should deploy a function returns JSON`, () => {
         const output = run(`${override || cmd} deploy helloJSON --source=test/test_module/ --trigger-bucket=test ${deployArgs}`, cwd);
         if (override) {
           try {
@@ -234,7 +228,7 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should deploy a function with a timeout`, () => {--source
+      it(`should deploy a function with a timeout`, () => {
         const output = run(`${override || cmd} deploy helloSlow --source=test/test_module/ --trigger-http --timeout=2s ${deployArgs}`, cwd);
         if (override) {
           try {
@@ -248,7 +242,7 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should deploy an HTTP function that fails to respond (crashes asynchronously)`, () => {--source
+      it(`should deploy an HTTP function that fails to respond (crashes asynchronously)`, () => {
         const output = run(`${override || cmd} deploy helloNoResponse --source=test/test_module/ --trigger-http ${deployArgs}`, cwd);
         if (override) {
           try {
@@ -262,7 +256,7 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should deploy an HTTP function`, () => {--source
+      it(`should deploy an HTTP function`, () => {
         const output = run(`${override || cmd} deploy helloGET --source=test/test_module/ --trigger-http ${deployArgs}`, cwd);
         if (override) {
           try {
@@ -276,7 +270,7 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should deploy an HTTP function and send it JSON`, () => {--source
+      it(`should deploy an HTTP function and send it JSON`, () => {
         const output = run(`${override || cmd} deploy helloPOST --source=test/test_module/ --trigger-http ${deployArgs}`, cwd);
         if (override) {
           try {
@@ -290,7 +284,7 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should deploy a function that needs "npm install"`, () => {--source
+      it(`should deploy a function that needs "npm install"`, () => {
         let _cmd = `${override || cmd} deploy helloUuidNpm --source=test/test_module_2/ --trigger-http ${deployArgs}`;
         if (!_cmd.includes(`--stage-bucket=${bucketName}`)) {
           _cmd = `${_cmd} --stage-bucket=${bucketName}`;
@@ -308,7 +302,7 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should deploy a function that needs "yarn install"`, () => {--source
+      it(`should deploy a function that needs "yarn install"`, () => {
         let _cmd = `${override || cmd} deploy helloUuidYarn --source=test/test_module_3/ --trigger-http ${deployArgs}`;
         if (!_cmd.includes(`--stage-bucket=${bucketName}`)) {
           _cmd = `${_cmd} --stage-bucket=${bucketName}`;
@@ -326,12 +320,12 @@ function makeTests (service, override) {
         }
       });
 
-      it(`should fail when the module does not exist`, () => {--source
+      it(`should fail when the module does not exist`, () => {
         const output = run(`${override || cmd} deploy fail --source=test/test_module/foo/bar --trigger-http ${deployArgs}`, cwd);
         assert(output.includes(`Provided directory does not exist.`));
       });
 
-      if (!override) {--source
+      if (!override) {
         it(`should fail when the function does not exist`, () => {
           // TODO: Make this work for the SDK
           const output = run(`${cmd} deploy doesNotExist --source=test/test_module/ --trigger-http ${deployArgs}`, cwd);
@@ -633,7 +627,6 @@ function makeTests (service, override) {
         assert(output.includes(`${prefix}`));
         assert(output.includes(`RUNNING`));
         assert(output.includes(`http://localhost:${REST_PORT}/`));
-        assert(output.includes(`http://localhost:${GRPC_PORT}/`));
         assert(output.includes(`http://localhost:${SUPERVISOR_PORT}/${PROJECT_ID}/${REGION}`));
 
         output = run(`${cmd} stop ${shortArgs}`, cwd);
@@ -668,15 +661,12 @@ describe(`system/cli`, () => {
       .then(() => storage.bucket(bucketName).delete());
   });
 
-  if (!process.env.CIRCLECI) {
-    makeTests(`rest`);
-    makeTests(`rest`, `${GCLOUD} beta functions`);
-    makeTests(`grpc`);
-  } else if (process.env.CIRCLE_NODE_INDEX === '0') {
-    makeTests(`grpc`);
-  } else if (process.env.CIRCLE_NODE_INDEX === '1') {
-    makeTests(`rest`);
-  } else if (process.env.CIRCLE_NODE_INDEX === '2') {
-    makeTests(`rest`, `${GCLOUD} beta functions`);
-  }
+  // if (!process.env.CIRCLECI) {
+  makeTests(`rest`);
+  //   makeTests(`rest`, `${GCLOUD} beta functions`);
+  // } else if (process.env.CIRCLE_NODE_INDEX === '0') {
+  //   makeTests(`rest`);
+  // } else if (process.env.CIRCLE_NODE_INDEX === '1') {
+  //   makeTests(`rest`, `${GCLOUD} beta functions`);
+  // }
 });

@@ -44,7 +44,7 @@ exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .options(_.merge(_.pick(OPTIONS, ['grpcPort', 'host', 'projectId', 'region', 'restPort', 'service']), {
+    .options(_.merge(_.pick(OPTIONS, ['host', 'projectId', 'region', 'restPort', 'service']), {
       'source': {
         alias: 'S',
         description: `Location of source code to deploy. ${'Default:'.bold} ${process.cwd().green} (the current working directory). Location of the source can be one of the following: Source code in Google Cloud Storage or a local filesystem path. The value of the flag will be interpreted as a Cloud Storage location, if it starts with ${'gs://'.bold}. Otherwise, it will be interpreted as the local filesystem path.`,
