@@ -18,7 +18,7 @@
 const semver = require('semver');
 
 if (!semver.satisfies(process.version, '>= 6.11.5')) {
-  console.error('Node.js v6.11.x or greater is required to run the Emulator!');
+  console.error('Node.js v6.11.5 or greater is required to run the Emulator!');
   process.exit(1);
 }
 
