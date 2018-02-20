@@ -307,6 +307,13 @@ class Controller {
       .then((cloudfunction) => {
         if (opts.triggerHttp) {
           cloudfunction.httpsTrigger = {};
+        } else if (opts.eventType) {
+          cloudfunction.eventTrigger = {
+            eventType: opts.eventType
+          };
+          if (opts.resource) {
+            cloudfunction.eventTrigger.resource = opts.resource;
+          }
         } else if (opts.triggerProvider) {
           if (opts.triggerProvider === 'cloud.pubsub') {
             opts.triggerEvent || (opts.triggerEvent = 'topic.publish');
@@ -325,10 +332,10 @@ class Controller {
             opts.triggerEvent || (opts.triggerEvent = 'event.log');
           }
           cloudfunction.eventTrigger = {
-            eventType: `providers/${opts.triggerProvider}/eventTypes/${opts.triggerEvent}`
+            eventType: `${opts.triggerProvider}.${opts.triggerEvent}`
           };
-          if (opts.triggerResource) {
-            cloudfunction.eventTrigger.resource = opts.triggerResource;
+          if (opts.triggerResource || opts.resource) {
+            cloudfunction.eventTrigger.resource = opts.triggerResource || opts.resource;
           }
         } else {
           throw new Error('You must specify a trigger provider!');

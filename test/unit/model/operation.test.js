@@ -60,8 +60,7 @@ describe(`unit/model/operation`, () => {
             message,
             [
               `DebugInfo`,
-              `BadRequest`,
-              `ResourceInfo`
+              `BadRequest`
             ]
           );
           return true;

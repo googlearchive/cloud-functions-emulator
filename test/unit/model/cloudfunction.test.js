@@ -60,8 +60,7 @@ describe(`unit/model/cloudfunction`, () => {
             message,
             [
               `DebugInfo`,
-              `BadRequest`,
-              `ResourceInfo`
+              `BadRequest`
             ]
           );
           return true;
