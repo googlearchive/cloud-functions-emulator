@@ -667,15 +667,6 @@ describe(`system/cli`, () => {
     }
   }
 
-  if (!process.env.CIRCLECI) {
-    console.log('Running "rest" and "rest-sdk" system tests');
-    makeTests(`rest`);
-    makeTests(`rest`, `${GCLOUD} beta functions`);
-  } else if (process.env.CIRCLE_NODE_INDEX === '0') {
-    console.log('Running "rest" system tests only');
-    makeTests(`rest`);
-  } else if (process.env.CIRCLE_NODE_INDEX === '1') {
-    console.log('Running "rest-sdk" system tests only');
-    makeTests(`rest`, `${GCLOUD} beta functions`);
-  }
+  makeTests(`rest`);
+  makeTests(`rest`, `${GCLOUD} beta functions`);
 });
