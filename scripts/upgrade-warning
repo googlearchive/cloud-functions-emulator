@@ -18,6 +18,9 @@
 'use strict';
 
 const message = `
+If you're using the Emulator via the Firebase CLI, you can
+disregard this message.
+
 If you're upgrading @google-cloud/functions-emulator, these
 are the recommended upgrade steps:
 
