@@ -59,7 +59,7 @@ function makeTests (service, override) {
       return Promise.resolve()
         .then(() => {
           if (override) {
-            overrideArgs = `--regions=${REGION}`;
+            overrideArgs = `--region=${REGION}`;
             return tools.spawnAsyncWithIO(GCLOUD, ['info', `--format='value(config.properties.api_endpoint_overrides.cloudfunctions)'`], cwd)
               .then((results) => {
                 currentEndpoint = results.output;
@@ -540,7 +540,7 @@ function makeTests (service, override) {
           assert(output.includes(`Function helloData deleted.`));
         }
 
-        output = run(`${override || cmd} list ${override ? '--regions=' + REGION + ' ' : ''}${overrideArgs || shortArgs}`, cwd);
+        output = run(`${override || cmd} list ${override ? '--regions=' + REGION : ''}`, cwd);
         assert.equal(output.includes(`No functions deployed`), false);
         assert.equal(output.includes(`helloData`), false);
         assert(output.toLowerCase().includes(`hello`));
@@ -660,12 +660,6 @@ describe(`system/cli`, () => {
       .then(() => storage.bucket(bucketName).deleteFiles({ force: true }))
       .then(() => storage.bucket(bucketName).delete());
   });
-
-  for (let key in process.env) {
-    if (key.toLowerCase().includes('circle')) {
-      console.log(key, process.env[key]);
-    }
-  }
 
   makeTests(`rest`);
   makeTests(`rest`, `${GCLOUD} beta functions`);
