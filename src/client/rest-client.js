@@ -91,6 +91,15 @@ class RestClient extends Client {
     );
   }
 
+  generateUploadUrl (name) {
+    return this._action(
+      'projects.locations.functions.generateUploadUrl',
+      {
+        parent: CloudFunction.formatLocation(this.config.projectId, this.config.region)
+      }
+    );
+  }
+
   getService () {
     return new Promise((resolve, reject) => {
       const discoveryPath = '$discovery/rest';

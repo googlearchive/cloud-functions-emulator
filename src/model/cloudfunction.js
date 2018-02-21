@@ -16,6 +16,9 @@
 'use strict';
 
 const _ = require('lodash');
+const querystring = require('querystring');
+const tmp = require('tmp');
+const url = require('url');
 
 const Errors = require('../utils/errors');
 const Schema = require('../utils/schema');
@@ -63,6 +66,9 @@ const CloudFunctionSchema = {
       type: 'string'
     },
     sourceArchiveUrl: {
+      type: 'string'
+    },
+    sourceUploadUrl: {
       type: 'string'
     }
   },
@@ -138,6 +144,44 @@ class CloudFunction {
    */
   static get SHORT_NAME_REG_EXP () {
     return SHORT_NAME_REG_EXP;
+  }
+
+  static getArchive (cloudfunction = {}) {
+    const sourceUploadUrl = cloudfunction.sourceUploadUrl || '';
+    const parts = url.parse(sourceUploadUrl);
+    const query = querystring.parse(parts.query);
+    return query.archive;
+  }
+
+  static getLocaldir (cloudfunction = {}) {
+    const sourceUploadUrl = cloudfunction.sourceUploadUrl || '';
+    const parts = url.parse(sourceUploadUrl);
+    const query = querystring.parse(parts.query);
+    return query.localdir;
+  }
+
+  static addLocaldir (cloudfunction, localdir) {
+    if (!cloudfunction) {
+      return;
+    }
+    const parts = url.parse(cloudfunction.sourceUploadUrl || 'http://localhost:8010');
+    const query = querystring.parse(parts.query);
+    query.localdir = localdir;
+    const newQueryString = querystring.stringify(query);
+    parts.search = `?${newQueryString}`;
+    parts.query = newQueryString;
+    cloudfunction.sourceUploadUrl = url.format(parts);
+  }
+
+  static generateUploadUrl(opts = {}) {
+    opts.bindHost || (opts.bindHost = 'localhost');
+    opts.port || (opts.port = '8010');
+    let url = `http://${opts.bindHost}:${opts.port}/upload`;
+    const tmpName = tmp.tmpNameSync({
+      postfix: '.zip'
+    });
+    url += `?archive=${tmpName}`;
+    return url;
   }
 
   /**

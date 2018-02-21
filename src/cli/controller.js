@@ -87,11 +87,12 @@ class Controller {
   /**
    * Creates an archive of a local module.
    *
-   * @param {string} name The name of the function being archived.
+   * @param {object} cloudfunction The function being archived.
    * @param {object} opts Configuration options.
    * @returns {Promise}
    */
-  _createArchive (name, opts) {
+  _createArchive (cloudfunction, opts) {
+    const name = cloudfunction.shortName;
     let sourceArchiveUrl;
 
     opts.source = path.resolve(opts.source);
@@ -107,30 +108,31 @@ class Controller {
       throw new Error('Provided directory does not exist.');
     }
 
-    return new Promise((resolve, reject) => {
-      // Parse the user's code to find the names of the exported functions
-      exec(`node -e "console.log(JSON.stringify(Object.keys(require('${pathForCmd}') || {}))); setTimeout(function() { process.exit(0); }, 100);"`, (err, stdout, stderr) => {
-        if (err) {
-          this.error(`${'ERROR'.red}: Function load error: Code could not be loaded.`);
-          this.error(`${'ERROR'.red}: Does the file exists? Is there a syntax error in your code?`);
-          this.error(`${'ERROR'.red}: Detailed stack trace: ${stderr || err.stack}`);
-          reject(new Error('Failed to deploy function.'));
-        } else {
-          resolve(stdout.toString().trim());
-        }
-      });
-    })
+    return this.client.generateUploadUrl(this.config)
+      .then(([body]) => {
+        cloudfunction.sourceUploadUrl = body.uploadUrl;
+        CloudFunction.addLocaldir(cloudfunction, opts.source);
+
+        return new Promise((resolve, reject) => {
+          // Parse the user's code to find the names of the exported functions
+          exec(`node -e "console.log(JSON.stringify(Object.keys(require('${pathForCmd}') || {}))); setTimeout(function() { process.exit(0); }, 100);"`, (err, stdout, stderr) => {
+            if (err) {
+              this.error(`${'ERROR'.red}: Function load error: Code could not be loaded.`);
+              this.error(`${'ERROR'.red}: Does the file exists? Is there a syntax error in your code?`);
+              this.error(`${'ERROR'.red}: Detailed stack trace: ${stderr || err.stack}`);
+              reject(new Error('Failed to deploy function.'));
+            } else {
+              resolve(stdout.toString().trim());
+            }
+          });
+        });
+      })
       .then((exportedKeys) => {
         // TODO: Move this check to the Emulator during unpacking
         // TODO: Make "index.js" dynamic
         if (!exportedKeys.includes(opts.entryPoint) && !exportedKeys.includes(name)) {
           throw new Error(`Node.js module defined by file index.js is expected to export function named ${opts.entryPoint || name}`);
         }
-
-        const tmpName = tmp.tmpNameSync({
-          prefix: `${opts.region}-${name}-`,
-          postfix: '.zip'
-        });
 
         const zip = new AdmZip();
 
@@ -149,10 +151,11 @@ class Controller {
           }
         });
 
+        const tmpName = CloudFunction.getArchive(cloudfunction);
         // Copy the function code to a temp directory on the local file system
         let logStr = `file://${tmpName}`;
         if (opts.stageBucket) {
-          logStr += ' [Content-Type=application/zip]';
+          logStr += ` [Content-Type=application/zip]`;
         }
         this.log(`Copying ${logStr}...`);
         if (!this.config.tail) {
@@ -181,18 +184,13 @@ class Controller {
               .on('error', reject)
               .on('finish', () => {
                 this.log('done.');
-                try {
-                  fs.unlinkSync(tmpName);
-                } catch (err) {
-                  // Ignore error
-                }
                 resolve(sourceArchiveUrl);
               });
           } else {
-            // Technically, this needs to be a GCS Uri, but the emulator will know
-            // how to interpret a path on the local file system
             sourceArchiveUrl = `file://${tmpName}`;
             this.log('done.');
+            // Technically, this needs to be a GCS Uri, but the emulator will know
+            // how to interpret a path on the local file system
             resolve(sourceArchiveUrl);
           }
         });
@@ -292,9 +290,11 @@ class Controller {
 
       if (opts.source.startsWith('https://')) {
         throw new Error('"https://" source is not supported yet!');
-      } else if (!opts.source.startsWith('gs://')) {
-        cloudfunction.serviceAccount = path.resolve(opts.source);
-        return this._createArchive(name, opts)
+      } else if (opts.source.startsWith('gs://')) {
+        cloudfunction.setSourceArchiveUrl(opts.source);
+        resolve(cloudfunction);
+      } else {
+        return this._createArchive(cloudfunction, opts)
           .then((sourceArchiveUrl) => {
             cloudfunction.setSourceArchiveUrl(sourceArchiveUrl);
             return cloudfunction;
@@ -533,7 +533,7 @@ class Controller {
       .then((cloudfunctions) => {
         tasks = cloudfunctions.map((cloudfunction) => {
           try {
-            fs.statSync(cloudfunction.serviceAccount);
+            fs.statSync(CloudFunction.getLocaldir(cloudfunction));
             // Don't return anything
           } catch (err) {
             return this.undeploy(cloudfunction.shortName);

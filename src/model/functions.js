@@ -23,10 +23,12 @@ const got = require('got');
 const logger = require('winston');
 const os = require('os');
 const path = require('path');
+const querystring = require('querystring');
 const rimraf = require('rimraf');
 const spawn = require('child_process').spawn;
 const Storage = require('@google-cloud/storage');
 const tmp = require('tmp');
+const url = require('url');
 const uuid = require('uuid');
 
 const CloudFunction = require('./cloudfunction');
@@ -212,68 +214,70 @@ class Functions {
     });
   }
 
+  _prepDir (dirName) {
+    return this._checkForPackageJson(dirName)
+      .then((hasPackageJson) => {
+        if (hasPackageJson) {
+          return this._checkForYarn(dirName)
+            .then((hasYarn) => hasYarn ? this._installYarn(dirName) : this._installNpm(dirName));
+        }
+      });
+  }
+
   _unpackArchive (cloudfunction) {
     logger.debug('Functions#_unpackArchive', cloudfunction);
     return Promise.resolve()
       .then(() => {
-        const archiveUrl = cloudfunction.gcsUrl || cloudfunction.sourceArchiveUrl || '';
-        if (!cloudfunction.serviceAccount || archiveUrl.startsWith('gs://')) {
-          if (archiveUrl) {
-            if (archiveUrl.startsWith('file://')) {
-              logger.debug('Functions#_unpackArchive', 'Function will be loaded from local file system.');
-              // TODO
-              return cloudfunction;
-            } else if (archiveUrl.startsWith('gs://')) {
-              logger.debug('Functions#_unpackArchive', 'Function will be downloaded from Cloud Storage.');
-              const matches = archiveUrl.match(GCS_URL);
-              if (!matches) {
-                throw new Error(`Unsupported archive url: ${archiveUrl}`);
-              }
-              const name = path.parse(matches[2]).base;
-              const parts = CloudFunction.parseName(cloudfunction.name);
-              const storage = Storage({
-                projectId: parts.project
-              });
-              const file = storage.bucket(matches[1]).file(matches[2]);
+        const sourceArchiveUrl = cloudfunction.gcsUrl || cloudfunction.sourceArchiveUrl || '';
+        let archive = CloudFunction.getArchive(cloudfunction);
+        let localdir = CloudFunction.getLocaldir(cloudfunction);
 
-              let zipName = tmp.tmpNameSync({
-                postfix: `-${name}`
-              });
-              if (!zipName.endsWith('.zip')) {
-                zipName = `${zipName}.zip`;
-              }
-
-              return file.download({
-                destination: zipName
-              })
-                .then(() => {
-                  const zip = new AdmZip(zipName);
-                  const parts = path.parse(zipName);
-                  const dirName = path.join(parts.dir, parts.name);
-
-                  cloudfunction.serviceAccount = dirName;
-                  zip.extractAllTo(dirName);
-
-                  return this._checkForPackageJson(dirName)
-                    .then((hasPackageJson) => {
-                      if (hasPackageJson) {
-                        return this._checkForYarn(dirName)
-                          .then((hasYarn) => hasYarn ? this._installYarn(dirName) : this._installNpm(dirName));
-                      }
-                    });
-                })
-                .then(() => this.adapter.createFunction(cloudfunction))
-                .then(() => cloudfunction);
-            } else {
-              throw new Error(`Unsupported archive url: ${archiveUrl}`);
-            }
-          } else {
-            throw new Error('Local deployment using "--source-url" is not supported yet!');
-          }
+        if (localdir) {
+          logger.debug('Functions#_unpackArchive', 'Function will be loaded from local file system.');
+          return cloudfunction;
         }
-        // Function was deployed from the local file system, so we're not going
-        // to do anything else here.
-        return cloudfunction;
+
+        logger.debug('Functions#_unpackArchive', 'Function source will be unpacked.');
+
+        if (archive) {
+          const zip = new AdmZip(archive);
+          const parts = path.parse(archive);
+          localdir = path.join(parts.dir, parts.name);
+          CloudFunction.addLocaldir(cloudfunction, localdir);
+          zip.extractAllTo(localdir);
+          return this._prepDir(localdir)
+            .then(() => this.adapter.createFunction(cloudfunction))
+            .then(() => cloudfunction);
+        } else if (sourceArchiveUrl.startsWith('gs://') && !archive) {
+          const matches = sourceArchiveUrl.match(GCS_URL);
+          if (!matches) {
+            throw new Error(`Unsupported archive url: ${sourceArchiveUrl}`);
+          }
+          const name = path.parse(matches[2]).base;
+          const parts = CloudFunction.parseName(cloudfunction.name);
+          const storage = Storage({
+            projectId: parts.project
+          });
+          const file = storage.bucket(matches[1]).file(matches[2]);
+
+          cloudfunction.sourceUploadUrl = CloudFunction.generateUploadUrl(this.config);
+          let zipName = CloudFunction.getArchive(cloudfunction);
+
+          return file.download({ destination: zipName })
+            .then(() => {
+              const zip = new AdmZip(zipName);
+              const parts = path.parse(zipName);
+              localdir = path.join(parts.dir, parts.name);
+              CloudFunction.addLocaldir(cloudfunction, localdir);
+              zip.extractAllTo(localdir);
+
+              return this._prepDir(localdir);
+            })
+            .then(() => this.adapter.createFunction(cloudfunction))
+            .then(() => cloudfunction);
+        } else {
+          throw new Error(`Unsupported archive url: ${sourceArchiveUrl}`);
+        }
       });
   }
 
@@ -338,6 +342,8 @@ class Functions {
             delete request.function[key];
           }
         }
+
+        logger.debug(JSON.stringify(request.function, null, 2));
 
         // TODO: Filter out fields that cannot be edited by the user
         cloudfunction = this.cloudfunction(cloudfunction.name, cloudfunction);
@@ -499,31 +505,20 @@ class Functions {
           .then(() => {
             // Asynchronously perform the deletion of the CloudFunction
             setImmediate(() => {
-              if (cloudfunction.sourceArchiveUrl.startsWith('file://')) {
+              const archive = CloudFunction.getArchive(cloudfunction);
+              const localdir = CloudFunction.getLocaldir(cloudfunction);
+              if (archive) {
                 try {
-                  fs.unlinkSync(cloudfunction.sourceArchiveUrl.replace('file://', ''));
+                  fs.unlinkSync(archive);
                 } catch (err) {
                   // Ignore error
                 }
-              }
-
-              const parts = path.parse(cloudfunction.sourceArchiveUrl);
-
-              if (cloudfunction.sourceArchiveUrl.startsWith('gs://') &&
-                parts.name && cloudfunction.serviceAccount &&
-                cloudfunction.serviceAccount.startsWith('/') &&
-                cloudfunction.serviceAccount.endsWith(parts.name)) {
-                try {
-                  fs.unlinkSync(`${cloudfunction.serviceAccount}.zip`);
-                  rimraf.sync(cloudfunction.serviceAccount);
-                } catch (err) {
-                  // Ignore error
-                }
-              } else if (cloudfunction.sourceArchiveUrl.startsWith('file:///')) {
-                try {
-                  fs.unlinkSync(cloudfunction.sourceArchiveUrl);
-                } catch (err) {
-                  // Ignore error
+                if (localdir && archive.startsWith(localdir)) {
+                  try {
+                    rimraf.sync(localdir);
+                  } catch (err) {
+                    // Ignore error
+                  }
                 }
               }
 

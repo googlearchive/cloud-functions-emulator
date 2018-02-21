@@ -22,6 +22,7 @@ const fs = require('fs');
 const Table = require('cli-table2');
 
 const Controller = require('../controller');
+const { CloudFunction } = require('../../model');
 const OPTIONS = require('../../options');
 
 const COMMAND = `functions list ${'[options]'.yellow}`;
@@ -92,7 +93,7 @@ exports.handler = (opts) => {
           if (!resource) {
             resource = 'None';
           }
-          if (pathExists(cloudfunction.serviceAccount)) {
+          if (pathExists(CloudFunction.getLocaldir(cloudfunction))) {
             table.push([
               CloudFunctionStatus[cloudfunction.status] || CloudFunctionStatus['0'],
               cloudfunction.shortName,

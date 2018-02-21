@@ -352,7 +352,7 @@ class Supervisor {
       // TODO: Forcefully exit worker process after maximum timeout
       const workerProcess = worker.process = fork(path.join(__dirname, 'worker.js'), [], {
         // Execute the process in the context of the user's code
-        cwd: cloudfunction.serviceAccount,
+        cwd: CloudFunction.getLocaldir(cloudfunction),
         // Emulate the environment variables of the production service
         env: _.merge({}, process.env, {
           FUNCTION_NAME: cloudfunction.shortName,
