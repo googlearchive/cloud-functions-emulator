@@ -661,6 +661,12 @@ describe(`system/cli`, () => {
       .then(() => storage.bucket(bucketName).delete());
   });
 
+  for (let key in process.env) {
+    if (key.toLowerCase().includes('circle')) {
+      console.log(key, process.env[key]);
+    }
+  }
+
   if (!process.env.CIRCLECI) {
     console.log('Running "rest" and "rest-sdk" system tests');
     makeTests(`rest`);
