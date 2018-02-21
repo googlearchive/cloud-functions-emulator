@@ -18,10 +18,12 @@
 const bodyParser = require('body-parser');
 const Configstore = require('configstore');
 const express = require('express');
+const fs = require('fs');
 const got = require('got');
 const logger = require('winston');
 const path = require('path');
 const url = require('url');
+
 const uuid = require('uuid');
 
 const Errors = require('../utils/errors');
@@ -32,7 +34,7 @@ const Service = require('./service');
 const { CloudFunction, Operation } = Model;
 
 // TODO: Support more than one version.
-const API_VERSION = 'v1beta2';
+const API_VERSION = 'v1';
 const DISCOVERY_URL = `https://cloudfunctions.googleapis.com/$discovery/rest?version=${API_VERSION}`;
 
 class RestService extends Service {
@@ -45,6 +47,11 @@ class RestService extends Service {
     // Standard ExpressJS app. Where possible this should mimic the *actual*
     // setup of Cloud Functions regarding the use of body parsers etc.
     this.server = express();
+    // Upload must be handled before the body gets processed
+    this.server.put(
+      `/upload`,
+      (req, res, next) => this.handleUpload(req, res).catch(next)
+    );
     this.server.use(bodyParser.json());
     this.server.use(bodyParser.raw());
     this.server.use(bodyParser.text());
@@ -76,6 +83,10 @@ class RestService extends Service {
       .get(
         `/${API_VERSION}/projects/:project/locations/:location/functions`,
         (req, res, next) => this.listFunctions(req, res).catch(next)
+      )
+      .post(
+        `/${API_VERSION}/projects/:project/locations/:location/functions::generateUploadUrl`,
+        (req, res, next) => this.generateUploadUrl(req, res).catch(next)
       )
       .post(
         `/${API_VERSION}/projects/:project/locations/:location/functions/:name::call`,
@@ -193,6 +204,13 @@ class RestService extends Service {
       });
   }
 
+  generateUploadUrl (req, res) {
+    logger.debug('RestService#generateUploadUrl');
+    res.send({
+      uploadUrl: CloudFunction.generateUploadUrl(this.config)
+    }).end();
+  }
+
   /**
    * Gets the Google Cloud Functions API discovery doc.
    *
@@ -284,6 +302,19 @@ class RestService extends Service {
 
         res.status(200).json(operation).end();
       });
+  }
+
+  handleUpload (req, res) {
+    logger.debug('RestService#handleUpload', req.query.archive);
+    return new Promise((resolve, reject) => {
+      req
+        .pipe(fs.createWriteStream(req.query.archive))
+        .on('error', reject)
+        .on('finish', () => {
+          res.end();
+          resolve();
+        });
+    });
   }
 
   /**

@@ -23,8 +23,7 @@ describe('unit/model', () => {
       'CloudFunction',
       'Functions',
       'functions',
-      'Operation',
-      'protos'
+      'Operation'
     ]);
   });
 });

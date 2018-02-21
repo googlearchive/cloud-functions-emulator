@@ -39,7 +39,7 @@ exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .options(_.pick(OPTIONS, ['grpcPort', 'host', 'projectId', 'region', 'restPort', 'service']));
+    .options(_.pick(OPTIONS, ['host', 'projectId', 'region', 'restPort', 'service']));
 };
 exports.handler = (opts) => {
   const controller = new Controller(opts);

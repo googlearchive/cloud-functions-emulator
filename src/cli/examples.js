@@ -21,8 +21,7 @@ exports.call = [
   ['functions call helloWorld', 'Invokes the helloWorld function with no data.'],
   [`functions call helloWorld --data='{"foo":"bar"}'`, 'LINUX/MAC: Invokes the helloWorld function, passing it inline JSON.'],
   [`functions call helloWorld --data={\"foo\":\"bar\"}`, 'WINDOWS: Invokes the helloWorld function, passing it inline JSON.'], // eslint-disable-line
-  ['functions call helloWorld --file=/path/to/datafile.json', 'Invokes the helloWorld function, passing it a path to a JSON file.'],
-  ['functions call helloWorld --service=grpc', 'Invokes the helloWorld function, using gRPC to make the request.']
+  ['functions call helloWorld --file=/path/to/datafile.json', 'Invokes the helloWorld function, passing it a path to a JSON file.']
 ];
 
 exports.clear = [];

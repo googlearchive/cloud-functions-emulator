@@ -50,7 +50,7 @@ exports.builder = (yargs) => {
         description: `If ${'true'.bold}, keep the function's debugging settings, if any.`,
         type: 'boolean'
       }
-    }, _.pick(OPTIONS, ['grpcPort', 'host', 'projectId', 'region', 'restPort', 'service'])))
+    }, _.pick(OPTIONS, ['host', 'projectId', 'region', 'restPort', 'service'])))
     .epilogue(`See ${'https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Debugging-functions'.bold}`);
 
   EXAMPLES['reset'].forEach((e) => yargs.example(e[0], e[1]));

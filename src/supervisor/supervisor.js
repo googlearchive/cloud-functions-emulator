@@ -49,6 +49,9 @@ class Supervisor {
     this._functions = functions;
     this.config = _.cloneDeep(opts);
 
+    // This map tracks the running function workers
+    this._workerPool = new Map();
+
     // Default values
     if (this.config.useMocks === 'true') {
       this.config.useMocks = true;
@@ -125,17 +128,6 @@ class Supervisor {
       .on('proxyRes', (proxyRes, req, res) => {
         clearTimeout(req.functionTimeout);
       });
-
-    // This map tracks the running function workers
-    this._workerPool = new Map();
-
-    // Periodically check for and close idle workers
-    if (typeof this.config.idlePruneInterval === 'number' &&
-        this.config.idlePruneInterval > 0 &&
-        typeof this.config.maxIdle === 'number' &&
-        this.config.maxIdle > 0) {
-      this.pruneIntervalId = setInterval(() => this.prune(), this.config.idlePruneInterval);
-    }
   }
 
   static get DEFAULT_MAX_IDLE () {
@@ -360,7 +352,7 @@ class Supervisor {
       // TODO: Forcefully exit worker process after maximum timeout
       const workerProcess = worker.process = fork(path.join(__dirname, 'worker.js'), [], {
         // Execute the process in the context of the user's code
-        cwd: cloudfunction.serviceAccount,
+        cwd: CloudFunction.getLocaldir(cloudfunction),
         // Emulate the environment variables of the production service
         env: _.merge({}, process.env, {
           FUNCTION_NAME: cloudfunction.shortName,
@@ -621,6 +613,16 @@ class Supervisor {
    */
   start () {
     logger.debug(`Starting supervisor at ${this.config.bindHost}:${this.config.port}...`);
+
+    // Periodically check for and close idle workers
+    if (typeof this.config.idlePruneInterval === 'number' &&
+        this.config.idlePruneInterval > 0 &&
+        typeof this.config.maxIdle === 'number' &&
+        this.config.maxIdle > 0) {
+      this.pruneIntervalId = setInterval(() => this.prune(), this.config.idlePruneInterval);
+      process.on('exit', () => clearInterval(this.pruneIntervalId));
+    }
+
     this._server = this.app.listen(this.config.port, this.config.bindHost);
     this._server
       .on('listening', () => {

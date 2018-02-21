@@ -38,7 +38,6 @@ Description:
 
 exports.options = [
   'bindHost',
-  'grpcPort',
   'host',
   'idlePruneInterval',
   'logFile',

@@ -47,7 +47,7 @@ describe('unit/service/rest-service', () => {
       .reply(200);
 
       request(service.server)
-      .post('/v1beta2/projects/fake-project/locations/us-central1/functions/test-function::call')
+      .post('/v1/projects/fake-project/locations/us-central1/functions/test-function:call')
       .expect(200, done);
     });
 
@@ -75,7 +75,7 @@ describe('unit/service/rest-service', () => {
       .reply(200);
 
       request(service.server)
-      .post('/v1beta2/projects/fake-project/locations/us-central1/functions/test-function::call')
+      .post('/v1/projects/fake-project/locations/us-central1/functions/test-function:call')
       .expect(200, done);
     });
 
@@ -102,7 +102,7 @@ describe('unit/service/rest-service', () => {
       .reply(200);
 
       request(service.server)
-      .post('/v1beta2/projects/fake-project/locations/us-central1/functions/test-function::call')
+      .post('/v1/projects/fake-project/locations/us-central1/functions/test-function:call')
       .expect(200, done);
     });
 
@@ -130,7 +130,7 @@ describe('unit/service/rest-service', () => {
       .reply(200);
 
       request(service.server)
-      .post('/v1beta2/projects/fake-project/locations/us-central1/functions/test-function::call')
+      .post('/v1/projects/fake-project/locations/us-central1/functions/test-function:call')
       .send({
         auth: {admin: false},
         resource: 'custom.resource'

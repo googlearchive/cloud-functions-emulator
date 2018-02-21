@@ -21,6 +21,7 @@ const _ = require('lodash');
 const Table = require('cli-table2');
 
 const Controller = require('../controller');
+const { CloudFunction } = require('../../model');
 const EXAMPLES = require('../examples');
 const OPTIONS = require('../../options');
 
@@ -44,7 +45,7 @@ exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .options(_.pick(OPTIONS, ['grpcPort', 'host', 'projectId', 'region', 'restPort', 'service']));
+    .options(_.pick(OPTIONS, ['host', 'projectId', 'region', 'restPort', 'service']));
 
   EXAMPLES['describe'].forEach((e) => yargs.example(e[0], e[1]));
 };
@@ -82,8 +83,9 @@ exports.handler = (opts) => {
       } else {
         table.push(['Timeout', `60 seconds`]);
       }
-      if (cloudfunction.serviceAccount) {
-        table.push(['Local path', cloudfunction.serviceAccount]);
+      const localdir = CloudFunction.getLocaldir(cloudfunction);
+      if (CloudFunction.getLocaldir(cloudfunction)) {
+        table.push(['Local path', localdir]);
       }
       table.push(['Archive', cloudfunction.sourceArchiveUrl]);
 

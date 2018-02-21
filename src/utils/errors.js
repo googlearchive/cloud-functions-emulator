@@ -15,10 +15,7 @@
 
 'use strict';
 
-const grpc = require('grpc');
 const http = require('http');
-
-const protos = require('../model/protos');
 
 class ExtendableError extends Error {
   constructor (message, details = []) {
@@ -37,24 +34,6 @@ class ExtendableError extends Error {
       this.stack = (new Error(message)).stack;
     }
     this.details.push(new DebugInfo(this));
-  }
-
-  static decode (err) {
-    // Decode the top-level Status message fields.
-    err = protos.decode(err, protos.Status);
-
-    if (Array.isArray(err.details)) {
-      err.details.forEach((detail) => {
-        protos.encodeAnyType(detail);
-      });
-    }
-
-    return err;
-  }
-
-  toProtobuf () {
-    // Get a sanitized copy of this ExtendableError instance.
-    return ExtendableError.decode(this);
   }
 }
 
@@ -100,28 +79,32 @@ class ResourceInfo {
 class ConflictError extends ExtendableError {
   constructor (...args) {
     super(...args);
-    this.code = grpc.status.ALREADY_EXISTS;
+    // grpc.status.ALREADY_EXISTS
+    this.code = 6;
   }
 }
 
 class InternalError extends ExtendableError {
   constructor (...args) {
     super(...args);
-    this.code = grpc.status.INTERNAL;
+    // grpc.status.INTERNAL
+    this.code = 13;
   }
 }
 
 class InvalidArgumentError extends ExtendableError {
   constructor (...args) {
     super(...args);
-    this.code = grpc.status.INVALID_ARGUMENT;
+    // grpc.status.INVALID_ARGUMENT
+    this.code = 3;
   }
 }
 
 class NotFoundError extends ExtendableError {
   constructor (...args) {
     super(...args);
-    this.code = grpc.status.NOT_FOUND;
+    // grpc.status.NOT_FOUND
+    this.code = 5;
   }
 }
 
@@ -174,7 +157,26 @@ function sendRestError (err, res) {
 }
 
 exports.sendRestError = sendRestError;
-exports.status = grpc.status;
+// grpc.status
+exports.status = {
+  OK: 0,
+  CANCELLED: 1,
+  UNKNOWN: 2,
+  INVALID_ARGUMENT: 3,
+  DEADLINE_EXCEEDED: 4,
+  NOT_FOUND: 5,
+  ALREADY_EXISTS: 6,
+  PERMISSION_DENIED: 7,
+  RESOURCE_EXHAUSTED: 8,
+  FAILED_PRECONDITION: 9,
+  ABORTED: 10,
+  OUT_OF_RANGE: 11,
+  UNIMPLEMENTED: 12,
+  INTERNAL: 13,
+  UNAVAILABLE: 14,
+  DATA_LOSS: 15,
+  UNAUTHENTICATED: 16
+};
 exports.BadRequest = BadRequest;
 exports.DebugInfo = DebugInfo;
 exports.ResourceInfo = ResourceInfo;

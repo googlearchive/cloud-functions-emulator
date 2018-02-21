@@ -1,6 +1,5 @@
 {
   "bindHost": "localhost",
-  "grpcPort": 8009,
   "host": "localhost",
   "idlePruneInterval": 60000,
   "logFile": "logs/cloud-functions-emulator.log",

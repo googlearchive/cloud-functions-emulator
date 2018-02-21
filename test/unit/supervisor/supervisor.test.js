@@ -45,7 +45,6 @@ describe('unit/supervisor/supervisor', () => {
       assert.equal(typeof supervisor.app, 'function');
       assert.equal(typeof supervisor._proxy, 'object');
       assert(supervisor._workerPool instanceof Map);
-      assert(supervisor.pruneIntervalId);
     });
 
     it('should check args', () => {
@@ -315,6 +314,8 @@ describe('unit/supervisor/supervisor', () => {
       supervisor.stop = sinon.stub();
 
       assert.strictEqual(supervisor.start(), supervisor);
+      assert(supervisor.pruneIntervalId);
+      clearInterval(supervisor.pruneIntervalId);
 
       assert.equal(supervisor.app.listen.callCount, 1);
       assert.deepEqual(
