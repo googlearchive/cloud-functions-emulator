@@ -22,6 +22,7 @@ const fs = require('fs');
 const Table = require('cli-table2');
 
 const Controller = require('../controller');
+const { CloudFunction } = require('../../model');
 const OPTIONS = require('../../options');
 
 const COMMAND = `functions list ${'[options]'.yellow}`;
@@ -62,7 +63,7 @@ exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .options(_.pick(OPTIONS, ['grpcPort', 'host', 'projectId', 'region', 'restPort', 'service']));
+    .options(_.pick(OPTIONS, ['host', 'projectId', 'region', 'restPort', 'service']));
 };
 exports.handler = (opts) => {
   const controller = new Controller(opts);
@@ -92,7 +93,7 @@ exports.handler = (opts) => {
           if (!resource) {
             resource = 'None';
           }
-          if (pathExists(cloudfunction.serviceAccount)) {
+          if (pathExists(CloudFunction.getLocaldir(cloudfunction))) {
             table.push([
               CloudFunctionStatus[cloudfunction.status] || CloudFunctionStatus['0'],
               cloudfunction.shortName,

@@ -21,9 +21,7 @@ describe('unit/service', () => {
   it('should export correct properties', () => {
     assert.deepEqual(Object.keys(Service), [
       'Service',
-      'GrpcService',
       'RestService',
-      'grpcService',
       'restService'
     ]);
   });

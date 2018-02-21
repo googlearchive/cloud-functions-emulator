@@ -14,7 +14,7 @@
  */
 
 /**
- * The Emulator has two services: "rest" and "grpc".
+ * The Emulator has one services: "rest".
  *
  * In "rest" mode the CLI uses a RestClient (implemented using the Google APIs
  * Client Library) to communicate with the Emulator:
@@ -22,13 +22,6 @@
  *     |-->-- RestClient - HTTP1.1 - JSON -->--|
  * CLI -                                       - Emulator
  *     |--<-- RestClient - HTTP1.1 - JSON --<--|
- *
- * In "grpc" mode the CLI uses a GrpcClient (implemented using the Google Cloud
- * Client Library) to communicate with the Emulator:
- *
- *     |-->-- GrpcClient - HTTP2 - Proto -->--|
- * CLI -                                      - Emulator
- *     |--<-- GrpcClient - HTTP2 - Proto --<--|
  *
  * The Gcloud SDK can be used to talk to the Emulator as well, just do:
  *
@@ -47,7 +40,6 @@ const got = require('got');
 const path = require('path');
 const spawn = require('child_process').spawn;
 const Storage = require('@google-cloud/storage');
-const tmp = require('tmp');
 
 const Client = require('../client');
 const config = require('../config');
@@ -85,59 +77,55 @@ class Controller {
     this.config.logFile = logs.assertLogsPath(this.config.logFile);
 
     const clientConfig = _.merge(this.config, {
-      grpcPort: opts.grpcPort || this.server.get('grpcPort') || this.config.grpcPort,
       host: opts.host || (!this.server.get('stopped') && this.server.get('host')) || this.config.host,
       restPort: opts.restPort || this.server.get('restPort') || this.config.restPort
     });
-
-    // Initialize the client that will communicate with the Emulator
-    if (this.config.service === 'rest') {
-      // The REST client uses the Google APIs Node.js client (googleapis)
-      this.client = Client.restClient(clientConfig);
-    } else if (this.config.service === 'grpc') {
-      // The gRPC client uses the Google Cloud Node.js client (@google-cloud/functions)
-      this.client = Client.grpcClient(clientConfig);
-    } else {
-      throw new Error('"service" must be one of "rest" or "grpc"!');
-    }
+    this.client = Client.restClient(clientConfig);
   }
 
   /**
    * Creates an archive of a local module.
    *
-   * @param {string} name The name of the function being archived.
+   * @param {object} cloudfunction The function being archived.
    * @param {object} opts Configuration options.
    * @returns {Promise}
    */
-  _createArchive (name, opts) {
+  _createArchive (cloudfunction, opts) {
+    const name = cloudfunction.shortName;
     let sourceArchiveUrl;
 
-    opts.localPath = path.resolve(opts.localPath);
+    opts.source = path.resolve(opts.source);
 
-    let pathForCmd = opts.localPath;
+    let pathForCmd = opts.source;
 
     if (process.platform === 'win32') {
       // See https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/34
-      pathForCmd = opts.localPath.replace(/\\/g, '/');
+      pathForCmd = opts.source.replace(/\\/g, '/');
     }
 
-    if (!fs.existsSync(opts.localPath)) {
+    if (!fs.existsSync(opts.source)) {
       throw new Error('Provided directory does not exist.');
     }
 
-    return new Promise((resolve, reject) => {
-      // Parse the user's code to find the names of the exported functions
-      exec(`node -e "console.log(JSON.stringify(Object.keys(require('${pathForCmd}') || {}))); setTimeout(function() { process.exit(0); }, 100);"`, (err, stdout, stderr) => {
-        if (err) {
-          this.error(`${'ERROR'.red}: Function load error: Code could not be loaded.`);
-          this.error(`${'ERROR'.red}: Does the file exists? Is there a syntax error in your code?`);
-          this.error(`${'ERROR'.red}: Detailed stack trace: ${stderr || err.stack}`);
-          reject(new Error('Failed to deploy function.'));
-        } else {
-          resolve(stdout.toString().trim());
-        }
-      });
-    })
+    return this.client.generateUploadUrl(this.config)
+      .then(([body]) => {
+        cloudfunction.sourceUploadUrl = body.uploadUrl;
+        CloudFunction.addLocaldir(cloudfunction, opts.source);
+
+        return new Promise((resolve, reject) => {
+          // Parse the user's code to find the names of the exported functions
+          exec(`node -e "console.log(JSON.stringify(Object.keys(require('${pathForCmd}') || {}))); setTimeout(function() { process.exit(0); }, 100);"`, (err, stdout, stderr) => {
+            if (err) {
+              this.error(`${'ERROR'.red}: Function load error: Code could not be loaded.`);
+              this.error(`${'ERROR'.red}: Does the file exists? Is there a syntax error in your code?`);
+              this.error(`${'ERROR'.red}: Detailed stack trace: ${stderr || err.stack}`);
+              reject(new Error('Failed to deploy function.'));
+            } else {
+              resolve(stdout.toString().trim());
+            }
+          });
+        });
+      })
       .then((exportedKeys) => {
         // TODO: Move this check to the Emulator during unpacking
         // TODO: Make "index.js" dynamic
@@ -145,19 +133,14 @@ class Controller {
           throw new Error(`Node.js module defined by file index.js is expected to export function named ${opts.entryPoint || name}`);
         }
 
-        const tmpName = tmp.tmpNameSync({
-          prefix: `${opts.region}-${name}-`,
-          postfix: '.zip'
-        });
-
         const zip = new AdmZip();
 
-        const files = fs.readdirSync(opts.localPath);
+        const files = fs.readdirSync(opts.source);
         files.forEach((entry) => {
           if (entry === 'node_modules') {
             return false;
           }
-          const entryPath = path.join(opts.localPath, entry);
+          const entryPath = path.join(opts.source, entry);
           const stats = fs.statSync(entryPath);
 
           if (stats.isDirectory()) {
@@ -167,10 +150,11 @@ class Controller {
           }
         });
 
+        const tmpName = CloudFunction.getArchive(cloudfunction);
         // Copy the function code to a temp directory on the local file system
         let logStr = `file://${tmpName}`;
         if (opts.stageBucket) {
-          logStr += ' [Content-Type=application/zip]';
+          logStr += ` [Content-Type=application/zip]`;
         }
         this.log(`Copying ${logStr}...`);
         if (!this.config.tail) {
@@ -199,18 +183,13 @@ class Controller {
               .on('error', reject)
               .on('finish', () => {
                 this.log('done.');
-                try {
-                  fs.unlinkSync(tmpName);
-                } catch (err) {
-                  // Ignore error
-                }
                 resolve(sourceArchiveUrl);
               });
           } else {
-            // Technically, this needs to be a GCS Uri, but the emulator will know
-            // how to interpret a path on the local file system
             sourceArchiveUrl = `file://${tmpName}`;
             this.log('done.');
+            // Technically, this needs to be a GCS Uri, but the emulator will know
+            // how to interpret a path on the local file system
             resolve(sourceArchiveUrl);
           }
         });
@@ -234,10 +213,6 @@ class Controller {
 
         if (i <= 0) {
           throw new Error('Timeout waiting for emulator start'.red);
-        }
-
-        if (this.config.service === 'grpc') {
-          this.client._setup();
         }
 
         return new Promise((resolve, reject) => {
@@ -265,10 +240,6 @@ class Controller {
 
         if (i <= 0) {
           throw new Error('Timeout waiting for emulator stop');
-        }
-
-        if (this.config.service === 'grpc') {
-          this.client._setup();
         }
 
         return new Promise((resolve, reject) => {
@@ -316,11 +287,13 @@ class Controller {
         cloudfunction.entryPoint = opts.entryPoint;
       }
 
-      if (opts.sourcePath) {
-        throw new Error('"source-path" is not supported yet!');
-      } else if (opts.localPath) {
-        cloudfunction.serviceAccount = path.resolve(opts.localPath);
-        return this._createArchive(name, opts)
+      if (opts.source.startsWith('https://')) {
+        throw new Error('"https://" source is not supported yet!');
+      } else if (opts.source.startsWith('gs://')) {
+        cloudfunction.setSourceArchiveUrl(opts.source);
+        resolve(cloudfunction);
+      } else {
+        return this._createArchive(cloudfunction, opts)
           .then((sourceArchiveUrl) => {
             cloudfunction.setSourceArchiveUrl(sourceArchiveUrl);
             return cloudfunction;
@@ -333,6 +306,13 @@ class Controller {
       .then((cloudfunction) => {
         if (opts.triggerHttp) {
           cloudfunction.httpsTrigger = {};
+        } else if (opts.eventType) {
+          cloudfunction.eventTrigger = {
+            eventType: opts.eventType
+          };
+          if (opts.resource) {
+            cloudfunction.eventTrigger.resource = opts.resource;
+          }
         } else if (opts.triggerProvider) {
           if (opts.triggerProvider === 'cloud.pubsub') {
             opts.triggerEvent || (opts.triggerEvent = 'topic.publish');
@@ -351,10 +331,10 @@ class Controller {
             opts.triggerEvent || (opts.triggerEvent = 'event.log');
           }
           cloudfunction.eventTrigger = {
-            eventType: `providers/${opts.triggerProvider}/eventTypes/${opts.triggerEvent}`
+            eventType: `${opts.triggerProvider}.${opts.triggerEvent}`
           };
-          if (opts.triggerResource) {
-            cloudfunction.eventTrigger.resource = opts.triggerResource;
+          if (opts.triggerResource || opts.resource) {
+            cloudfunction.eventTrigger.resource = opts.triggerResource || opts.resource;
           }
         } else {
           throw new Error('You must specify a trigger provider!');
@@ -552,7 +532,7 @@ class Controller {
       .then((cloudfunctions) => {
         tasks = cloudfunctions.map((cloudfunction) => {
           try {
-            fs.statSync(cloudfunction.serviceAccount);
+            fs.statSync(CloudFunction.getLocaldir(cloudfunction));
             // Don't return anything
           } catch (err) {
             return this.undeploy(cloudfunction.shortName);
@@ -615,7 +595,6 @@ class Controller {
         const args = [
           CWD,
           `--bindHost=${this.config.bindHost}`,
-          `--grpcPort=${this.config.grpcPort}`,
           `--host=${this.config.host}`,
           `--timeout=${this.config.timeout}`,
           `--verbose=${this.config.verbose}`,
@@ -638,7 +617,6 @@ class Controller {
 
         // Update status of settings
         this.server.set({
-          grpcPort: this.config.grpcPort,
           host: this.config.host,
           logFile: this.config.logFile,
           projectId: this.config.projectId,

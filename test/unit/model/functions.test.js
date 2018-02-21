@@ -23,21 +23,10 @@ const defaults = require(`../../../src/defaults.json`);
 defaults.location = _.kebabCase(os.userInfo().username);
 
 describe(`unit/model/functions`, () => {
-  let Functions, mocks;
+  let Functions;
 
   beforeEach(() => {
-    mocks = {
-      protos: {
-        decode: (arg1) => _.cloneDeep(arg1),
-        decodeAnyType: sinon.stub(),
-        encodeAnyType: sinon.stub()
-      }
-    };
-    sinon.spy(mocks.protos, `decode`);
-
-    Functions = proxyquire(`../../../src/model/functions`, {
-      './protos': mocks.protos
-    });
+    Functions = proxyquire(`../../../src/model/functions`, {});
   });
 
   describe(`Functions`, () => {

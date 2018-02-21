@@ -33,7 +33,7 @@ const pkg = require('../../package.json');
 const server = new Configstore(path.join(pkg.name, '/.active-server'));
 
 const COMMAND = `./bin/emulator ${'[options]'.yellow}`;
-const DESCRIPTION = `The Google Cloud Functions Emulator service. The service implements both the REST and gRPC versions of the Google
+const DESCRIPTION = `The Google Cloud Functions Emulator service. The service implements both the REST version of the Google
   Cloud Functions API.
 
   You can use the CLI to manage the service, or deploy the service manually.`;

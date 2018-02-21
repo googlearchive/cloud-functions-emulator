@@ -44,16 +44,10 @@ exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .options(_.merge(_.pick(OPTIONS, ['grpcPort', 'host', 'projectId', 'region', 'restPort', 'service']), {
-      'local-path': {
-        alias: 'l',
-        description: `Path to local directory with source code. ${'Default:'.bold} ${process.cwd().green} (the current working directory)`,
-        requiresArg: true,
-        type: 'string'
-      },
-      'trigger-bucket': {
-        alias: 'B',
-        description: `Google Cloud Storage bucket name. Every change in files in this bucket will trigger function execution. Short for --trigger-provider=cloud.storage --trigger-event=object.change --trigger-resource=<bucket>.`,
+    .options(_.merge(_.pick(OPTIONS, ['host', 'projectId', 'region', 'restPort', 'service']), {
+      'source': {
+        alias: 'S',
+        description: `Location of source code to deploy. ${'Default:'.bold} ${process.cwd().green} (the current working directory). Location of the source can be one of the following: Source code in Google Cloud Storage or a local filesystem path. The value of the flag will be interpreted as a Cloud Storage location, if it starts with ${'gs://'.bold}. Otherwise, it will be interpreted as the local filesystem path.`,
         requiresArg: true,
         type: 'string'
       },
@@ -62,11 +56,17 @@ exports.builder = (yargs) => {
         description: `Every HTTP request to the function's endpoint will trigger function execution. Result of the function execution will be returned in response body.`,
         requiresArg: false
       },
-      'trigger-topic': {
-        alias: 'T',
-        description: `Name of Pub/Sub topic. Every message published in this topic will trigger function execution with message contents passed as input data. Short for --trigger-provider=cloud.pubsub --trigger-event=topic.publish --trigger-resource=<topic>.`,
+      'event-type': {
+        description: `The service that is sending an event and the kind of event that was fired. Must be of the form ${'PROVIDER.EVENT_TYPE'.bold}. ${'PROVIDER'.bold} must be one of: cloud.pubsub, cloud.storage, google.firebase.auth, google.firebase.database, google.firebase.analytics. ${'EVENT_TYPE'.bold} must be one of: topic.publish, object.change, user.create, user.delete, ref.write, ref.create, ref.update, ref.delete, event.log.`,
         requiresArg: true,
-        type: 'string'
+        type: 'string',
+        required: false
+      },
+      'resource': {
+        description: `Which instance of the source's service should send events. E.g. for Pub/Sub this would be a Pub/Sub topic at 'projects/*/topics/*'. For Google Cloud Storage this would be a bucket at 'projects/*/buckets/*'. For any source that only supports one instance per-project, this should be the name of the project ('projects/*')`,
+        requiresArg: true,
+        type: 'string',
+        required: false
       },
       'entry-point': {
         alias: 'e',
@@ -81,22 +81,34 @@ exports.builder = (yargs) => {
         requiresArg: true,
         type: 'string'
       },
+      'trigger-bucket': {
+        alias: 'B',
+        description: `${'LEGACY'.yellow}: Google Cloud Storage bucket name. Every change in files in this bucket will trigger function execution. Short for --trigger-provider=cloud.storage --trigger-event=object.change --trigger-resource=<bucket>.`,
+        requiresArg: true,
+        type: 'string'
+      },
+      'trigger-topic': {
+        alias: 'T',
+        description: `${'LEGACY'.yellow}: Name of Pub/Sub topic. Every message published in this topic will trigger function execution with message contents passed as input data. Short for --trigger-provider=cloud.pubsub --trigger-event=topic.publish --trigger-resource=<topic>.`,
+        requiresArg: true,
+        type: 'string'
+      },
       'trigger-event': {
         choices: ['topic.publish', 'object.change', 'user.create', 'user.delete', 'ref.write', 'ref.create', 'ref.update', 'ref.delete', 'event.log', undefined],
-        description: 'Specifies which action should trigger the function. If omitted, a default EVENT_TYPE for --trigger-provider will be used if it is available. For a list of acceptable values, call functions event_types list. EVENT_TYPE must be one of: topic.publish, object.change, user.create, user.delete, ref.write, ref.create, ref.update, ref.delete, event.log.',
+        description: `${'LEGACY'.yellow}: Specifies which action should trigger the function. If omitted, a default EVENT_TYPE for --trigger-provider will be used if it is available. For a list of acceptable values, call functions event_types list. EVENT_TYPE must be one of: topic.publish, object.change, user.create, user.delete, ref.write, ref.create, ref.update, ref.delete, event.log.`,
         requiresArg: true,
         type: 'string',
         required: false
       },
       'trigger-provider': {
         choices: ['cloud.pubsub', 'cloud.storage', 'google.firebase.auth', 'google.firebase.database', 'google.firebase.analytics', undefined],
-        description: 'Trigger this function in response to an event in another service. For a list of acceptable values, call gcloud functions event-types list. PROVIDER must be one of: cloud.pubsub, cloud.storage, google.firebase.auth, google.firebase.database, google.firebase.analytics',
+        description: `${'LEGACY'.yellow}: Trigger this function in response to an event in another service. For a list of acceptable values, call gcloud functions event-types list. PROVIDER must be one of: cloud.pubsub, cloud.storage, google.firebase.auth, google.firebase.database, google.firebase.analytics`,
         requiresArg: true,
         type: 'string',
         required: false
       },
       'trigger-resource': {
-        description: 'Specifies which resource from --trigger-provider is being observed. E.g. if --trigger-provider is cloud.storage, --trigger-resource must be a bucket name. For a list of expected resources, call functions event_types list.',
+        description: `${'LEGACY'.yellow}: Specifies which resource from --trigger-provider is being observed. E.g. if --trigger-provider is cloud.storage, --trigger-resource must be a bucket name. For a list of expected resources, call functions event_types list.`,
         requiresArg: true,
         type: 'string',
         required: false
@@ -113,16 +125,14 @@ exports.builder = (yargs) => {
   EXAMPLES['deploy'].forEach((e) => yargs.example(e[0]));
 };
 exports.handler = (opts) => {
-  opts.localPath || (opts.localPath = process.cwd());
+  opts.source || (opts.source = process.cwd());
 
   if (opts.triggerBucket) {
-    opts.triggerProvider = 'cloud.storage';
-    opts.triggerEvent = 'object.change';
-    opts.triggerResource = opts.triggerBucket;
+    opts.eventType = 'google.storage.object.finalize';
+    opts.resource = opts.triggerBucket;
   } else if (opts.triggerTopic) {
-    opts.triggerProvider = 'cloud.pubsub';
-    opts.triggerEvent = 'topic.publish';
-    opts.triggerResource = opts.triggerTopic;
+    opts.eventType = 'google.pubsub.topic.publish';
+    opts.resource = opts.triggerTopic;
   }
 
   const controller = new Controller(opts);
@@ -156,11 +166,11 @@ exports.handler = (opts) => {
         controller.write('Deploying function');
         poll();
       })
-      .then(() => controller.write('done.\n'))
-      .catch((err) => {
-        controller.write('failed.\n');
-        return Promise.reject(err);
-      });
+        .then(() => controller.write('done.\n'))
+        .catch((err) => {
+          controller.write('failed.\n');
+          return Promise.reject(err);
+        });
     })
     // Log the status
     .then(() => controller.log(`Function ${opts.functionName} deployed.`.green))

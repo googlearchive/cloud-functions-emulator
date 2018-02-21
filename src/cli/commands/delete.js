@@ -44,7 +44,7 @@ exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .options(_.pick(OPTIONS, ['grpcPort', 'host', 'projectId', 'region', 'restPort', 'service']));
+    .options(_.pick(OPTIONS, ['host', 'projectId', 'region', 'restPort', 'service']));
 
   EXAMPLES['delete'].forEach((e) => yargs.example(e[0]));
 };
@@ -75,11 +75,11 @@ exports.handler = (opts) => {
         controller.write('Deleting function');
         poll();
       })
-      .then(() => controller.write('done.\n'))
-      .catch((err) => {
-        controller.write('failed.\n');
-        return Promise.reject(err);
-      });
+        .then(() => controller.write('done.\n'))
+        .catch((err) => {
+          controller.write('failed.\n');
+          return Promise.reject(err);
+        });
     })
     .then(() => controller.log(`Function ${opts.functionName} deleted.`.green))
     .then(() => list(opts))

@@ -43,11 +43,6 @@ module.exports = {
   /**
    * CLI settings
    */
-  service: {
-    description: `Which wire protocol to use when communicating with the Emulator. Choices are ${'rest'.green} or ${'grpc'.green}. ${'Default:'.bold} ${defaults.service.toString().green}`,
-    requiresArg: true,
-    type: 'string'
-  },
   timeout: {
     description: `How long (in milliseconds) the CLI should wait for the Emulator to start or stop before giving up. ${'Default:'.bold} ${defaults.timeout.toString().green}`,
     requiresArg: true,
@@ -61,11 +56,6 @@ module.exports = {
     description: `The address to bind the listener to. ${'Default:'.bold} ${defaults.bindHost.toString().green}`,
     requiresArg: true,
     type: 'string'
-  },
-  grpcPort: {
-    description: `The port of the Cloud Functions Emulator gRPC API. ${'Default:'.bold} ${defaults.grpcPort.toString().green}`,
-    requiresArg: true,
-    type: 'number'
   },
   host: {
     description: `The host of the Cloud Functions Emulator. ${'Default:'.bold} ${defaults.host.toString().green}`,

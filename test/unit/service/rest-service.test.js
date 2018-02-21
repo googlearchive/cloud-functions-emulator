@@ -43,12 +43,12 @@ describe('unit/service/rest-service', () => {
       const service = new RestService(functionsMock, {});
 
       nock('https://faked.com')
-      .post('/fake-project/us-central1/test-function')
-      .reply(200);
+        .post('/fake-project/us-central1/test-function')
+        .reply(200);
 
       request(service.server)
-      .post('/v1beta2/projects/fake-project/locations/us-central1/functions/test-function::call')
-      .expect(200, done);
+        .post('/v1/projects/fake-project/locations/us-central1/functions/test-function:call')
+        .expect(200, done);
     });
 
     it(`should fill in correct default resource and eventType`, done => {
@@ -68,15 +68,15 @@ describe('unit/service/rest-service', () => {
       const service = new RestService(functionsMock, {});
 
       nock('https://faked.com')
-      .post('/fake-project/us-central1/test-function', {
-        resource: 'fake.resource',
-        eventType: 'fake.type'
-      })
-      .reply(200);
+        .post('/fake-project/us-central1/test-function', {
+          resource: 'fake.resource',
+          eventType: 'fake.type'
+        })
+        .reply(200);
 
       request(service.server)
-      .post('/v1beta2/projects/fake-project/locations/us-central1/functions/test-function::call')
-      .expect(200, done);
+        .post('/v1/projects/fake-project/locations/us-central1/functions/test-function:call')
+        .expect(200, done);
     });
 
     it(`should default auth to {admin:true} for Firebase database functions`, done => {
@@ -96,14 +96,14 @@ describe('unit/service/rest-service', () => {
       const service = new RestService(functionsMock, {});
 
       nock('https://faked.com')
-      .post('/fake-project/us-central1/test-function', {
-        auth: {admin: true}
-      })
-      .reply(200);
+        .post('/fake-project/us-central1/test-function', {
+          auth: {admin: true}
+        })
+        .reply(200);
 
       request(service.server)
-      .post('/v1beta2/projects/fake-project/locations/us-central1/functions/test-function::call')
-      .expect(200, done);
+        .post('/v1/projects/fake-project/locations/us-central1/functions/test-function:call')
+        .expect(200, done);
     });
 
     it(`should allow auth, eventType, and resource to be custom-defined`, done => {
@@ -123,19 +123,19 @@ describe('unit/service/rest-service', () => {
       const service = new RestService(functionsMock, {});
 
       nock('https://faked.com')
-      .post('/fake-project/us-central1/test-function', {
-        auth: {admin: false},
-        resource: 'custom.resource'
-      })
-      .reply(200);
+        .post('/fake-project/us-central1/test-function', {
+          auth: {admin: false},
+          resource: 'custom.resource'
+        })
+        .reply(200);
 
       request(service.server)
-      .post('/v1beta2/projects/fake-project/locations/us-central1/functions/test-function::call')
-      .send({
-        auth: {admin: false},
-        resource: 'custom.resource'
-      })
-      .expect(200, done);
+        .post('/v1/projects/fake-project/locations/us-central1/functions/test-function:call')
+        .send({
+          auth: {admin: false},
+          resource: 'custom.resource'
+        })
+        .expect(200, done);
     });
   });
 });

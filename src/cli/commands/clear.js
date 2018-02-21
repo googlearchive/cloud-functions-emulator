@@ -40,7 +40,7 @@ exports.description = DESCRIPTION;
 exports.builder = (yargs) => {
   yargs
     .usage(USAGE)
-    .options(_.pick(OPTIONS, ['grpcPort', 'host', 'projectId', 'region', 'restPort', 'service']));
+    .options(_.pick(OPTIONS, ['host', 'projectId', 'region', 'restPort', 'service']));
 
   EXAMPLES['clear'].forEach((e) => yargs.example(e[0], e[1]));
 };
