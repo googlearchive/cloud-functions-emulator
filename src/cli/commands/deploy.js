@@ -57,13 +57,13 @@ exports.builder = (yargs) => {
         requiresArg: false
       },
       'event-type': {
-        description:  `The service that is sending an event and the kind of event that was fired. Must be of the form ${'PROVIDER.EVENT_TYPE'.bold}. ${'PROVIDER'.bold} must be one of: cloud.pubsub, cloud.storage, google.firebase.auth, google.firebase.database, google.firebase.analytics. ${'EVENT_TYPE'.bold} must be one of: topic.publish, object.change, user.create, user.delete, ref.write, ref.create, ref.update, ref.delete, event.log.`,
+        description: `The service that is sending an event and the kind of event that was fired. Must be of the form ${'PROVIDER.EVENT_TYPE'.bold}. ${'PROVIDER'.bold} must be one of: cloud.pubsub, cloud.storage, google.firebase.auth, google.firebase.database, google.firebase.analytics. ${'EVENT_TYPE'.bold} must be one of: topic.publish, object.change, user.create, user.delete, ref.write, ref.create, ref.update, ref.delete, event.log.`,
         requiresArg: true,
         type: 'string',
         required: false
       },
       'resource': {
-        description:  `Which instance of the source's service should send events. E.g. for Pub/Sub this would be a Pub/Sub topic at 'projects/*/topics/*'. For Google Cloud Storage this would be a bucket at 'projects/*/buckets/*'. For any source that only supports one instance per-project, this should be the name of the project ('projects/*')`,
+        description: `Which instance of the source's service should send events. E.g. for Pub/Sub this would be a Pub/Sub topic at 'projects/*/topics/*'. For Google Cloud Storage this would be a bucket at 'projects/*/buckets/*'. For any source that only supports one instance per-project, this should be the name of the project ('projects/*')`,
         requiresArg: true,
         type: 'string',
         required: false
@@ -102,13 +102,13 @@ exports.builder = (yargs) => {
       },
       'trigger-provider': {
         choices: ['cloud.pubsub', 'cloud.storage', 'google.firebase.auth', 'google.firebase.database', 'google.firebase.analytics', undefined],
-        description:  `${'LEGACY'.yellow}: Trigger this function in response to an event in another service. For a list of acceptable values, call gcloud functions event-types list. PROVIDER must be one of: cloud.pubsub, cloud.storage, google.firebase.auth, google.firebase.database, google.firebase.analytics`,
+        description: `${'LEGACY'.yellow}: Trigger this function in response to an event in another service. For a list of acceptable values, call gcloud functions event-types list. PROVIDER must be one of: cloud.pubsub, cloud.storage, google.firebase.auth, google.firebase.database, google.firebase.analytics`,
         requiresArg: true,
         type: 'string',
         required: false
       },
       'trigger-resource': {
-        description:  `${'LEGACY'.yellow}: Specifies which resource from --trigger-provider is being observed. E.g. if --trigger-provider is cloud.storage, --trigger-resource must be a bucket name. For a list of expected resources, call functions event_types list.`,
+        description: `${'LEGACY'.yellow}: Specifies which resource from --trigger-provider is being observed. E.g. if --trigger-provider is cloud.storage, --trigger-resource must be a bucket name. For a list of expected resources, call functions event_types list.`,
         requiresArg: true,
         type: 'string',
         required: false

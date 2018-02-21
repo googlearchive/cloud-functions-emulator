@@ -40,7 +40,6 @@ const got = require('got');
 const path = require('path');
 const spawn = require('child_process').spawn;
 const Storage = require('@google-cloud/storage');
-const tmp = require('tmp');
 
 const Client = require('../client');
 const config = require('../config');

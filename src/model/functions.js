@@ -23,12 +23,9 @@ const got = require('got');
 const logger = require('winston');
 const os = require('os');
 const path = require('path');
-const querystring = require('querystring');
 const rimraf = require('rimraf');
 const spawn = require('child_process').spawn;
 const Storage = require('@google-cloud/storage');
-const tmp = require('tmp');
-const url = require('url');
 const uuid = require('uuid');
 
 const CloudFunction = require('./cloudfunction');
@@ -253,7 +250,6 @@ class Functions {
           if (!matches) {
             throw new Error(`Unsupported archive url: ${sourceArchiveUrl}`);
           }
-          const name = path.parse(matches[2]).base;
           const parts = CloudFunction.parseName(cloudfunction.name);
           const storage = Storage({
             projectId: parts.project

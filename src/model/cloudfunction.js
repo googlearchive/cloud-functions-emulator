@@ -173,7 +173,7 @@ class CloudFunction {
     cloudfunction.sourceUploadUrl = url.format(parts);
   }
 
-  static generateUploadUrl(opts = {}) {
+  static generateUploadUrl (opts = {}) {
     opts.bindHost || (opts.bindHost = 'localhost');
     opts.port || (opts.port = '8010');
     let url = `http://${opts.bindHost}:${opts.port}/upload`;
