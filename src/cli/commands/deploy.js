@@ -128,7 +128,7 @@ exports.handler = (opts) => {
   opts.source || (opts.source = process.cwd());
 
   if (opts.triggerBucket) {
-    opts.eventType = 'google.storage.object.metadataUpdate';
+    opts.eventType = 'google.storage.object.finalize';
     opts.resource = opts.triggerBucket;
   } else if (opts.triggerTopic) {
     opts.eventType = 'google.pubsub.topic.publish';

@@ -535,7 +535,7 @@ function makeTests (service, override) {
         let output = run(`${override || cmd} delete helloData ${overrideArgs ? overrideArgs + ' -q' : shortArgs}`, cwd);
         if (override) {
           assert(output.includes(`/functions/helloData`));
-          assert(output.includes(`deleted`));
+          assert(output.toLowerCase().includes(`deleted`));
         } else {
           assert(output.includes(`Function helloData deleted.`));
         }
@@ -662,11 +662,14 @@ describe(`system/cli`, () => {
   });
 
   if (!process.env.CIRCLECI) {
+    console.log('Running "rest" and "rest-sdk" system tests');
     makeTests(`rest`);
     makeTests(`rest`, `${GCLOUD} beta functions`);
   } else if (process.env.CIRCLE_NODE_INDEX === '0') {
+    console.log('Running "rest" system tests only');
     makeTests(`rest`);
   } else if (process.env.CIRCLE_NODE_INDEX === '1') {
+    console.log('Running "rest-sdk" system tests only');
     makeTests(`rest`, `${GCLOUD} beta functions`);
   }
 });
