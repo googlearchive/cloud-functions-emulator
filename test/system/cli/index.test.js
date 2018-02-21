@@ -59,7 +59,7 @@ function makeTests (service, override) {
       return Promise.resolve()
         .then(() => {
           if (override) {
-            overrideArgs = `--region=${REGION}`;
+            overrideArgs = `--regions=${REGION}`;
             return tools.spawnAsyncWithIO(GCLOUD, ['info', `--format='value(config.properties.api_endpoint_overrides.cloudfunctions)'`], cwd)
               .then((results) => {
                 currentEndpoint = results.output;
@@ -543,7 +543,7 @@ function makeTests (service, override) {
         output = run(`${override || cmd} list ${override ? '--regions=' + REGION + ' ' : ''}${overrideArgs || shortArgs}`, cwd);
         assert.equal(output.includes(`No functions deployed`), false);
         assert.equal(output.includes(`helloData`), false);
-        assert(output.includes(`hello`));
+        assert(output.toLowerCase().includes(`hello`));
       });
     });
 
