@@ -75,11 +75,11 @@ exports.handler = (opts) => {
         controller.write('Deleting function');
         poll();
       })
-      .then(() => controller.write('done.\n'))
-      .catch((err) => {
-        controller.write('failed.\n');
-        return Promise.reject(err);
-      });
+        .then(() => controller.write('done.\n'))
+        .catch((err) => {
+          controller.write('failed.\n');
+          return Promise.reject(err);
+        });
     })
     .then(() => controller.log(`Function ${opts.functionName} deleted.`.green))
     .then(() => list(opts))

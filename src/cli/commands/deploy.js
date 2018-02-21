@@ -166,11 +166,11 @@ exports.handler = (opts) => {
         controller.write('Deploying function');
         poll();
       })
-      .then(() => controller.write('done.\n'))
-      .catch((err) => {
-        controller.write('failed.\n');
-        return Promise.reject(err);
-      });
+        .then(() => controller.write('done.\n'))
+        .catch((err) => {
+          controller.write('failed.\n');
+          return Promise.reject(err);
+        });
     })
     // Log the status
     .then(() => controller.log(`Function ${opts.functionName} deployed.`.green))

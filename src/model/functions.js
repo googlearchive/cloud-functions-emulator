@@ -639,13 +639,13 @@ class Functions {
   getOperation (name) {
     logger.debug('Functions#getOperation', name);
     return this.adapter.getOperation(name)
-    .then((operation) => {
-      if (!operation) {
-        return this._getOperationNotFoundError(name);
-      }
+      .then((operation) => {
+        if (!operation) {
+          return this._getOperationNotFoundError(name);
+        }
 
-      return this.operation(name, operation);
-    }, (err) => this._getOperationError(err));
+        return this.operation(name, operation);
+      }, (err) => this._getOperationError(err));
   }
 
   /**
