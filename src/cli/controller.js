@@ -127,6 +127,10 @@ class Controller {
 
     return new Promise((resolve, reject) => {
       // Parse the user's code to find the names of the exported functions
+      if (opts.firebase) {
+            resolve(name.replace(/\-/g, '\.'));
+      }
+
       exec(`node -e "console.log(JSON.stringify(Object.keys(require('${pathForCmd}') || {}))); setTimeout(function() { process.exit(0); }, 100);"`, (err, stdout, stderr) => {
         if (err) {
           this.error(`${'ERROR'.red}: Function load error: Code could not be loaded.`);
@@ -141,7 +145,7 @@ class Controller {
       .then((exportedKeys) => {
         // TODO: Move this check to the Emulator during unpacking
         // TODO: Make "index.js" dynamic
-        if (!exportedKeys.includes(opts.entryPoint) && !exportedKeys.includes(name)) {
+        if (!opts.firebase && !exportedKeys.includes(opts.entryPoint) && !exportedKeys.includes(name)) {
           throw new Error(`Node.js module defined by file index.js is expected to export function named ${opts.entryPoint || name}`);
         }
 
