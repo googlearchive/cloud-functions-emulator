@@ -1,3 +1,10 @@
+##### 1.0.0-beta.3 - 23 February 2017
+
+###### Bug fixes
+- Fixed missing promise
+- Fixed default `source` value in Controller#deploy
+- Fixed outdated discovery doc
+
 ##### 1.0.0-beta.2 - 20 February 2017
 
 ###### Other

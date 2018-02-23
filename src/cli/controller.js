@@ -287,6 +287,10 @@ class Controller {
         cloudfunction.entryPoint = opts.entryPoint;
       }
 
+      if (!opts.source) {
+        opts.source = process.cwd();
+      }
+
       if (opts.source.startsWith('https://')) {
         throw new Error('"https://" source is not supported yet!');
       } else if (opts.source.startsWith('gs://')) {
