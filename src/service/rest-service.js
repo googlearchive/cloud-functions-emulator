@@ -204,11 +204,20 @@ class RestService extends Service {
       });
   }
 
+  /**
+   * Generates an upload URL.
+   *
+   * @param {object} req The request.
+   * @param {object} res The response.
+   */
   generateUploadUrl (req, res) {
     logger.debug('RestService#generateUploadUrl');
-    res.send({
-      uploadUrl: CloudFunction.generateUploadUrl(this.config)
-    }).end();
+    return new Promise((resolve) => {
+      res.send({
+        uploadUrl: CloudFunction.generateUploadUrl(this.config)
+      }).end();
+      resolve();
+    });
   }
 
   /**
@@ -221,7 +230,7 @@ class RestService extends Service {
     return Promise.resolve()
       .then(() => {
         const doc = this._discovery.all;
-        if (typeof doc === 'object' && Object.keys(doc).length > 0) {
+        if (typeof doc === 'object' && Object.keys(doc).length > 0 && doc.version === API_VERSION) {
           return doc;
         }
         return got(DISCOVERY_URL, {
