@@ -62,7 +62,7 @@ function main () {
     }
 
     // Require the target module to load the function for invocation
-    const functionModule = require(localdir);
+    const functionModule = require(cloudfunction.serviceAccount);
     const bracketedName = name.split('-');
     const nestedFunctionModule = _.reduce(bracketedName, function(funcMod, item) {
       return funcMod[item];
