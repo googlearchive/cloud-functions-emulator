@@ -19,7 +19,6 @@ const _ = require('lodash');
 const uuid = require('uuid');
 
 const Errors = require('../utils/errors');
-const protos = require('./protos');
 const Schema = require('../utils/schema');
 
 const NAME_REG_EXP = /^operations\/([-A-Za-z0-9]+)$/;
@@ -51,15 +50,13 @@ class Operation {
     if (!name || typeof name !== 'string' || !Operation.NAME_REG_EXP.test(name)) {
       const err = new Errors.InvalidArgumentError(`Invalid value '${name}': Operation name must contain only lower case Latin letters, digits and hyphens (-).`);
       err.details.push(new Errors.BadRequest(err, 'name'));
-      err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.Operation), name));
       throw err;
     }
-    _.merge(this, Operation.decode(props), { name });
+    _.merge(this, props, { name });
     const errors = Schema.validate(this, Operation.schema);
     if (errors) {
       const err = new Errors.InvalidArgumentError('Invalid Operation property!');
       err.details.push(new Errors.BadRequest(err, errors));
-      err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.Operation), name));
       throw err;
     }
   }
@@ -82,52 +79,6 @@ class Operation {
    */
   static get schema () {
     return OperationSchema;
-  }
-
-  /**
-   * Decodes an Operation message.
-   *
-   * @method Operation.decode
-   * @param {object} operation The Operation to decode.
-   * @returns {object} The decoded operation.
-   */
-  static decode (operation = {}) {
-    // Decode the top-level Operation message fields
-    operation = protos.decode(operation, protos.Operation);
-
-    // Decode the Operation error details, if any
-    if (operation.error && Array.isArray(operation.error.details)) {
-      operation.error.details.forEach((detail) => {
-        protos.decodeAnyType(detail);
-      });
-    }
-
-    // Validate the oneOf property of "error" and "response"
-    if (operation.error && operation.response) {
-      const message = `Operation may only have one of 'error' or 'response'!`;
-      const err = new Error(message);
-      err.code = Errors.status.INVALID_ARGUMENT;
-      err.details = [
-        {
-          typeUrl: 'google.rpc.BadRequest',
-          value: {
-            fieldViolations: [
-              {
-                field: 'error',
-                description: message
-              },
-              {
-                field: 'response',
-                description: message
-              }
-            ]
-          }
-        }
-      ];
-      throw err;
-    }
-
-    return operation;
   }
 
   /**
@@ -163,52 +114,6 @@ class Operation {
     return {
       operation: matches ? matches[1] : null
     };
-  }
-
-  /**
-   * Convert this Operation instance into a gRPC Operation message.
-   *
-   * @method Operation#toProtobuf
-   * @returns {object} The encoded Operation message.
-   */
-  toProtobuf () {
-    // Get a sanitized copy of this Operation instance.
-    const operation = Operation.decode(this);
-
-    // Encode objects of type "google.protobuf.Any".
-    protos.encodeAnyType(operation.metadata);
-    protos.encodeAnyType(operation.response);
-    if (operation.error && Array.isArray(operation.error.details)) {
-      operation.error.details.forEach((detail) => {
-        protos.encodeAnyType(detail);
-      });
-    }
-
-    if (operation.error instanceof Error) {
-      const details = operation.error.details;
-      operation.error = {
-        code: operation.error.code,
-        message: operation.error.message
-      };
-      if (details) {
-        operation.error.details = details;
-      }
-    }
-
-    return operation;
-  }
-
-  /**
-   * Convert this Operation instance into an object suitable for transport over
-   * REST (JSON).
-   *
-   * @method Operation#toJSON
-   * @returns {object} The formatted object.
-   */
-  toJSON () {
-    // Return a sanitized copy of this Operation instance. There's no need to
-    // encode anything.
-    return Operation.decode(this);
   }
 }
 

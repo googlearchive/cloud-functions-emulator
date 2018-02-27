@@ -1,3 +1,30 @@
+##### 1.0.0-beta.3 - 23 February 2017
+
+###### Bug fixes
+- Fixed missing promise
+- Fixed default `source` value in Controller#deploy
+- Fixed outdated discovery doc
+
+##### 1.0.0-beta.2 - 20 February 2017
+
+###### Other
+- Updated dependencies
+
+##### 1.0.0-beta.1 - 20 February 2017
+
+###### Breaking changes
+- Removed all support for gRPC.
+
+###### Backwards compatible changes
+- Added new `--event-type` and `--resource` flags to the `deploy` command.
+- Added support for `generateUploadUrl`.
+
+###### Bug fixes
+- [#176](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/176) - Wrong error message
+
+###### Other
+- Updated dependencies
+
 ##### 1.0.0-alpha.29 - 12 December 2017
 
 ###### Bug fixes

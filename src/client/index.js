@@ -16,7 +16,5 @@
 'use strict';
 
 exports.Client = require('./client');
-exports.GrpcClient = require('./grpc-client');
 exports.RestClient = require('./rest-client');
-exports.grpcClient = (...args) => new exports.GrpcClient(...args);
 exports.restClient = (...args) => new exports.RestClient(...args);

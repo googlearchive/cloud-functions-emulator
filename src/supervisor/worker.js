@@ -20,9 +20,19 @@ const bodyParser = require('body-parser');
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const querystring = require('querystring');
 const serializerr = require('serializerr');
+const url = require('url');
 
 let _originalLoader = null;
+
+function getLocaldir (cloudfunction) {
+  cloudfunction || (cloudfunction = {});
+  const sourceUploadUrl = cloudfunction.sourceUploadUrl || '';
+  const parts = url.parse(sourceUploadUrl);
+  const query = querystring.parse(parts.query);
+  return query.localdir;
+}
 
 const loadHandler = {
   init (handler) {
@@ -39,9 +49,10 @@ function main () {
   process.on('message', (message) => {
     const name = message.name;
     const cloudfunction = message.cloudfunction;
+    const localdir = getLocaldir(cloudfunction);
 
     // Unload the code if is already loaded
-    delete require.cache[cloudfunction.serviceAccount];
+    delete require.cache[localdir];
 
     if (message.useMocks) {
       try {
@@ -62,7 +73,7 @@ function main () {
     }
 
     // Require the target module to load the function for invocation
-    const functionModule = require(cloudfunction.serviceAccount);
+    const functionModule = require(localdir);
     const bracketedName = name.split('-');
     const nestedFunctionModule = _.reduce(bracketedName, function(funcMod, item) {
       return funcMod[item];
@@ -162,8 +173,8 @@ function main () {
     });
 
     // Only start watching for file changes if the funciton is not in debug mode
-    if (cloudfunction.serviceAccount && !message.debug && message.watch) {
-      fs.watch(cloudfunction.serviceAccount, {
+    if (localdir && !message.debug && message.watch) {
+      fs.watch(localdir, {
         recursive: true
       }, (event, filename) => {
         // Ignore node_modules

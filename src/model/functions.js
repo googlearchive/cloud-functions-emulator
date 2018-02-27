@@ -26,14 +26,12 @@ const path = require('path');
 const rimraf = require('rimraf');
 const spawn = require('child_process').spawn;
 const Storage = require('@google-cloud/storage');
-const tmp = require('tmp');
 const uuid = require('uuid');
 
 const CloudFunction = require('./cloudfunction');
 const Errors = require('../utils/errors');
 const Operation = require('./operation');
 const pkg = require('../../package.json');
-const protos = require('./protos');
 const Schema = require('../utils/schema');
 
 const GCS_URL = /^gs:\/\/([A-Za-z0-9][\w-.]+[A-Za-z0-9])\/(.+)$/;
@@ -162,7 +160,6 @@ class Functions {
         if (cloudfunction) {
           const parts = CloudFunction.parseName(name);
           const err = new Errors.ConflictError(`Function ${parts.name} in location ${parts.location} in project ${parts.project} already exists`);
-          err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
           logger.error(err);
           throw err;
         }
@@ -214,68 +211,69 @@ class Functions {
     });
   }
 
+  _prepDir (dirName) {
+    return this._checkForPackageJson(dirName)
+      .then((hasPackageJson) => {
+        if (hasPackageJson) {
+          return this._checkForYarn(dirName)
+            .then((hasYarn) => hasYarn ? this._installYarn(dirName) : this._installNpm(dirName));
+        }
+      });
+  }
+
   _unpackArchive (cloudfunction) {
     logger.debug('Functions#_unpackArchive', cloudfunction);
     return Promise.resolve()
       .then(() => {
-        const archiveUrl = cloudfunction.gcsUrl || cloudfunction.sourceArchiveUrl || '';
-        if (!cloudfunction.serviceAccount || archiveUrl.startsWith('gs://')) {
-          if (archiveUrl) {
-            if (archiveUrl.startsWith('file://')) {
-              logger.debug('Functions#_unpackArchive', 'Function will be loaded from local file system.');
-              // TODO
-              return cloudfunction;
-            } else if (archiveUrl.startsWith('gs://')) {
-              logger.debug('Functions#_unpackArchive', 'Function will be downloaded from Cloud Storage.');
-              const matches = archiveUrl.match(GCS_URL);
-              if (!matches) {
-                throw new Error(`Unsupported archive url: ${archiveUrl}`);
-              }
-              const name = path.parse(matches[2]).base;
-              const parts = CloudFunction.parseName(cloudfunction.name);
-              const storage = Storage({
-                projectId: parts.project
-              });
-              const file = storage.bucket(matches[1]).file(matches[2]);
+        const sourceArchiveUrl = cloudfunction.gcsUrl || cloudfunction.sourceArchiveUrl || '';
+        let archive = CloudFunction.getArchive(cloudfunction);
+        let localdir = CloudFunction.getLocaldir(cloudfunction);
 
-              let zipName = tmp.tmpNameSync({
-                postfix: `-${name}`
-              });
-              if (!zipName.endsWith('.zip')) {
-                zipName = `${zipName}.zip`;
-              }
-
-              return file.download({
-                destination: zipName
-              })
-                .then(() => {
-                  const zip = new AdmZip(zipName);
-                  const parts = path.parse(zipName);
-                  const dirName = path.join(parts.dir, parts.name);
-
-                  cloudfunction.serviceAccount = dirName;
-                  zip.extractAllTo(dirName);
-
-                  return this._checkForPackageJson(dirName)
-                    .then((hasPackageJson) => {
-                      if (hasPackageJson) {
-                        return this._checkForYarn(dirName)
-                          .then((hasYarn) => hasYarn ? this._installYarn(dirName) : this._installNpm(dirName));
-                      }
-                    });
-                })
-                .then(() => this.adapter.createFunction(cloudfunction))
-                .then(() => cloudfunction);
-            } else {
-              throw new Error(`Unsupported archive url: ${archiveUrl}`);
-            }
-          } else {
-            throw new Error('Local deployment using "--source-url" is not supported yet!');
-          }
+        if (localdir) {
+          logger.debug('Functions#_unpackArchive', 'Function will be loaded from local file system.');
+          return cloudfunction;
         }
-        // Function was deployed from the local file system, so we're not going
-        // to do anything else here.
-        return cloudfunction;
+
+        logger.debug('Functions#_unpackArchive', 'Function source will be unpacked.');
+
+        if (archive) {
+          const zip = new AdmZip(archive);
+          const parts = path.parse(archive);
+          localdir = path.join(parts.dir, parts.name);
+          CloudFunction.addLocaldir(cloudfunction, localdir);
+          zip.extractAllTo(localdir);
+          return this._prepDir(localdir)
+            .then(() => this.adapter.createFunction(cloudfunction))
+            .then(() => cloudfunction);
+        } else if (sourceArchiveUrl.startsWith('gs://') && !archive) {
+          const matches = sourceArchiveUrl.match(GCS_URL);
+          if (!matches) {
+            throw new Error(`Unsupported archive url: ${sourceArchiveUrl}`);
+          }
+          const parts = CloudFunction.parseName(cloudfunction.name);
+          const storage = Storage({
+            projectId: parts.project
+          });
+          const file = storage.bucket(matches[1]).file(matches[2]);
+
+          cloudfunction.sourceUploadUrl = CloudFunction.generateUploadUrl(this.config);
+          let zipName = CloudFunction.getArchive(cloudfunction);
+
+          return file.download({ destination: zipName })
+            .then(() => {
+              const zip = new AdmZip(zipName);
+              const parts = path.parse(zipName);
+              localdir = path.join(parts.dir, parts.name);
+              CloudFunction.addLocaldir(cloudfunction, localdir);
+              zip.extractAllTo(localdir);
+
+              return this._prepDir(localdir);
+            })
+            .then(() => this.adapter.createFunction(cloudfunction))
+            .then(() => cloudfunction);
+        } else {
+          throw new Error(`Unsupported archive url: ${sourceArchiveUrl}`);
+        }
       });
   }
 
@@ -309,7 +307,6 @@ class Functions {
   _createFunctionError (name, err) {
     logger.error(err);
     err = new Errors.InternalError(err.message);
-    err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
     return Promise.reject(err);
   }
 
@@ -342,6 +339,8 @@ class Functions {
           }
         }
 
+        logger.debug(JSON.stringify(request.function, null, 2));
+
         // TODO: Filter out fields that cannot be edited by the user
         cloudfunction = this.cloudfunction(cloudfunction.name, cloudfunction);
       })
@@ -359,12 +358,12 @@ class Functions {
         operation = this.operation(Operation.generateId(), {
           done: false,
           metadata: {
-            typeUrl: protos.getPath(protos.OperationMetadataV1Beta2),
+            typeUrl: 'types.googleapis.com/google.cloud.functions.v1beta2.OperationMetadataV1Beta2',
             value: {
               target: cloudfunction.name,
-              type: protos.OperationType.CREATE_FUNCTION,
+              type: 1,
               request: {
-                typeUrl: protos.getPath(protos.CreateFunctionRequest),
+                typeUrl: 'types.googleapis.com/google.cloud.functions.v1beta2.CreateFunctionRequest',
                 value: request
               }
             }
@@ -411,7 +410,7 @@ class Functions {
               cloudfunction.status = 'READY';
               operation.done = true;
               operation.response = {
-                typeUrl: protos.getPath(protos.CloudFunction),
+                typeUrl: 'types.googleapis.com/google.cloud.functions.v1beta2.CloudFunction',
                 value: _.cloneDeep(cloudfunction)
               };
 
@@ -454,7 +453,6 @@ class Functions {
    */
   _deleteFunctionError (name, err, operation) {
     err = new Errors.InternalError(err.message);
-    err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
 
     if (operation) {
       operation.done = true;
@@ -486,12 +484,12 @@ class Functions {
         const operation = this.operation(operationName, {
           done: false,
           metadata: {
-            typeUrl: protos.getPath(protos.OperationMetadataV1Beta2),
+            typeUrl: 'types.googleapis.com/google.cloud.functions.v1beta2.OperationMetadataV1Beta2',
             value: {
               target: name,
-              type: protos.OperationType.DELETE_FUNCTION,
+              type: 1,
               request: {
-                typeUrl: protos.getPath(protos.DeleteFunctionRequest),
+                typeUrl: 'types.googleapis.com/google.cloud.functions.v1beta2.DeleteFunctionRequest',
                 value: { name }
               }
             }
@@ -503,31 +501,20 @@ class Functions {
           .then(() => {
             // Asynchronously perform the deletion of the CloudFunction
             setImmediate(() => {
-              if (cloudfunction.sourceArchiveUrl.startsWith('file://')) {
+              const archive = CloudFunction.getArchive(cloudfunction);
+              const localdir = CloudFunction.getLocaldir(cloudfunction);
+              if (archive) {
                 try {
-                  fs.unlinkSync(cloudfunction.sourceArchiveUrl.replace('file://', ''));
+                  fs.unlinkSync(archive);
                 } catch (err) {
                   // Ignore error
                 }
-              }
-
-              const parts = path.parse(cloudfunction.sourceArchiveUrl);
-
-              if (cloudfunction.sourceArchiveUrl.startsWith('gs://') &&
-                parts.name && cloudfunction.serviceAccount &&
-                cloudfunction.serviceAccount.startsWith('/') &&
-                cloudfunction.serviceAccount.endsWith(parts.name)) {
-                try {
-                  fs.unlinkSync(`${cloudfunction.serviceAccount}.zip`);
-                  rimraf.sync(cloudfunction.serviceAccount);
-                } catch (err) {
-                  // Ignore error
-                }
-              } else if (cloudfunction.sourceArchiveUrl.startsWith('file:///')) {
-                try {
-                  fs.unlinkSync(cloudfunction.sourceArchiveUrl);
-                } catch (err) {
-                  // Ignore error
+                if (localdir && archive.startsWith(localdir)) {
+                  try {
+                    rimraf.sync(localdir);
+                  } catch (err) {
+                    // Ignore error
+                  }
                 }
               }
 
@@ -571,7 +558,6 @@ class Functions {
   _getFunctionNotFoundError (name) {
     const parts = CloudFunction.parseName(name);
     const err = new Errors.NotFoundError(`Function ${parts.name} in location ${parts.location} in project ${parts.project} does not exist`);
-    err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
     return Promise.reject(err);
   }
 
@@ -587,7 +573,6 @@ class Functions {
    */
   _getFunctionError (name, err) {
     err = new Errors.InternalError(err.message);
-    err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.CloudFunction), name));
     logger.error(err);
     return Promise.reject(err);
   }
@@ -625,7 +610,6 @@ class Functions {
    */
   _getOperationNotFoundError (name) {
     const err = new Errors.NotFoundError(`Operation ${name} does not exist`);
-    err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.Operation), name));
     return Promise.reject(err);
   }
 
@@ -641,7 +625,6 @@ class Functions {
    */
   _getOperationError (name, err) {
     err = new Errors.InternalError(err.message);
-    err.details.push(new Errors.ResourceInfo(err, protos.getPath(protos.Operation), name));
     logger.error(err);
     return Promise.reject(err);
   }
@@ -656,13 +639,13 @@ class Functions {
   getOperation (name) {
     logger.debug('Functions#getOperation', name);
     return this.adapter.getOperation(name)
-    .then((operation) => {
-      if (!operation) {
-        return this._getOperationNotFoundError(name);
-      }
+      .then((operation) => {
+        if (!operation) {
+          return this._getOperationNotFoundError(name);
+        }
 
-      return this.operation(name, operation);
-    }, (err) => this._getOperationError(err));
+        return this.operation(name, operation);
+      }, (err) => this._getOperationError(err));
   }
 
   /**

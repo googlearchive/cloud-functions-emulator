@@ -15,27 +15,14 @@
 
 'use strict';
 
-const _ = require('lodash');
-const grpc = require(`grpc`);
 const proxyquire = require(`proxyquire`);
 
 describe(`unit/model/cloudfunction`, () => {
-  let CloudFunction, mocks;
+  let CloudFunction;
   const TEST_NAME = `projects/p/locations/l/functions/f`;
 
   beforeEach(() => {
-    mocks = {
-      protos: {
-        decode: (arg1) => _.cloneDeep(arg1),
-        decodeAnyType: sinon.stub(),
-        encodeAnyType: sinon.stub()
-      }
-    };
-    sinon.spy(mocks.protos, `decode`);
-
-    CloudFunction = proxyquire(`../../../src/model/cloudfunction`, {
-      './protos': mocks.protos
-    });
+    CloudFunction = proxyquire(`../../../src/model/cloudfunction`, {});
   });
 
   describe(`CloudFunction`, () => {
@@ -69,12 +56,11 @@ describe(`unit/model/cloudfunction`, () => {
           assert(err.message === message);
           assert.errorType(
             err,
-            grpc.status.INVALID_ARGUMENT,
+            3,
             message,
             [
               `DebugInfo`,
-              `BadRequest`,
-              `ResourceInfo`
+              `BadRequest`
             ]
           );
           return true;
@@ -133,24 +119,6 @@ describe(`unit/model/cloudfunction`, () => {
       );
     });
 
-    it(`should decode the props`, () => {
-      sinon.spy(CloudFunction, `decode`);
-
-      let props = {};
-      let cloudfunction = new CloudFunction(TEST_NAME);
-
-      assert.deepEqual(cloudfunction, { name: TEST_NAME });
-      assert(CloudFunction.decode.callCount === 1);
-      assert.deepEqual(CloudFunction.decode.getCall(0).args, [props]);
-
-      props = { done: true };
-      cloudfunction = new CloudFunction(TEST_NAME, props);
-
-      assert.deepEqual(cloudfunction, _.merge(props, { name: TEST_NAME }));
-      assert(CloudFunction.decode.callCount === 2);
-      assert.deepEqual(CloudFunction.decode.getCall(1).args, [props]);
-    });
-
     it(`should return an CloudFunction instance`, () => {
       assert(new CloudFunction(TEST_NAME) instanceof CloudFunction);
     });
@@ -171,24 +139,6 @@ describe(`unit/model/cloudfunction`, () => {
   describe(`CloudFunction.SHORT_NAME_REG_EXP`, () => {
     it(`should be an instance of RegExp`, () => {
       assert(CloudFunction.SHORT_NAME_REG_EXP instanceof RegExp);
-    });
-  });
-
-  describe(`CloudFunction.decode`, () => {
-    it(`should decode the props`, () => {
-      let props;
-      let cloudfunction = CloudFunction.decode();
-
-      assert.deepEqual(cloudfunction, {});
-      assert(mocks.protos.decode.callCount === 1);
-      assert(mocks.protos.decodeAnyType.callCount === 0);
-
-      props = {};
-      cloudfunction = CloudFunction.decode(props);
-
-      assert.deepEqual(cloudfunction, props);
-      assert(cloudfunction !== props);
-      assert(mocks.protos.decode.callCount === 2);
     });
   });
 
@@ -234,55 +184,6 @@ describe(`unit/model/cloudfunction`, () => {
 
       cloudfunction.setSourceArchiveUrl(sourceArchiveUrl);
       assert(cloudfunction.sourceArchiveUrl === sourceArchiveUrl);
-    });
-  });
-
-  describe(`CloudFunction#toProtobuf`, () => {
-    it(`should return a representation suitable for serialization to a protobuf`, () => {
-      sinon.spy(CloudFunction, `decode`);
-
-      const cloudfunction = new CloudFunction(TEST_NAME, {
-        sourceArchiveUrl: `gs://bucket/file.zip`,
-        pubsubTrigger: `test`
-      });
-
-      assert(CloudFunction.decode.callCount === 1);
-
-      const proto = cloudfunction.toProtobuf();
-
-      assert.deepEqual(proto, cloudfunction);
-      assert(CloudFunction.decode.callCount === 2);
-
-      cloudfunction.gcsTrigger = ``;
-      cloudfunction.pubsubTrigger = ``;
-      delete proto.pubsubTrigger;
-
-      const proto2 = cloudfunction.toProtobuf();
-
-      assert.deepEqual(proto2, proto);
-      assert(CloudFunction.decode.callCount === 3);
-
-      cloudfunction.gcsTrigger = proto.gcsTrigger = `test`;
-
-      const proto3 = cloudfunction.toProtobuf();
-
-      assert.deepEqual(proto3, proto);
-      assert(CloudFunction.decode.callCount === 4);
-    });
-  });
-
-  describe(`CloudFunction#toJSON`, () => {
-    it(`should return a representation suitable for serialization to JSON`, () => {
-      sinon.spy(CloudFunction, `decode`);
-
-      const cloudfunction = new CloudFunction(TEST_NAME);
-
-      assert(CloudFunction.decode.callCount === 1);
-
-      const json = cloudfunction.toJSON();
-
-      assert.deepEqual(json, cloudfunction);
-      assert(CloudFunction.decode.callCount === 2);
     });
   });
 });

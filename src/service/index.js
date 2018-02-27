@@ -16,7 +16,5 @@
 'use strict';
 
 exports.Service = require('./service');
-exports.GrpcService = require('./grpc-service');
 exports.RestService = require('./rest-service');
-exports.grpcService = (...args) => new exports.GrpcService(...args);
 exports.restService = (...args) => new exports.RestService(...args);
