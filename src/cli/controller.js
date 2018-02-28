@@ -116,7 +116,7 @@ class Controller {
           // Parse the user's code to find the names of the exported functions
           if (opts.firebase) {
             // If call is coming from Firebase, assume functions have already been parsed
-            return resolve(name.replace(/\-/g, '.'));
+            return resolve(name);
           }
           exec(`node -e "console.log(JSON.stringify(Object.keys(require('${pathForCmd}') || {}))); setTimeout(function() { process.exit(0); }, 100);"`, (err, stdout, stderr) => {
             if (err) {
