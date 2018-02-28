@@ -114,9 +114,9 @@ class Controller {
 
         return new Promise((resolve, reject) => {
           // Parse the user's code to find the names of the exported functions
-          if (opts.firebase) {
+          if (opts.entryPoint) {
             // If call is coming from Firebase, assume functions have already been parsed
-            return resolve(name.replace(/\-/g, '.'));
+            return resolve(opts.entryPoint);
           }
           exec(`node -e "console.log(JSON.stringify(Object.keys(require('${pathForCmd}') || {}))); setTimeout(function() { process.exit(0); }, 100);"`, (err, stdout, stderr) => {
             if (err) {

@@ -74,7 +74,7 @@ function main () {
 
     // Require the target module to load the function for invocation
     const functionModule = require(localdir);
-    const handler = _.get(functionModule, cloudfunction.entryPoint, name);
+    const handler = _.get(functionModule, cloudfunction.entryPoint, functionModule[name]);
 
     if (!handler) {
       throw new Error(`No function found with name ${cloudfunction.entryPoint || name}`);
