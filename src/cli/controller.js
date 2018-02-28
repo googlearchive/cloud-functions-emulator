@@ -133,7 +133,7 @@ class Controller {
       .then((exportedKeys) => {
         // TODO: Move this check to the Emulator during unpacking
         // TODO: Make "index.js" dynamic
-        if (!opts.firebase && !exportedKeys.includes(opts.entryPoint) && !exportedKeys.includes(name)) {
+        if (!exportedKeys.includes(opts.entryPoint) && !exportedKeys.includes(name)) {
           throw new Error(`Node.js module defined by file index.js is expected to export function named ${opts.entryPoint || name}`);
         }
 
