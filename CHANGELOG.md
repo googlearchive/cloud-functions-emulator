@@ -1,16 +1,19 @@
-##### 1.0.0-beta.3 - 23 February 2017
+##### 1.0.0-beta.4 - 06 March 2018
+
+###### Bug fixes
+- [#191](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/191) - allow for nested functions from firebase
 
 ###### Bug fixes
 - Fixed missing promise
 - Fixed default `source` value in Controller#deploy
 - Fixed outdated discovery doc
 
-##### 1.0.0-beta.2 - 20 February 2017
+##### 1.0.0-beta.2 - 20 February 2018
 
 ###### Other
 - Updated dependencies
 
-##### 1.0.0-beta.1 - 20 February 2017
+##### 1.0.0-beta.1 - 20 February 2018
 
 ###### Breaking changes
 - Removed all support for gRPC.
