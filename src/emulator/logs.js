@@ -32,9 +32,8 @@ function readLogLines (filePath, linesToRead, output) {
   stream.on('error', (err) => {
     if (err.code === 'ENOENT') {
       output('');
-      return;
     }
-  })
+  });
 
   const rl = readline.createInterface({
     input: stream,
