@@ -22,13 +22,13 @@ require('colors');
  */
 const semver = require('semver');
 if (!semver.satisfies(process.version, '>= 6.11.5')) {
-  console.error('You are required to use Node.js versions between v6.11.5 and v6.14.1 inclusive.');
+  console.error('You are required to use Node.js versions between v6.11.5 and v6.14.0 inclusive.');
   process.exit(1);
 }
 
 if (semver.satisfies(process.version, '>= 7.0.0')) {
   console.log(`Warning: You're using Node.js ${process.version} but the Cloud Functions Emulator only supports versions' +
-    'between v6.11.5 and v6.14.1 inclusive.`);
+    'between v6.11.5 and v6.14.0 inclusive.`);
 }
 
 /**
