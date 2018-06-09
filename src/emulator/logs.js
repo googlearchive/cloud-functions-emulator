@@ -16,8 +16,15 @@
 'use strict';
 
 const fs = require('fs');
+const makeDir = require('make-dir');
+const os = require('os');
 const path = require('path');
 const readline = require('readline');
+const xdgBasedir = require('xdg-basedir');
+
+const pkg = require('../../package.json');
+
+const defaultLogsDir = path.join(xdgBasedir.config || os.tmpdir(), pkg.name);
 
 function readLogLines (filePath, linesToRead, output) {
   try {
@@ -56,13 +63,13 @@ function readLogLines (filePath, linesToRead, output) {
 module.exports = {
   assertLogsPath (logFile) {
     if (!path.isAbsolute(logFile)) {
-      logFile = path.join(__dirname, '../..', logFile);
+      logFile = path.join(defaultLogsDir, logFile);
     }
 
     const parts = path.parse(logFile);
 
     if (!_pathExists(parts.dir)) {
-      fs.mkdirSync(parts.dir);
+      makeDir.sync(parts.dir);
     }
     return logFile;
   },
