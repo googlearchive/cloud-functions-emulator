@@ -26,7 +26,7 @@ const url = require('url');
 
 let _originalLoader = null;
 
-function getLocaldir (cloudfunction) {
+function getLocaldir(cloudfunction) {
   cloudfunction || (cloudfunction = {});
   const sourceUploadUrl = cloudfunction.sourceUploadUrl || '';
   const parts = url.parse(sourceUploadUrl);
@@ -35,18 +35,18 @@ function getLocaldir (cloudfunction) {
 }
 
 const loadHandler = {
-  init (handler) {
+  init(handler) {
     const Module = require('module');
     _originalLoader = Module._load;
-    Module._load = function (...args) {
+    Module._load = function(...args) {
       const override = handler.onRequire(process.env['FUNCTION_NAME'], args[0]);
-      return (override || _originalLoader.apply(this, args));
+      return override || _originalLoader.apply(this, args);
     };
-  }
+  },
 };
 
-function main () {
-  process.on('message', (message) => {
+function main() {
+  process.on('message', message => {
     const name = message.name;
     const cloudfunction = message.cloudfunction;
     const localdir = getLocaldir(cloudfunction);
@@ -67,7 +67,9 @@ function main () {
           console.log('Mock handler found. Require calls will be intercepted');
         }
       } catch (e) {
-        console.error('Mocks enabled but no mock handler found. Require calls will NOT be intercepted');
+        console.error(
+          'Mocks enabled but no mock handler found. Require calls will NOT be intercepted'
+        );
         console.error(e);
       }
     }
@@ -90,14 +92,14 @@ function main () {
 
     const rawBodySavingOptions = {
       limit: requestLimit,
-      verify: rawBodySaver
+      verify: rawBodySaver,
     };
 
     // Use extended query string parsing for URL-encoded bodies.
     const urlEncodedOptions = {
       limit: requestLimit,
       verify: rawBodySaver,
-      extended: true
+      extended: true,
     };
 
     // Parse request body
@@ -146,7 +148,7 @@ function main () {
           } else {
             return Promise.resolve()
               .then(() => handler(req.body))
-              .then((result) => {
+              .then(result => {
                 errback(null, result);
               })
               .catch(errback);
@@ -163,37 +165,41 @@ function main () {
 
     const server = app.listen(0, 'localhost', () => {
       process.send({
-        port: server.address().port
+        port: server.address().port,
       });
     });
 
     // Only start watching for file changes if the funciton is not in debug mode
-    if (localdir && !message.debug && message.watch) {
-      fs.watch(localdir, {
-        recursive: true
-      }, (event, filename) => {
-        // Ignore node_modules
-        if (Array.isArray(message.watchIgnore)) {
-          for (let i = 0; i < message.watchIgnore.length; i++) {
-            if ((new RegExp(message.watchIgnore[i])).test(filename)) {
-              return;
+    if (localdir && message.watch) {
+      fs.watch(
+        localdir,
+        {
+          recursive: true,
+        },
+        (event, filename) => {
+          // Ignore node_modules
+          if (Array.isArray(message.watchIgnore)) {
+            for (let i = 0; i < message.watchIgnore.length; i++) {
+              if (new RegExp(message.watchIgnore[i]).test(filename)) {
+                return;
+              }
             }
           }
-        }
 
-        process.send({
-          close: true
-        });
-        server.close(() => {
-          console.log(`Worker for ${name} closed due to file changes.`);
-          process.exit();
-        });
-      });
+          process.send({
+            close: true,
+          });
+          server.close(() => {
+            console.log(`Worker for ${name} closed due to file changes.`);
+            process.exit();
+          });
+        }
+      );
     }
   });
 
   process.send({
-    ready: true
+    ready: true,
   });
 }
 
