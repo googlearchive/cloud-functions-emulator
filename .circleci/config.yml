@@ -68,10 +68,8 @@ jobs:
           name: Install and configure Cloud SDK
           command: |
             echo $KEYFILE > key.json
-            export CLOUD_SDK_REPO="cloud-sdk-jessie"
-            echo "deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-            apt-get update && apt-get install google-cloud-sdk
+            curl https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-209.0.0-linux-x86_64.tar.gz | tar xz -c /opt
+            export $PATH=$PATH:/opt/google-cloud-sdk/bin
             gcloud components install beta -q
             gcloud components update -q
             gcloud config set project cloud-functions-emulator
