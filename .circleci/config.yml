@@ -1,0 +1,92 @@
+version: 2
+workflows:
+  version: 2
+  tests:
+    jobs: &workflow_jobs
+      - node6:
+          filters:
+            tags:
+              only: /.*/
+      # - node8:
+      #     filters:
+      #       tags:
+      #         only: /.*/
+      # - node10:
+      #     filters:
+      #       tags:
+      #         only: /.*/
+      - lint:
+          requires:
+            - node6
+            # - node8
+            # - node10
+          filters:
+            tags:
+              only: /.*/
+      - system_tests:
+          requires:
+            - lint
+          filters:
+            branches:
+              only: master
+            tags:
+              only: '/^v[\d.]+$/'
+      - publish_npm:
+          requires:
+            - system_tests
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: '/^v[\d.]+$/'
+jobs:
+  node6:
+    docker:
+      - image: 'node:6'
+    steps: &unit_tests_steps
+      - checkout
+      - run:
+          name: Install and configure Cloud SDK
+          command: |
+            echo $KEYFILE > key.json
+            curl https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-209.0.0-linux-x86_64.tar.gz | tar xz
+            mv ./google-cloud-sdk /opt
+            export PATH=$PATH:/opt/google-cloud-sdk/bin
+            gcloud components install beta -q
+            gcloud components update -q
+            gcloud config set project cloud-functions-emulator
+            gcloud config set compute/region us-central1
+            gcloud auth activate-service-account --key-file key.json
+      - run: yarn
+      - run: yarn test
+      - run: node_modules/.bin/codecov
+  # node8:
+  #   docker:
+  #     - image: 'node:8'
+  #   steps: *unit_tests_steps
+  # node10:
+  #   docker:
+  #     - image: 'node:10'
+  #   steps: *unit_tests_steps
+  lint:
+    docker:
+      - image: 'node:6'
+    steps:
+      - checkout
+      - run: yarn install
+      - run: npm run lint
+  system_tests:
+    docker:
+      - image: 'node:6'
+        user: node
+    steps:
+      - checkout
+      - run: yarn
+      - run: yarn run system-test
+  publish_npm:
+    docker:
+      - image: 'node:10'
+    steps:
+      - checkout
+      - run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+      - run: npm publish
