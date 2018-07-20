@@ -170,7 +170,7 @@ function main () {
     });
 
     // Only start watching for file changes if the funciton is not in debug mode
-    if (localdir && message.watch) {
+    if (localdir && !message.debug && message.watch) {
       const watcher = chokidar.watch(localdir, {
         ignoreInitial: true,
         persistent: false,
