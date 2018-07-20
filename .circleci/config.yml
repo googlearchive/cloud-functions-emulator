@@ -65,6 +65,12 @@ jobs:
     steps: &unit_tests_steps
       - checkout
       - run: yarn
+      - run: echo $KEYFILE > key.json
+      - run: sudo /opt/google-cloud-sdk/bin/gcloud components install beta -q
+      - run: sudo /opt/google-cloud-sdk/bin/gcloud components update -q
+      - run: sudo /opt/google-cloud-sdk/bin/gcloud config set project cloud-functions-emulator
+      - run: sudo /opt/google-cloud-sdk/bin/gcloud config set compute/region us-central1
+      - run: sudo /opt/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file /home/ubuntu/cloud-functions-emulator/key.json
       - run: yarn test
       - run: node_modules/.bin/codecov
   node8:
