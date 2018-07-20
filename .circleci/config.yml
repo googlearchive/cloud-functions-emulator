@@ -23,18 +23,9 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - docs:
-          requires:
-            - node6
-            # - node8
-            # - node10
-          filters:
-            tags:
-              only: /.*/
       - system_tests:
           requires:
             - lint
-            - docs
           filters:
             branches:
               only: master
