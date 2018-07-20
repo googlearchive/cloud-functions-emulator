@@ -65,13 +65,16 @@ jobs:
     steps: &unit_tests_steps
       - checkout
       - run: yarn
-      - run: echo $KEYFILE > key.json
-      - run: curl https://sdk.cloud.google.com | bash
-      - run: gcloud components install beta -q
-      - run: gcloud components update -q
-      - run: gcloud config set project cloud-functions-emulator
-      - run: gcloud config set compute/region us-central1
-      - run: gcloud auth activate-service-account --key-file key.json
+      - run:
+          name: Install and configure Cloud SDK
+          command: |
+            echo $KEYFILE > key.json \
+            curl -sSL https://sdk.cloud.google.com | bash \
+            gcloud components install beta -q \
+            gcloud components update -q \
+            gcloud config set project cloud-functions-emulator \
+            gcloud config set compute/region us-central1 \
+            gcloud auth activate-service-account --key-file key.json \
       - run: yarn test
       - run: node_modules/.bin/codecov
   node8:
