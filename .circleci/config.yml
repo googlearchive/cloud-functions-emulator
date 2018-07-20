@@ -64,8 +64,8 @@ jobs:
       - image: 'node:6'
     steps: &unit_tests_steps
       - checkout
-      - run: npm install
-      - run: npm test
+      - run: yarn
+      - run: yarn test
       - run: node_modules/.bin/codecov
   node8:
     docker:
@@ -80,7 +80,7 @@ jobs:
       - image: 'node:10'
     steps:
       - checkout
-      - run: npm install
+      - run: yarn install
       - run: npm run lint
   publish_npm:
     docker:
