@@ -64,17 +64,20 @@ jobs:
       - image: 'node:6'
     steps: &unit_tests_steps
       - checkout
-      - run: yarn
       - run:
           name: Install and configure Cloud SDK
           command: |
             echo $KEYFILE > key.json
-            curl -sSL https://sdk.cloud.google.com | bash
+            export CLOUD_SDK_REPO="cloud-sdk-$(lsb_release -c -s)"
+            echo "deb http://packages.cloud.google.com/apt $CLOUD_SDK_REPO main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+            curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+            apt-get update && apt-get install google-cloud-sdk
             gcloud components install beta -q
             gcloud components update -q
             gcloud config set project cloud-functions-emulator
             gcloud config set compute/region us-central1
             gcloud auth activate-service-account --key-file key.json
+      - run: yarn
       - run: yarn test
       - run: node_modules/.bin/codecov
   node8:
