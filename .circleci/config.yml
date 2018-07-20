@@ -70,7 +70,7 @@ jobs:
             echo $KEYFILE > key.json
             curl https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-209.0.0-linux-x86_64.tar.gz | tar xz
             mv ./google-cloud-sdk /opt
-            export $PATH=$PATH:/opt/google-cloud-sdk/bin
+            export PATH=$PATH:/opt/google-cloud-sdk/bin
             gcloud components install beta -q
             gcloud components update -q
             gcloud config set project cloud-functions-emulator
