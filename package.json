@@ -70,7 +70,7 @@
     "generate-scaffolding": "repo-tools generate contributors coc contributing license pr_template pkgjson"
   },
   "dependencies": {
-    "@google-cloud/storage": "1.6.0",
+    "@google-cloud/storage": "1.7.0",
     "adm-zip": "0.4.7",
     "ajv": "6.1.1",
     "body-parser": "1.18.2",
