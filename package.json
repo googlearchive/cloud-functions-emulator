@@ -76,7 +76,7 @@
     "body-parser": "^1.18.3",
     "cli-table2": "0.2.0",
     "colors": "1.1.2",
-    "configstore": "3.1.2",
+    "configstore": "^3.1.2",
     "express": "4.16.2",
     "googleapis": "23.0.0",
     "got": "8.2.0",
