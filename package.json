@@ -72,7 +72,7 @@
   "dependencies": {
     "@google-cloud/storage": "^1.7.0",
     "adm-zip": "^0.4.11",
-    "ajv": "6.1.1",
+    "ajv": "^6.5.2",
     "body-parser": "^1.18.3",
     "cli-table2": "0.2.0",
     "colors": "1.1.2",
