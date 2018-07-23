@@ -29,6 +29,9 @@ The **Google Cloud Functions Emulator** is a Node.js application that implements
 
 The Emulator allows you to [**deploy**](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Deploying-functions), [**run**](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Calling-functions), and [**debug**](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/wiki/Debugging-functions) your Cloud Functions on your local machine before deploying them to the production Google Cloud Functions service.
 
+### Note
+The Emulator only supports Node `v6.x.x`. It does *not* support Node `v8.x.x` or Python.
+
 ## How do I get started?
 
 1. Write a function:
