@@ -77,7 +77,7 @@
     "cli-table2": "0.2.0",
     "colors": "1.1.2",
     "configstore": "^3.1.2",
-    "express": "4.16.3",
+    "express": "^4.16.3",
     "googleapis": "23.0.0",
     "got": "8.2.0",
     "http-proxy": "1.16.2",
