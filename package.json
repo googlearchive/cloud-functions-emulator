@@ -5,7 +5,7 @@
   "license": "Apache-2.0",
   "author": "Google Inc.",
   "engines": {
-    "node": ">=6.11.5"
+    "node": "~6"
   },
   "repository": "GoogleCloudPlatform/cloud-functions-emulator",
   "main": "./bin/emulator",
@@ -70,17 +70,17 @@
     "generate-scaffolding": "repo-tools generate contributors coc contributing license pr_template pkgjson"
   },
   "dependencies": {
-    "@google-cloud/storage": "1.6.0",
-    "adm-zip": "0.4.7",
-    "ajv": "6.1.1",
-    "body-parser": "1.18.2",
+    "@google-cloud/storage": "^1.7.0",
+    "adm-zip": "^0.4.11",
+    "ajv": "^6.5.2",
+    "body-parser": "^1.18.3",
     "chokidar": "^2.0.4",
     "cli-table2": "0.2.0",
     "colors": "1.1.2",
-    "configstore": "3.1.1",
-    "express": "4.16.2",
-    "googleapis": "23.0.0",
-    "got": "8.2.0",
+    "configstore": "^3.1.2",
+    "express": "^4.16.3",
+    "googleapis": "^23.0.2",
+    "got": "^8.3.2",
     "http-proxy": "1.16.2",
     "lodash": "4.17.5",
     "prompt": "1.0.0",
@@ -93,17 +93,17 @@
     "yargs": "11.0.0"
   },
   "devDependencies": {
-    "@google-cloud/nodejs-repo-tools": "2.3.1",
+    "@google-cloud/nodejs-repo-tools": "^2.3.1",
     "codecov": "^3.0.4",
-    "intelli-espower-loader": "1.0.1",
-    "mocha": "5.2.0",
-    "nock": "9.4.2",
-    "nyc": "11.9.0",
-    "power-assert": "1.6.0",
-    "proxyquire": "1.8.0",
-    "semistandard": "12.0.1",
-    "semistandard-format": "3.0.0",
-    "sinon": "4.3.0",
-    "supertest": "3.0.0"
+    "intelli-espower-loader": "^1.0.1",
+    "mocha": "^5.2.0",
+    "nock": "^9.4.2",
+    "nyc": "^11.9.0",
+    "power-assert": "^1.6.0",
+    "proxyquire": "^1.8.0",
+    "semistandard": "^12.0.1",
+    "semistandard-format": "^3.0.0",
+    "sinon": "^4.3.0",
+    "supertest": "^3.0.0"
   }
 }
