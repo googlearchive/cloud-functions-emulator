@@ -87,7 +87,7 @@
     "lodash": "4.17.5",
     "prompt": "1.0.0",
     "rimraf": "2.6.2",
-    "semver": "5.5.0",
+    "semver": "5.6.0",
     "serializerr": "1.0.3",
     "tmp": "0.0.33",
     "uuid": "3.2.1",
