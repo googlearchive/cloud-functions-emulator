@@ -81,7 +81,7 @@
     "colors": "1.1.2",
     "configstore": "^3.1.2",
     "express": "^4.16.3",
-    "googleapis": "^23.0.2",
+    "googleapis": "^35.0.0",
     "got": "^8.3.2",
     "http-proxy": "1.16.2",
     "lodash": "4.17.5",
