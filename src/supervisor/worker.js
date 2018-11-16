@@ -18,7 +18,7 @@
 const _ = require('lodash');
 const bodyParser = require('body-parser');
 const express = require('express');
-const fs = require('fs');
+const chokidar = require('chokidar');
 const path = require('path');
 const querystring = require('querystring');
 const serializerr = require('serializerr');
@@ -40,13 +40,13 @@ const loadHandler = {
     _originalLoader = Module._load;
     Module._load = function (...args) {
       const override = handler.onRequire(process.env['FUNCTION_NAME'], args[0]);
-      return (override || _originalLoader.apply(this, args));
+      return override || _originalLoader.apply(this, args);
     };
   }
 };
 
 function main () {
-  process.on('message', (message) => {
+  process.on('message', message => {
     const name = message.name;
     const cloudfunction = message.cloudfunction;
     const localdir = getLocaldir(cloudfunction);
@@ -67,7 +67,9 @@ function main () {
           console.log('Mock handler found. Require calls will be intercepted');
         }
       } catch (e) {
-        console.error('Mocks enabled but no mock handler found. Require calls will NOT be intercepted');
+        console.error(
+          'Mocks enabled but no mock handler found. Require calls will NOT be intercepted'
+        );
         console.error(e);
       }
     }
@@ -155,7 +157,7 @@ function main () {
           } else {
             return Promise.resolve()
               .then(() => handler(req.body))
-              .then((result) => {
+              .then(result => {
                 errback(null, result);
               })
               .catch(errback);
@@ -178,18 +180,13 @@ function main () {
 
     // Only start watching for file changes if the funciton is not in debug mode
     if (localdir && !message.debug && message.watch) {
-      fs.watch(localdir, {
-        recursive: true
-      }, (event, filename) => {
-        // Ignore node_modules
-        if (Array.isArray(message.watchIgnore)) {
-          for (let i = 0; i < message.watchIgnore.length; i++) {
-            if ((new RegExp(message.watchIgnore[i])).test(filename)) {
-              return;
-            }
-          }
-        }
+      const watcher = chokidar.watch(localdir, {
+        ignoreInitial: true,
+        persistent: false,
+        ignored: message.watchIgnore
+      });
 
+      const reloadServer = () => {
         process.send({
           close: true
         });
@@ -197,7 +194,13 @@ function main () {
           console.log(`Worker for ${name} closed due to file changes.`);
           process.exit();
         });
-      });
+      };
+
+      watcher
+        .on('change', reloadServer)
+        .on('add', reloadServer)
+        .on('unlink', reloadServer)
+        .on('error', err => console.error(err));
     }
   });
 
