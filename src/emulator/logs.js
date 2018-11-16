@@ -27,37 +27,35 @@ const pkg = require('../../package.json');
 const defaultLogsDir = path.join(xdgBasedir.config || os.tmpdir(), pkg.name);
 
 function readLogLines (filePath, linesToRead, output) {
-  try {
-    const parts = path.parse(filePath);
-    const files = fs
-      .readdirSync(parts.dir)
-      .filter((file) => file && file.includes(parts.name));
-    files.sort();
+  const parts = path.parse(filePath);
+  const files = fs
+    .readdirSync(parts.dir)
+    .filter((file) => file && file.includes(parts.name));
+  files.sort();
 
-    // Here, we naively select the newest log file, even if the user wants to
-    // display more lines than are available in the newest log file.
-    const rl = readline.createInterface({
-      input: fs.createReadStream(path.join(parts.dir, files[files.length - 1])),
-      terminal: false
-    });
-    const lines = [];
-    rl
-      .on('line', (line) => {
-        lines.push(line);
-      })
-      .on('close', () => {
-        lines
-          .slice(lines.length - linesToRead)
-          .forEach((line) => output(`${line}\n`));
-      });
-  } catch (err) {
+  // Here, we naively select the newest log file, even if the user wants to
+  // display more lines than are available in the newest log file.
+  const stream = fs.createReadStream(path.join(parts.dir, files[files.length - 1] || ''));
+  stream.on('error', (err) => {
     if (err.code === 'ENOENT') {
       output('');
-      return;
     }
+  });
 
-    throw err;
-  }
+  const rl = readline.createInterface({
+    input: stream,
+    terminal: false
+  });
+  const lines = [];
+  rl
+    .on('line', (line) => {
+      lines.push(line);
+    })
+    .on('close', () => {
+      lines
+        .slice(lines.length - linesToRead)
+        .forEach((line) => output(`${line}\n`));
+    });
 }
 
 module.exports = {
