@@ -308,8 +308,6 @@ class Controller {
           })
           .then(resolve, reject);
       }
-
-      throw new Error('One of "local-path" or "source-path" must be set!');
     })
       .then((cloudfunction) => {
         if (opts.triggerHttp) {
@@ -337,7 +335,10 @@ class Controller {
             }
           } else if (opts.triggerProvider === 'google.firebase.analytics') {
             opts.triggerEvent || (opts.triggerEvent = 'event.log');
+          } else if (opts.triggerProvider === 'google.firebase.remoteconfig') {
+            opts.triggerEvent || (opts.triggerEvent = 'update');
           }
+
           cloudfunction.eventTrigger = {
             eventType: `${opts.triggerProvider}.${opts.triggerEvent}`
           };
