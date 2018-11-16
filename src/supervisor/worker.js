@@ -88,9 +88,15 @@ function main () {
       req.rawBody = buf;
     };
 
-    const rawBodySavingOptions = {
+    const defaultBodySavingOptions = {
       limit: requestLimit,
       verify: rawBodySaver
+    };
+
+    const rawBodySavingOptions = {
+      limit: requestLimit,
+      verify: rawBodySaver,
+      type: '*/*'
     };
 
     // Use extended query string parsing for URL-encoded bodies.
@@ -101,10 +107,13 @@ function main () {
     };
 
     // Parse request body
-    app.use(bodyParser.raw(rawBodySavingOptions));
-    app.use(bodyParser.json(rawBodySavingOptions));
-    app.use(bodyParser.text(rawBodySavingOptions));
+    app.use(bodyParser.json(defaultBodySavingOptions));
+    app.use(bodyParser.text(defaultBodySavingOptions));
     app.use(bodyParser.urlencoded(urlEncodedOptions));
+
+    // MUST be last in the list of body parsers as subsequent parsers will be
+    // skipped when one is matched.
+    app.use(bodyParser.raw(rawBodySavingOptions));
 
     // Never cache
     app.use((req, res, next) => {

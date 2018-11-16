@@ -97,7 +97,7 @@ exports.handler = (opts) => {
       }
 
       controller.log(table.toString());
-      controller.log(`\nIf the Emulator becomes unresponsive, kill it will ${'functions kill'.bold} and then ensure that no other Emulator Node.js processes are running before restarting the Emulator.`);
+      controller.log(`\nIf the Emulator becomes unresponsive, kill it with ${'functions kill'.bold} and then ensure that no other Emulator Node.js processes are running before restarting the Emulator.`);
     })
     .catch((err) => controller.handleError(err));
 };
