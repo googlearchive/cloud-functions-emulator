@@ -308,8 +308,6 @@ class Controller {
           })
           .then(resolve, reject);
       }
-
-      throw new Error('One of "local-path" or "source-path" must be set!');
     })
       .then((cloudfunction) => {
         if (opts.triggerHttp) {

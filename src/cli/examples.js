@@ -48,10 +48,10 @@ exports.delete = [
 
 exports.deploy = [
   ['cd /path/to/src; functions deploy helloWorld --trigger-http'],
-  ['functions deploy helloWorld --local-path=/path/to/src --trigger-http'],
-  ['functions deploy testHelloWorld -l=/path/to/src --entry-point=helloWorld --trigger-http'],
+  ['functions deploy helloWorld --source=/path/to/src --trigger-http'],
+  ['functions deploy testHelloWorld -S=/path/to/src --entry-point=helloWorld --trigger-http'],
   ['cd /path/to/src; functions deploy helloGCS --trigger-bucket=my-bucket'],
-  ['functions deploy helloPubSub -l=/path/to/src --trigger-topic=my-topic']
+  ['functions deploy helloPubSub -S=/path/to/src --trigger-topic=my-topic']
 ];
 
 exports.describe = [
