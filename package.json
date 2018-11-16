@@ -1,11 +1,11 @@
 {
   "name": "@google-cloud/functions-emulator",
   "description": "Google Cloud Functions Emulator",
-  "version": "1.0.0-beta.4",
+  "version": "1.0.0-beta.5",
   "license": "Apache-2.0",
   "author": "Google Inc.",
   "engines": {
-    "node": ">=6.11.5"
+    "node": ">=6 <10"
   },
   "repository": "GoogleCloudPlatform/cloud-functions-emulator",
   "main": "./bin/emulator",
@@ -40,9 +40,11 @@
     ]
   },
   "contributors": [
+    "Ace Nassri <anassri@google.com>",
     "Akinori Machino <akinori.machino@icloud.com>",
     "Jason Dobry <jason.dobry@gmail.com>",
     "Jason Polites <jason.polites@gmail.com>",
+    "Justin Beckwith <justin.beckwith@gmail.com>",
     "Kim Vogt <kim.vogt@gmail.com>",
     "Kris J. Pruden <kpruden@users.noreply.github.com>",
     "Lauren Long <laurenzlong@users.noreply.github.com>",
@@ -51,7 +53,8 @@
     "Slawek Walkowski <swalkowski@users.noreply.github.com>",
     "Tim Swast <swast@google.com>",
     "Tina Liang <tinaliang@google.com>",
-    "aminy <aminy@indicee.com>"
+    "aminy <aminy@indicee.com>",
+    "renovate[bot] <renovate[bot]@users.noreply.github.com>"
   ],
   "scripts": {
     "lint": "semistandard",
@@ -78,7 +81,7 @@
     "colors": "1.1.2",
     "configstore": "^3.1.2",
     "express": "^4.16.3",
-    "googleapis": "^23.0.2",
+    "googleapis": "^35.0.0",
     "got": "^8.3.2",
     "http-proxy": "^1.17.0",
     "lodash": "4.17.5",
@@ -92,7 +95,7 @@
     "yargs": "11.0.0"
   },
   "devDependencies": {
-    "@google-cloud/nodejs-repo-tools": "^2.3.1",
+    "@google-cloud/nodejs-repo-tools": "^3.0.0",
     "codecov": "^3.0.4",
     "intelli-espower-loader": "^1.0.1",
     "mocha": "^5.2.0",
@@ -100,9 +103,9 @@
     "nyc": "^11.9.0",
     "power-assert": "^1.6.0",
     "proxyquire": "^1.8.0",
-    "semistandard": "^12.0.1",
+    "semistandard": "^13.0.0",
     "semistandard-format": "^3.0.0",
-    "sinon": "^4.3.0",
+    "sinon": "^7.0.0",
     "supertest": "^3.0.0"
   }
 }

@@ -94,14 +94,14 @@ exports.builder = (yargs) => {
         type: 'string'
       },
       'trigger-event': {
-        choices: ['topic.publish', 'object.change', 'user.create', 'user.delete', 'ref.write', 'ref.create', 'ref.update', 'ref.delete', 'event.log', undefined],
+        choices: ['topic.publish', 'object.change', 'user.create', 'user.delete', 'ref.write', 'ref.create', 'ref.update', 'ref.delete', 'event.log', 'update', undefined],
         description: `${'LEGACY'.yellow}: Specifies which action should trigger the function. If omitted, a default EVENT_TYPE for --trigger-provider will be used if it is available. For a list of acceptable values, call functions event_types list. EVENT_TYPE must be one of: topic.publish, object.change, user.create, user.delete, ref.write, ref.create, ref.update, ref.delete, event.log.`,
         requiresArg: true,
         type: 'string',
         required: false
       },
       'trigger-provider': {
-        choices: ['cloud.pubsub', 'cloud.storage', 'google.firebase.auth', 'google.firebase.database', 'google.firebase.analytics', undefined],
+        choices: ['cloud.pubsub', 'cloud.storage', 'google.firebase.auth', 'google.firebase.database', 'google.firebase.analytics', 'google.firebase.remoteconfig', undefined],
         description: `${'LEGACY'.yellow}: Trigger this function in response to an event in another service. For a list of acceptable values, call gcloud functions event-types list. PROVIDER must be one of: cloud.pubsub, cloud.storage, google.firebase.auth, google.firebase.database, google.firebase.analytics`,
         requiresArg: true,
         type: 'string',

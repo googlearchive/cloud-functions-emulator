@@ -337,7 +337,10 @@ class Controller {
             }
           } else if (opts.triggerProvider === 'google.firebase.analytics') {
             opts.triggerEvent || (opts.triggerEvent = 'event.log');
+          } else if (opts.triggerProvider === 'google.firebase.remoteconfig') {
+            opts.triggerEvent || (opts.triggerEvent = 'update');
           }
+
           cloudfunction.eventTrigger = {
             eventType: `${opts.triggerProvider}.${opts.triggerEvent}`
           };

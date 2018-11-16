@@ -1,3 +1,12 @@
+##### 1.0.0-beta.5 - 31 July 2018
+
+###### Bug fixes
+- [#161](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/161) - The emulator behaves differently than the production version with respect to the rawBody property
+- [#261](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/pull/261) - Update Node.js version warning message
+
+###### Other
+- Updated dependencies
+
 ##### 1.0.0-beta.4 - 06 March 2018
 
 ###### Bug fixes
