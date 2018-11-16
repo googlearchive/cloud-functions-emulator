@@ -17,7 +17,7 @@
 
 require('colors');
 
-const Table = require('cli-table2');
+const Table = require('cli-table3');
 
 const Controller = require('../controller');
 

@@ -18,7 +18,7 @@
 require('colors');
 
 const _ = require('lodash');
-const Table = require('cli-table2');
+const Table = require('cli-table3');
 
 const Controller = require('../controller');
 const { CloudFunction } = require('../../model');
