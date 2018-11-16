@@ -15,7 +15,7 @@
 
 'use strict';
 
-const got = require(`got`);
+const axios = require(`axios`);
 const path = require(`path`);
 
 process.env.XDG_CONFIG_HOME = path.join(__dirname, `../`);
@@ -437,9 +437,7 @@ function makeTests (service, override) {
       });
 
       it(`should call (via request) an HTTP function that exceeds its timeout`, () => {
-        return got(`http://localhost:${SUPERVISOR_PORT}/${PROJECT_ID}/${REGION}/helloSlow`, {
-          json: true
-        }).then((response) => {
+        return axios.get(`http://localhost:${SUPERVISOR_PORT}/${PROJECT_ID}/${REGION}/helloSlow`).then((response) => {
           assert.fail(`should have failed`);
         }).catch((err) => {
           assert.equal(err.response.statusCode, 500);
@@ -459,9 +457,7 @@ function makeTests (service, override) {
       });
 
       it(`should call (via request) an HTTP function that fails to respond (crashes asynchronously)`, () => {
-        return got(`http://localhost:${SUPERVISOR_PORT}/${PROJECT_ID}/${REGION}/helloNoResponse`, {
-          json: true
-        }).then((response) => {
+        return axios.get(`http://localhost:${SUPERVISOR_PORT}/${PROJECT_ID}/${REGION}/helloNoResponse`).then((response) => {
           assert.fail(`should have failed`);
         }).catch((err) => {
           assert.equal(err.response.statusCode, 500);
@@ -492,12 +488,12 @@ function makeTests (service, override) {
       });
 
       it(`should call an HTTP function via trigger URL`, () => {
-        return got(`http://localhost:${SUPERVISOR_PORT}/${PROJECT_ID}/${REGION}/helloGET`, {
+        return axios.request({
+          url: `http://localhost:${SUPERVISOR_PORT}/${PROJECT_ID}/${REGION}/helloGET`,
           method: 'GET',
           headers: {
             'x-api-key': 'any'
-          },
-          json: true
+          }
         }).then((response) => {
           assert.equal(response.body.headers[`x-api-key`], `any`);
           assert.equal(response.body.method, `GET`);
@@ -507,12 +503,12 @@ function makeTests (service, override) {
       });
 
       it(`should call an HTTP function via trigger URL with extras`, () => {
-        return got(`http://localhost:${SUPERVISOR_PORT}/${PROJECT_ID}/${REGION}/helloGET/test?foo=bar&beep=boop`, {
+        return axios.request({
+          url: `http://localhost:${SUPERVISOR_PORT}/${PROJECT_ID}/${REGION}/helloGET/test?foo=bar&beep=boop`,
           method: 'GET',
           headers: {
             'x-api-key': 'any'
-          },
-          json: true
+          }
         }).then((response) => {
           assert.equal(response.body.headers[`x-api-key`], `any`);
           assert.equal(response.body.method, `GET`);

@@ -15,11 +15,11 @@
 
 'use strict';
 
+const axios = require('axios');
 const bodyParser = require('body-parser');
 const Configstore = require('configstore');
 const express = require('express');
 const fs = require('fs');
-const got = require('got');
 const logger = require('winston');
 const path = require('path');
 const url = require('url');
@@ -147,11 +147,14 @@ class RestService extends Service {
           event.auth = req.body.auth || { admin: true };
         }
 
-        return got.post(`${this.functions.getSupervisorHost()}/${req.params.project}/${req.params.location}/${req.params.name}`, {
-          body: JSON.stringify(cloudfunction.httpsTrigger ? event.data : event),
+        return axios.request({
+          url: `${this.functions.getSupervisorHost()}/${req.params.project}/${req.params.location}/${req.params.name}`,
+          method: 'POST',
+          data: JSON.stringify(cloudfunction.httpsTrigger ? event.data : event),
           headers: {
             'Content-Type': 'application/json'
-          }
+          },
+          responseType: 'text'
         });
       })
       .then((response) => {
@@ -233,8 +236,11 @@ class RestService extends Service {
         if (typeof doc === 'object' && Object.keys(doc).length > 0 && doc.version === API_VERSION) {
           return doc;
         }
-        return got(DISCOVERY_URL, {
-          query: {
+
+        return axios.request({
+          url: DISCOVERY_URL,
+          method: 'GET',
+          params: {
             version: req.query.version
           }
         })
@@ -346,6 +352,7 @@ class RestService extends Service {
    * @param {object} res The response.
    */
   listFunctions (req, res) {
+    console.error('listFunctions');
     const location = CloudFunction.formatLocation(req.params.project, req.params.location);
     logger.debug('RestService#listFunctions', location);
     return this.functions.listFunctions(location, {

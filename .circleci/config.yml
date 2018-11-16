@@ -3,90 +3,89 @@ workflows:
   version: 2
   tests:
     jobs: &workflow_jobs
-      - node6:
-          filters:
-            tags:
-              only: /.*/
-      # - node8:
-      #     filters:
-      #       tags:
-      #         only: /.*/
-      # - node10:
-      #     filters:
-      #       tags:
-      #         only: /.*/
       - lint:
-          requires:
-            - node6
-            # - node8
-            # - node10
-          filters:
+          filters: &all_commits
             tags:
               only: /.*/
-      - system_tests:
+      - node6:
           requires:
             - lint
+          filters: *all_commits
+      - node8:
+          requires:
+            - lint
+          filters: *all_commits
+  nightly:
+    triggers:
+      - schedule:
+          cron: 0 7 * * *
           filters:
             branches:
               only: master
-            tags:
-              only: '/^v[\d.]+$/'
-      - publish_npm:
-          requires:
-            - system_tests
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: '/^v[\d.]+$/'
+    jobs: *workflow_jobs
 jobs:
+  lint:
+    docker:
+      - image: 'node:8'
+        user: node
+    steps:
+      - checkout
+      - run: &npm_install_and_link
+          name: Install and link the module
+          command: |-
+            mkdir -p /home/node/.npm-global
+            ./.circleci/npm-install-retry.js
+          environment:
+            NPM_CONFIG_PREFIX: /home/node/.npm-global
+      - run:
+          name: Run linting.
+          command: npm run lint
+          environment:
+            NPM_CONFIG_PREFIX: /home/node/.npm-global
   node6:
     docker:
       - image: 'node:6'
-    steps: &unit_tests_steps
+        user: node
+    steps: &tests_steps
       - checkout
+      - run:
+          name: Decrypt credentials.
+          command: |
+            if ! [[ -z "${SERVICE_ACCOUNT_ENCRYPTION_KEY}" ]]; then
+              for encrypted_key in .circleci/*.json.enc; do
+                openssl aes-256-cbc -d -in $encrypted_key \
+                  -out $(echo $encrypted_key | sed 's/\.enc//') \
+                  -k "${SERVICE_ACCOUNT_ENCRYPTION_KEY}"
+              done
+            fi
       - run:
           name: Install and configure Cloud SDK
           command: |
-            echo $KEYFILE > key.json
-            curl https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-209.0.0-linux-x86_64.tar.gz | tar xz
+            curl https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-225.0.0-linux-x86_64.tar.gz | tar xz
             mv ./google-cloud-sdk /opt
             export PATH=$PATH:/opt/google-cloud-sdk/bin
             gcloud components install beta -q
             gcloud components update -q
             gcloud config set project cloud-functions-emulator
             gcloud config set compute/region us-central1
-            gcloud auth activate-service-account --key-file key.json
-      - run: yarn
-      - run: yarn test
+            gcloud auth activate-service-account --key-file .circleci/key.json
+      - run: *npm_install_and_link
+      - run:
+          name: Run tests.
+          command: npm test
+          environment:
+            GCLOUD_PROJECT: cloud-functions-emulator
+            GOOGLE_APPLICATION_CREDENTIALS: .circleci/key.json
       - run: node_modules/.bin/codecov
-  # node8:
-  #   docker:
-  #     - image: 'node:8'
-  #   steps: *unit_tests_steps
-  # node10:
-  #   docker:
-  #     - image: 'node:10'
-  #   steps: *unit_tests_steps
-  lint:
+      - run:
+          name: Remove unencrypted key.
+          command: |
+            if ! [[ -z "${SERVICE_ACCOUNT_ENCRYPTION_KEY}" ]]; then
+              rm .circleci/*.json
+            fi
+          when: always
+  node8:
     docker:
-      - image: 'node:6'
-    steps:
-      - checkout
-      - run: yarn install
-      - run: npm run lint
-  system_tests:
-    docker:
-      - image: 'node:6'
+      - image: 'node:8'
         user: node
-    steps:
-      - checkout
-      - run: yarn
-      - run: yarn run system-test
-  publish_npm:
-    docker:
-      - image: 'node:10'
-    steps:
-      - checkout
-      - run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-      - run: npm publish
+    steps: *tests_steps

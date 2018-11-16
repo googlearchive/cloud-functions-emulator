@@ -17,9 +17,9 @@
 
 const _ = require('lodash');
 const AdmZip = require('adm-zip');
+const axios = require('axios');
 const Configstore = require('configstore');
 const fs = require('fs');
-const got = require('got');
 const logger = require('winston');
 const os = require('os');
 const path = require('path');
@@ -388,11 +388,12 @@ class Functions {
 
               return new Promise((resolve, reject) => {
                 setTimeout(() => {
-                  got.post(`${this.getSupervisorHost()}/api/deploy`, {
-                    body: {
+                  return axios.request({
+                    url: `${this.getSupervisorHost()}/api/deploy`,
+                    method: 'POST',
+                    data: {
                       name: cloudfunction.name
-                    },
-                    json: true
+                    }
                   }).then(resolve, (err) => {
                     if (err && err.response && err.response.body) {
                       if (err.response.body.error) {
@@ -521,11 +522,12 @@ class Functions {
               // Delete the CloudFunction
               this.adapter.deleteFunction(name)
                 .then(() => {
-                  return got.post(`${this.getSupervisorHost()}/api/delete`, {
-                    body: {
+                  return axios.request({
+                    url: `${this.getSupervisorHost()}/api/delete`,
+                    method: 'POST',
+                    data: {
                       name: cloudfunction.name
-                    },
-                    json: true
+                    }
                   });
                 })
                 .then(() => {

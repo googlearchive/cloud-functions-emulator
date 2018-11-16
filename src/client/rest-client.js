@@ -16,7 +16,7 @@
 'use strict';
 
 const _ = require('lodash');
-const google = require('googleapis');
+const { google } = require('googleapis');
 const net = require('net');
 const path = require('path');
 const url = require('url');

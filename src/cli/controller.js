@@ -34,9 +34,9 @@ require('colors');
 
 const _ = require('lodash');
 const AdmZip = require('adm-zip');
+const axios = require('axios');
 const exec = require('child_process').exec;
 const fs = require('fs');
-const got = require('got');
 const path = require('path');
 const spawn = require('child_process').spawn;
 const Storage = require('@google-cloud/storage');
@@ -367,14 +367,15 @@ class Controller {
           this.log(`You paused execution. Connect to the debugger on port ${opts.port} to resume execution and begin debugging.`);
         }
 
-        return got.post(`http://${this.config.host}:${this.config.supervisorPort}/api/debug`, {
-          body: {
+        return axios.request({
+          url: `http://${this.config.host}:${this.config.supervisorPort}/api/debug`,
+          method: 'POST',
+          data: {
             type: type,
             name: cloudfunction.name,
             port: opts.port,
             pause: opts.pause
-          },
-          json: true
+          }
         });
       });
   }
@@ -563,12 +564,13 @@ class Controller {
   reset (name, opts) {
     return this.client.getFunction(name)
       .then(([cloudfunction]) => {
-        return got.post(`http://${this.config.host}:${this.config.supervisorPort}/api/reset`, {
-          body: {
+        return axios.request({
+          url: `http://${this.config.host}:${this.config.supervisorPort}/api/reset`,
+          method: 'POST',
+          data: {
             name: cloudfunction.name,
             keep: opts.keep
-          },
-          json: true
+          }
         });
       });
   }
