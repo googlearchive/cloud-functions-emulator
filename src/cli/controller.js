@@ -78,7 +78,8 @@ class Controller {
 
     const clientConfig = _.merge(this.config, {
       host: opts.host || (!this.server.get('stopped') && this.server.get('host')) || this.config.host,
-      restPort: opts.restPort || this.server.get('restPort') || this.config.restPort
+      restPort: opts.restPort || this.server.get('restPort') || this.config.restPort,
+      supervisorPort: opts.supervisorPort || this.server.get('supervisorPort') || this.config.supervisorPort
     });
     this.client = Client.restClient(clientConfig);
   }
