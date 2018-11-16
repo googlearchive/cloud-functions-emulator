@@ -99,7 +99,7 @@
     "codecov": "^3.0.4",
     "intelli-espower-loader": "^1.0.1",
     "mocha": "^5.2.0",
-    "nock": "^9.4.2",
+    "nock": "^10.0.0",
     "nyc": "^11.9.0",
     "power-assert": "^1.6.0",
     "proxyquire": "^1.8.0",
