@@ -339,7 +339,7 @@ class Functions {
           }
         }
 
-        logger.debug(JSON.stringify(request.function, null, 2));
+        logger.debug(request.function);
 
         // TODO: Filter out fields that cannot be edited by the user
         cloudfunction = this.cloudfunction(cloudfunction.name, cloudfunction);

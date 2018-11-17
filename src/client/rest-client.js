@@ -16,7 +16,7 @@
 'use strict';
 
 const _ = require('lodash');
-const { google } = require('googleapis');
+const axios = require('axios');
 const net = require('net');
 const path = require('path');
 const url = require('url');
@@ -27,34 +27,14 @@ const Model = require('../model');
 const { CloudFunction } = Model;
 
 class RestClient extends Client {
-  _action (method, params) {
-    return this.getService()
-      .then((functionsService) => {
-        return new Promise((resolve, reject) => {
-          _.get(functionsService, method).call(functionsService, params, (err, body, response) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve([body, response]);
-            }
-          });
-        });
-      });
-  }
-
   callFunction (name, data, opts) {
     var resource = { data: data };
     if (opts) {
       resource = _.merge(resource, opts);
     }
 
-    return this._action(
-      'projects.locations.functions.call',
-      {
-        name: CloudFunction.formatName(this.config.projectId, this.config.region, name),
-        resource: resource
-      }
-    ).then(([body, response]) => {
+    return axios.post(this.getUrl(`${CloudFunction.formatName(this.config.projectId, this.config.region, name)}:call`), resource).then((response) => {
+      const body = response.data;
       if (body.result && typeof body.result === 'string') {
         try {
           body.result = JSON.parse(body.result);
@@ -73,50 +53,21 @@ class RestClient extends Client {
   }
 
   createFunction (cloudfunction) {
-    return this._action(
-      'projects.locations.functions.create',
-      {
-        location: CloudFunction.formatLocation(this.config.projectId, this.config.region),
-        resource: cloudfunction
-      }
-    );
+    return axios.post(this.getUrl(`${CloudFunction.formatLocation(this.config.projectId, this.config.region)}/functions`), cloudfunction).then((response) => [response.data, response]);
   }
 
   deleteFunction (name) {
-    return this._action(
-      'projects.locations.functions.delete',
-      {
-        name: CloudFunction.formatName(this.config.projectId, this.config.region, name)
-      }
-    );
+    return axios.request({
+      url: this.getUrl(CloudFunction.formatName(this.config.projectId, this.config.region, name)),
+      method: 'DELETE'
+    }).then((response) => [response.data, response]);
   }
 
   generateUploadUrl (name) {
-    return this._action(
-      'projects.locations.functions.generateUploadUrl',
-      {
-        parent: CloudFunction.formatLocation(this.config.projectId, this.config.region)
-      }
-    );
-  }
-
-  getService () {
-    return new Promise((resolve, reject) => {
-      const discoveryPath = '$discovery/rest';
-      const parts = url.parse(this.getUrl(discoveryPath));
-      const discoveryUrl = url.format(_.merge(parts, {
-        pathname: discoveryPath,
-        search: '?version=v1'
-      }));
-
-      google.discoverAPI(discoveryUrl, (err, functions) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(functions);
-        }
-      });
-    });
+    return axios.post(
+      this.getUrl(`${CloudFunction.formatLocation(this.config.projectId, this.config.region)}/functions:generateUploadUrl`)
+    )
+      .then((response) => [response.data, response]);
   }
 
   getUrl (pathname) {
@@ -129,26 +80,20 @@ class RestClient extends Client {
   }
 
   getFunction (name) {
-    return this._action(
-      'projects.locations.functions.get',
-      {
-        name: CloudFunction.formatName(this.config.projectId, this.config.region, name)
-      }
-    ).then(([body, response]) => [new CloudFunction(body.name, body), response]);
+    return axios.get(this.getUrl(CloudFunction.formatName(this.config.projectId, this.config.region, name)))
+      .then((response) => [new CloudFunction(response.data.name, response.data), response]);
   }
 
   getOperation (name) {
-    return this._action('operations.get', { name });
+    return axios.get(this.getUrl(name)).then(response => response.data);
   }
 
   listFunctions () {
-    return this._action(
-      'projects.locations.functions.list',
-      {
-        pageSize: 100,
-        parent: CloudFunction.formatLocation(this.config.projectId, this.config.region)
+    return axios.get(this.getUrl(`${CloudFunction.formatLocation(this.config.projectId, this.config.region)}/functions`), {
+      params: {
+        pageSize: 100
       }
-    ).then(([body, response]) => [body.functions.map((cloudfunction) => new CloudFunction(cloudfunction.name, cloudfunction)), response]);
+    }).then((response) => [response.data.functions.map((cloudfunction) => new CloudFunction(cloudfunction.name, cloudfunction)), response]);
   }
 
   testConnection () {

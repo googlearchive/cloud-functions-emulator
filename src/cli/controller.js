@@ -23,9 +23,6 @@
  * CLI -                                       - Emulator
  *     |--<-- RestClient - HTTP1.1 - JSON --<--|
  *
- * The Gcloud SDK can be used to talk to the Emulator as well, just do:
- *
- *     gcloud config set api_endpoint_overrides/cloudfunctions http://localhost:8008/
  */
 
 'use strict';
@@ -391,10 +388,11 @@ class Controller {
       .then(
         () => this.undeploy(name).then(() => this._create(name, opts)),
         (err) => {
-          if (err.code === 404 || err.code === 5) {
+          const error = err.response.data.error;
+          if (error.code === 404 || error.code === 5) {
             return this._create(name, opts);
           }
-          return Promise.reject(err);
+          return Promise.reject(error);
         }
       );
   }

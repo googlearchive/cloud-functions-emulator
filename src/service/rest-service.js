@@ -17,32 +17,26 @@
 
 const axios = require('axios');
 const bodyParser = require('body-parser');
-const Configstore = require('configstore');
 const express = require('express');
 const fs = require('fs');
 const logger = require('winston');
-const path = require('path');
-const url = require('url');
 
 const uuid = require('uuid');
 
 const Errors = require('../utils/errors');
 const Model = require('../model');
-const pkg = require('../../package.json');
 const Service = require('./service');
 
 const { CloudFunction, Operation } = Model;
 
 // TODO: Support more than one version.
 const API_VERSION = 'v1';
-const DISCOVERY_URL = `https://cloudfunctions.googleapis.com/$discovery/rest?version=${API_VERSION}`;
 
 class RestService extends Service {
   constructor (...args) {
     super(...args);
 
     this.type = 'REST';
-    this._discovery = new Configstore(path.join(pkg.name, '/.discovery'));
 
     // Standard ExpressJS app. Where possible this should mimic the *actual*
     // setup of Cloud Functions regarding the use of body parsers etc.
@@ -68,10 +62,6 @@ class RestService extends Service {
     });
 
     this.server
-      .get(
-        `/([$])discovery/rest`,
-        (req, res, next) => this.getDiscoveryDoc(req, res).catch(next)
-      )
       .delete(
         `/${API_VERSION}/projects/:project/locations/:location/functions/:name`,
         (req, res, next) => this.deleteFunction(req, res).catch(next)
@@ -112,13 +102,6 @@ class RestService extends Service {
    *
    */
   callFunction (req, res) {
-    if (req.headers['user-agent'].includes('google-cloud-sdk') && typeof req.body.data === 'string') {
-      try {
-        req.body.data = JSON.parse(req.body.data);
-      } catch (err) {
-
-      }
-    }
     try {
       req.body.auth = JSON.parse(req.body.auth);
     } catch (err) {
@@ -162,7 +145,7 @@ class RestService extends Service {
           .status(200)
           .send({
             executionId: eventId,
-            result: response.body
+            result: response.data
           })
           .end();
       }, (err) => {
@@ -170,7 +153,7 @@ class RestService extends Service {
           .status(200)
           .send({
             executionId: eventId,
-            error: err.response ? err.response.body : err.message
+            error: err.response ? err.response.data : err.message
           })
           .end();
       });
@@ -224,51 +207,6 @@ class RestService extends Service {
   }
 
   /**
-   * Gets the Google Cloud Functions API discovery doc.
-   *
-   * @param {object} req The request.
-   * @param {object} res The response.
-   */
-  getDiscoveryDoc (req, res) {
-    return Promise.resolve()
-      .then(() => {
-        const doc = this._discovery.all;
-        if (typeof doc === 'object' && Object.keys(doc).length > 0 && doc.version === API_VERSION) {
-          return doc;
-        }
-
-        return axios.request({
-          url: DISCOVERY_URL,
-          method: 'GET',
-          params: {
-            version: req.query.version
-          }
-        })
-          .then((response) => {
-            const doc = JSON.parse(response.body);
-            this._discovery.set(doc);
-            return doc;
-          })
-          .catch((err) => {
-            if (err && err.statusCode === 404) {
-              return Promise.reject(new Errors.NotFoundError('Discovery document not found for API service.'));
-            }
-            return Promise.reject(err);
-          });
-      })
-      .then((doc) => {
-        // TODO: Change the baseUrl and rootUrl
-        doc.baseUrl = doc.rootUrl = url.format({
-          hostname: this.config.host,
-          port: this.config.port,
-          protocol: `${req.protocol}:`
-        }) + '/';
-        doc.canonicalName = 'Cloud Functions Emulator';
-        res.status(200).json(doc).end();
-      });
-  }
-
-  /**
    * Gets a function.
    *
    * @param {object} req The request.
@@ -283,16 +221,6 @@ class RestService extends Service {
     logger.debug('RestService#getFunction', name);
     return this.functions.getFunction(name)
       .then((cloudfunction) => {
-        if (req.get('user-agent') &&
-            req.get('user-agent').includes('google-cloud-sdk') &&
-            cloudfunction.status === 'DEPLOYING') {
-          // For some reason the Cloud SDK doesn't wait for the operation to be
-          // done before printing the function to the user, instead it polls for
-          // the function. So here pretend the function doesn't exist until it's
-          // no longer deploying.
-          return Promise.reject(this.functions._getFunctionNotFoundError(name));
-        }
-
         res.status(200).json(cloudfunction).end();
       });
   }
@@ -352,7 +280,6 @@ class RestService extends Service {
    * @param {object} res The response.
    */
   listFunctions (req, res) {
-    console.error('listFunctions');
     const location = CloudFunction.formatLocation(req.params.project, req.params.location);
     logger.debug('RestService#listFunctions', location);
     return this.functions.listFunctions(location, {

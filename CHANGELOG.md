@@ -1,3 +1,12 @@
+##### 1.0.0-beta.6 - XX November 2018
+
+###### Breaking changes
+- Removed support for using the Gcloud SDK to interact with the emulator
+- Removed used of googleapis library
+
+###### Other
+- Upgraded all dependencies
+
 ##### 1.0.0-beta.5 - 31 July 2018
 
 ###### Bug fixes

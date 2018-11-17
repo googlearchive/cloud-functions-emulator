@@ -40,7 +40,6 @@ const config = new Configstore(path.join(pkg.name, `config`));
 const server = new Configstore(path.join(pkg.name, `.active-server`));
 const functions = new Configstore(path.join(pkg.name, `.functions`));
 const operations = new Configstore(path.join(pkg.name, `.operations`));
-const prefix = `Google Cloud Functions Emulator`;
 
 const GCLOUD = process.env.GCLOUD_CMD_OVERRIDE || `gcloud`;
 const HOST = 'localhost';
@@ -95,12 +94,12 @@ function makeTests (service, override) {
         })
         .then(() => tools.spawnAsyncWithIO('node', ['bin/functions', 'restart'], cwd))
         .then((results) => {
-          assert(results.output.includes(`${prefix} STARTED`));
+          assert(results.output.includes(`STARTED`));
 
           return tools.tryTest(() => {
             return tools.spawnAsyncWithIO('node', ['bin/functions', 'clear'], cwd)
               .then((results) => {
-                assert(results.output.includes(`${prefix} CLEARED`));
+                assert(results.output.includes(`CLEARED`));
               });
           }).start();
         });
@@ -119,18 +118,18 @@ function makeTests (service, override) {
         })
         .then(() => tools.spawnAsyncWithIO('node', ['bin/functions', 'restart'], cwd))
         .then((results) => {
-          assert(results.output.includes(`${prefix} STARTED`));
+          assert(results.output.includes(`STARTED`));
 
           return tools.tryTest(() => {
             return tools.spawnAsyncWithIO('node', ['bin/functions', 'clear'], cwd)
               .then((results) => {
-                assert(results.output.includes(`${prefix} CLEARED`));
+                assert(results.output.includes(`CLEARED`));
               });
           }).start();
         })
         .then(() => tools.spawnAsyncWithIO('node', ['bin/functions', 'stop'], cwd))
         .then((results) => {
-          assert(results.output.includes(`${prefix} STOPPED`));
+          assert(results.output.includes(`STOPPED`));
         });
     });
 
@@ -591,7 +590,7 @@ function makeTests (service, override) {
         assert(output.includes(`helloPOST`));
 
         output = run(`${cmd} clear ${shortArgs}`, cwd);
-        assert(output.includes(`${prefix} CLEARED`));
+        assert(output.includes(`CLEARED`));
 
         output = run(`${cmd} list ${shortArgs}`, cwd);
         assert(output.includes(`No functions deployed`));
@@ -620,7 +619,6 @@ function makeTests (service, override) {
     describe(`status`, () => {
       it(`should show the server status`, () => {
         let output = run(`${cmd} status ${shortArgs}`, cwd);
-        assert(output.includes(`${prefix}`));
         assert(output.includes(`RUNNING`));
         assert(output.includes(`http://localhost:${REST_PORT}/`));
         assert(output.includes(`http://localhost:${SUPERVISOR_PORT}/${PROJECT_ID}/${REGION}`));
@@ -658,5 +656,4 @@ describe(`system/cli`, () => {
   });
 
   makeTests(`rest`);
-  makeTests(`rest`, `${GCLOUD} beta functions`);
 });
