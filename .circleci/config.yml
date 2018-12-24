@@ -61,9 +61,8 @@ jobs:
       - run:
           name: Install and configure Cloud SDK
           command: |
-            curl https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-225.0.0-linux-x86_64.tar.gz | tar xz
-            mv ./google-cloud-sdk /opt
-            export PATH=$PATH:/opt/google-cloud-sdk/bin
+            curl https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-228.0.0-linux-x86_64.tar.gz | tar xz -C /tmp
+            export PATH=$PATH:/tmp/google-cloud-sdk/bin
             gcloud components install beta -q
             gcloud components update -q
             gcloud config set project cloud-functions-emulator
