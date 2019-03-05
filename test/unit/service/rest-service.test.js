@@ -97,7 +97,7 @@ describe('unit/service/rest-service', () => {
 
       nock('https://faked.com')
         .post('/fake-project/us-central1/test-function', {
-          auth: {admin: true}
+          auth: { admin: true }
         })
         .reply(200);
 
@@ -124,7 +124,7 @@ describe('unit/service/rest-service', () => {
 
       nock('https://faked.com')
         .post('/fake-project/us-central1/test-function', {
-          auth: {admin: false},
+          auth: { admin: false },
           resource: 'custom.resource'
         })
         .reply(200);
@@ -132,7 +132,7 @@ describe('unit/service/rest-service', () => {
       request(service.server)
         .post('/v1/projects/fake-project/locations/us-central1/functions/test-function:call')
         .send({
-          auth: {admin: false},
+          auth: { admin: false },
           resource: 'custom.resource'
         })
         .expect(200, done);
