@@ -101,7 +101,7 @@
     "@google-cloud/nodejs-repo-tools": "^3.0.0",
     "codecov": "^3.0.4",
     "intelli-espower-loader": "^1.0.1",
-    "mocha": "^5.2.0",
+    "mocha": "^6.0.0",
     "nock": "^10.0.0",
     "nyc": "^13.0.0",
     "power-assert": "^1.6.0",
