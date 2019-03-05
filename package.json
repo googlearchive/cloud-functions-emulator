@@ -93,7 +93,7 @@
     "serializerr": "1.0.3",
     "tmp": "0.0.33",
     "uuid": "3.2.1",
-    "winston": "3.1.0",
+    "winston": "3.2.1",
     "xdg-basedir": "3.0.0",
     "yargs": "11.0.0"
   },
