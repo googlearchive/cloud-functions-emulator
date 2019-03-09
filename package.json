@@ -109,6 +109,6 @@
     "semistandard": "^13.0.0",
     "semistandard-format": "^3.0.0",
     "sinon": "^7.0.0",
-    "supertest": "^3.0.0"
+    "supertest": "^4.0.0"
   }
 }
