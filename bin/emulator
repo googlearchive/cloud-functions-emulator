@@ -23,7 +23,7 @@ if (!semver.satisfies(process.version, '>= 6.11.5')) {
 }
 
 if (semver.satisfies(process.version, '>= 7.0.0')) {
-  console.log(`Warning: You're using Node.js ${process.version} but Google Cloud Functions only supports v6.11.5.`);
+  console.log(`Warning: You're using Node.js ${process.version} but Google Cloud Functions emulator only supports v6.x.`);
 }
 
 exports.emulator = require('../src/emulator');
