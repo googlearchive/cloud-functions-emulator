@@ -1,3 +1,17 @@
+# Status: Archived
+
+![status: inactive](https://img.shields.io/badge/status-inactive-red.svg)
+
+This repository has been archived and is no longer maintained.
+
+We recommend you use:
+- **Google Cloud Functions:** The [functions framework](https://github.com/GoogleCloudPlatform/functions-framework-nodejs) which is the same library that powers functions for Node 10+.
+- **Google Cloud Functions for Firebase:** The [local emulator](https://firebase.google.com/docs/functions/local-emulator) with [`firebase-tools`](https://github.com/firebase/firebase-tools).
+
+Please see [Issue #327](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/327) for more details.
+
+---
+
 <img src="https://avatars2.githubusercontent.com/u/2810941?v=3&s=96" alt="Google Inc. logo" title="Google" align="right" height="96" width="96"/>
 
 # Google Cloud Functions Emulator
