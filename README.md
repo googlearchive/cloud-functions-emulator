@@ -5,8 +5,8 @@
 This repository has been archived and is no longer maintained.
 
 We recommend you use:
-- **Google Cloud Functions:** The new [functions framework](https://github.com/GoogleCloudPlatform/functions-framework-nodejs) which is the same library that powers functions for Node 10+.
-- **Google Cloud Functions for Firebase:** The new [local emulator](https://firebase.google.com/docs/functions/local-emulator) with [`firebase-tools`](https://github.com/firebase/firebase-tools).
+- **Google Cloud Functions:** The [functions framework](https://github.com/GoogleCloudPlatform/functions-framework-nodejs) which is the same library that powers functions for Node 10+.
+- **Google Cloud Functions for Firebase:** The [local emulator](https://firebase.google.com/docs/functions/local-emulator) with [`firebase-tools`](https://github.com/firebase/firebase-tools).
 
 Please see [Issue #327](https://github.com/GoogleCloudPlatform/cloud-functions-emulator/issues/327) for more details.
 
