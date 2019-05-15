@@ -317,7 +317,7 @@ class Supervisor {
 
       const execArgv = [];
       if (opts.inspect) {
-        execArgv.push(`--inspect=${opts.port}`);
+        execArgv.push(`--inspect=${this.config.bindHost}:${opts.port}`);
         worker.inspect = true;
         if (!this.debugPortIsAvailable(opts.port)) {
           error = new Errors.ConflictError(`Debug/Inspect port ${opts.port} already in use. Are you already debugging another function on this port? Specify a different port or reset the function that's using your desired port.`);
