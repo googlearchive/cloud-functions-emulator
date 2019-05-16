@@ -144,13 +144,13 @@ exports.handler = (opts) => {
   return controller.doIfRunning()
     // Deploy the function
     .then(() => controller.deploy(opts.functionName, opts))
-    .then(([operation, response]) => {
+    .then(([operation]) => {
       // Poll the operation
       return new Promise((resolve, reject) => {
         function poll () {
           controller.write('.');
           controller.client.getOperation(operation.name)
-            .then(([operation]) => {
+            .then((operation) => {
               if (!operation.done) {
                 setTimeout(poll, 500);
               } else {

@@ -59,7 +59,7 @@ exports.handler = (opts) => {
         function poll () {
           controller.write('.');
           controller.client.getOperation(operation.name)
-            .then(([operation]) => {
+            .then((operation) => {
               if (!operation.done) {
                 setTimeout(poll, 500);
               } else {
